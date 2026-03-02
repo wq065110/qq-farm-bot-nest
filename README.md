@@ -29,6 +29,7 @@
 ## 功能特性
 
 ### 多账号管理
+
 - 账号新增、编辑、删除、启动、停止
 - 扫码登录（QQ）与手动输入 Code
 - 账号被踢下线自动删除
@@ -36,6 +37,7 @@
 - 账号离线推送通知（支持 Bark、自定义 Webhook 等）
 
 ### 自动化能力
+
 - 农场：收获、种植、浇水、除草、除虫、铲除、土地升级
 - 仓库：收获后自动出售果实
 - 好友：自动偷菜 / 帮忙 / 捣乱
@@ -44,12 +46,15 @@
 - 静默时段：指定时间段内不执行好友操作
 
 ### Web 面板
+
 - 概览 / 农场 / 背包 / 好友 / 分析 / 账号 / 设置页面
 - 实时日志，支持按账号、模块、事件、级别、关键词、时间范围筛选
 - 深色 / 浅色主题切换
 
 ### 分析页
+
 支持按以下维度排序作物：
+
 - 经验效率 / 普通肥经验效率
 - 净利润效率 / 普通肥净利润效率
 - 等级要求
@@ -74,7 +79,7 @@ pnpm -v
 # 2. 安装依赖并构建前端
 cd D:\Projects\qq-farm-bot-ui
 pnpm install
-pnpm build:web
+pnpm build
 
 # 3. 启动
 pnpm dev:core
@@ -96,7 +101,7 @@ corepack enable
 # 2. 安装依赖并构建前端
 cd /path/to/qq-farm-bot-ui
 pnpm install
-pnpm build:web
+pnpm build
 
 # 3. 启动
 pnpm dev:core
@@ -106,6 +111,7 @@ ADMIN_PASSWORD='你的强密码' pnpm dev:core
 ```
 
 启动后访问面板：
+
 - 本机：`http://localhost:3000`
 - 局域网：`http://<你的IP>:3000`
 
@@ -128,9 +134,9 @@ docker compose down
 
 `docker-compose.yml` 已将数据目录挂载：
 
-| 宿主机路径 | 容器内路径 |
-|-----------|-----------|
-| `./data`  | `/app/core/data` |
+| 宿主机路径 | 容器内路径       |
+| ---------- | ---------------- |
+| `./data`   | `/app/core/data` |
 
 账号与配置数据保存在 `./data/accounts.json` 和 `./data/store.json`。
 
@@ -158,11 +164,11 @@ pnpm package:release
 
 产物输出在 `dist/` 目录：
 
-| 平台 | 文件名 |
-|------|--------|
-| Windows x64 | `qq-farm-bot-win-x64.exe` |
-| Linux x64 | `qq-farm-bot-linux-x64` |
-| macOS Intel | `qq-farm-bot-macos-x64` |
+| 平台                | 文件名                    |
+| ------------------- | ------------------------- |
+| Windows x64         | `qq-farm-bot-win-x64.exe` |
+| Linux x64           | `qq-farm-bot-linux-x64`   |
+| macOS Intel         | `qq-farm-bot-macos-x64`   |
 | macOS Apple Silicon | `qq-farm-bot-macos-arm64` |
 
 ### 运行

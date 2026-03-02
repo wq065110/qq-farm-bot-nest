@@ -31,13 +31,13 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Lint Web
-        run: pnpm -C web lint
+        run: pnpm exec turbo run lint -F=web
 
       - name: Lint Core
-        run: pnpm -C core exec eslint "src/**/*.js" "client.js"
+        run: pnpm exec turbo run lint -F=core
 
       - name: Build Web
-        run: pnpm build:web
+        run: pnpm build
 
   package:
     if: github.event_name != 'pull_request'
@@ -63,28 +63,28 @@ jobs:
         run: pnpm package:release
 
       - name: List Artifacts
-        run: ls -R core/dist
+        run: ls -R apps/core/dist
 
       - name: Upload Windows
         uses: actions/upload-artifact@v4
         with:
           name: farm-win-x64
-          path: ./core/dist/qq-farm-bot-win-x64.exe
+          path: ./apps/core/dist/core-win-x64.exe
 
       - name: Upload Linux
         uses: actions/upload-artifact@v4
         with:
           name: farm-linux-x64
-          path: ./core/dist/qq-farm-bot-linux-x64
+          path: ./apps/core/dist/core-linux-x64
 
       - name: Upload MacOS Intel
         uses: actions/upload-artifact@v4
         with:
           name: farm-mac-x64
-          path: ./core/dist/qq-farm-bot-macos-x64
+          path: ./apps/core/dist/core-macos-x64
 
       - name: Upload MacOS Apple Silicon
         uses: actions/upload-artifact@v4
         with:
           name: farm-mac-arm64
-          path: ./core/dist/qq-farm-bot-macos-arm64
+          path: ./apps/core/dist/core-macos-arm64

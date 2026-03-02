@@ -1,5 +1,5 @@
 {
-  "name": "qq-farm-bot-web",
+  "name": "web",
   "type": "module",
   "version": "3.0.0",
   "private": true,
@@ -7,7 +7,7 @@
     "dev": "vite --host 0.0.0.0",
     "build": "vue-tsc -b && vite build",
     "build:analyzer": "vue-tsc -b && vite build --mode analyzer",
-    "lint": "eslint \"src/**/*.{ts,vue}\" --fix",
+    "lint": "eslint . --fix",
     "preview": "vite preview"
   },
   "dependencies": {

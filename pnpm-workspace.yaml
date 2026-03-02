@@ -1,6 +1,5 @@
 packages:
-  - core
-  - web
+  - 'apps/*'
 
 ignoredBuiltDependencies:
   - '@parcel/watcher'

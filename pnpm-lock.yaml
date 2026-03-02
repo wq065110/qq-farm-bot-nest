@@ -9,9 +9,13 @@ overrides:
 
 importers:
 
-  .: {}
+  .:
+    devDependencies:
+      turbo:
+        specifier: ^2.8.12
+        version: 2.8.12
 
-  core:
+  apps/core:
     dependencies:
       axios:
         specifier: ^1.6.0
@@ -54,7 +58,7 @@ importers:
         specifier: ^5.8.1
         version: 5.8.1
 
-  web:
+  apps/web:
     dependencies:
       '@antdv-next/icons':
         specifier: ^1.0.2
@@ -101,7 +105,7 @@ importers:
         version: 1.0.0(unocss@66.5.12(postcss@8.5.6)(vite@7.3.1(@types/node@24.10.13)(jiti@2.6.1)(sass@1.97.3)(tsx@4.21.0)(yaml@2.8.2)))
       '@antfu/eslint-config':
         specifier: ^7.4.3
-        version: 7.4.3(@unocss/eslint-plugin@66.5.12(eslint@9.39.3(jiti@2.6.1))(typescript@5.9.3))(@vue/compiler-sfc@3.5.28)(eslint-plugin-format@1.4.0(eslint@9.39.3(jiti@2.6.1)))(eslint@9.39.3(jiti@2.6.1))(typescript@5.9.3)
+        version: 7.4.3(@unocss/eslint-plugin@66.6.0(eslint@9.39.3(jiti@2.6.1))(typescript@5.9.3))(@vue/compiler-sfc@3.5.28)(eslint-plugin-format@1.4.0(eslint@9.39.3(jiti@2.6.1)))(eslint@9.39.3(jiti@2.6.1))(typescript@5.9.3)
       '@types/node':
         specifier: ^24.10.1
         version: 24.10.13
@@ -110,7 +114,7 @@ importers:
         version: 0.2.3
       '@unocss/eslint-plugin':
         specifier: ^66.5.12
-        version: 66.5.12(eslint@9.39.3(jiti@2.6.1))(typescript@5.9.3)
+        version: 66.6.0(eslint@9.39.3(jiti@2.6.1))(typescript@5.9.3)
       '@unocss/preset-web-fonts':
         specifier: ^66.6.2
         version: 66.6.2
@@ -1048,10 +1052,6 @@ packages:
   '@unocss/core@66.6.2':
     resolution: {integrity: sha512-IOvN1BLRP0VTjjS5afSxmXhvKRDko2Shisp8spU+A9qiH1tXEFP3phyVevm/SuGwBHO1lC+SJ451/4oFkCAwJA==}
 
-  '@unocss/eslint-plugin@66.5.12':
-    resolution: {integrity: sha512-dTJIiAetwq4YcxJo7O1L2DuBclrO6LcqnyGwcAregPFQ/EDUUhIIRtbQeHPIUKhiEpjURSSIXYJ6pkaR5XTm7A==}
-    engines: {node: '>=14'}
-
   '@unocss/eslint-plugin@66.6.0':
     resolution: {integrity: sha512-6i+kNVVGb5I+XOCUgLDHol6sxb28ahbJrmLL/eiAWflT850MUqtAlFeyHDYHzScnOFcPy1AcmeY0yM77GgERmg==}
     engines: {node: '>=14'}
@@ -1330,11 +1330,6 @@ packages:
 
   '@v-c/upload@1.0.0':
     resolution: {integrity: sha512-W92PNCD61aM/B5w8oUzHQSDHur1T8484726Ls0IoNMO5nPiF/15eEE3RuuI/t7xXQVP/fA06hNSwzXwGWdDg1w==}
-    peerDependencies:
-      vue: ^3.0.0
-
-  '@v-c/util@1.0.15':
-    resolution: {integrity: sha512-8hwmVB8uJvs4S5tHLmUCwbBZo2nv+HwiL+W1X5cV0+WlIDLhFxUu4s9tVp/7wM34xRaemImSc8LVYhSlsAWyYg==}
     peerDependencies:
       vue: ^3.0.0
 
@@ -2997,6 +2992,7 @@ packages:
   prebuild-install@7.1.1:
     resolution: {integrity: sha512-jAXscXWMcCK8GgCoHOfIr0ODh5ai8mj63L2nWrjuAgXE6tDyYGnx4/8o/rCgU+B4JSyZBKbeZqzhtwtC3ovxjw==}
     engines: {node: '>=10'}
+    deprecated: No longer maintained. Please contact the author of the relevant native addon; alternatives are available.
     hasBin: true
 
   prelude-ls@1.2.1:
@@ -3393,6 +3389,40 @@ packages:
   tunnel-agent@0.6.0:
     resolution: {integrity: sha512-McnNiV1l8RYeY8tBgEpuodCC1mLUdbSN+CYBL7kJsJNInOP8UjDDEwdk6Mw60vdLLrr5NHKZhMAOSrR2NZuQ+w==}
 
+  turbo-darwin-64@2.8.12:
+    resolution: {integrity: sha512-EiHJmW2MeQQx+21x8hjMHw/uPhXt9PIxvDrxzOtyVwrXzL0tQmsxtO4qHf2l7uA+K6PUJ4+TjY1MHZDuCvWXrw==}
+    cpu: [x64]
+    os: [darwin]
+
+  turbo-darwin-arm64@2.8.12:
+    resolution: {integrity: sha512-cbqqGN0vd7ly2TeuaM8k9AK9u1CABO4kBA5KPSqovTiLL3sORccn/mZzJSbvQf0EsYRfU34MgW5FotfwW3kx8Q==}
+    cpu: [arm64]
+    os: [darwin]
+
+  turbo-linux-64@2.8.12:
+    resolution: {integrity: sha512-jXKw9j4r4q6s0goSXuKI3aKbQK2qiNeP25lGGEnq018TM6SWRW1CCpPMxyG91aCKrub7wDm/K45sGNT4ZFBcFQ==}
+    cpu: [x64]
+    os: [linux]
+
+  turbo-linux-arm64@2.8.12:
+    resolution: {integrity: sha512-BRJCMdyXjyBoL0GYpvj9d2WNfMHwc3tKmJG5ATn2Efvil9LsiOsd/93/NxDqW0jACtHFNVOPnd/CBwXRPiRbwA==}
+    cpu: [arm64]
+    os: [linux]
+
+  turbo-windows-64@2.8.12:
+    resolution: {integrity: sha512-vyFOlpFFzQFkikvSVhVkESEfzIopgs2J7J1rYvtSwSHQ4zmHxkC95Q8Kjkus8gg+8X2mZyP1GS5jirmaypGiPw==}
+    cpu: [x64]
+    os: [win32]
+
+  turbo-windows-arm64@2.8.12:
+    resolution: {integrity: sha512-9nRnlw5DF0LkJClkIws1evaIF36dmmMEO84J5Uj4oQ8C0QTHwlH7DNe5Kq2Jdmu8GXESCNDNuUYG8Cx6W/vm3g==}
+    cpu: [arm64]
+    os: [win32]
+
+  turbo@2.8.12:
+    resolution: {integrity: sha512-auUAMLmi0eJhxDhQrxzvuhfEbICnVt0CTiYQYY8WyRJ5nwCDZxD0JG8bCSxT4nusI2CwJzmZAay5BfF6LmK7Hw==}
+    hasBin: true
+
   type-check@0.4.0:
     resolution: {integrity: sha512-XleUoc9uwGXqjWwXaUTZAmzMcFZ5858QA2vvx1Ur5xIcixXIP+8LnFDgRplU30us6teqdlskFfu+ae4K79Ooew==}
     engines: {node: '>= 0.8.0'}
@@ -3724,61 +3754,12 @@ snapshots:
     dependencies:
       '@ant-design/colors': 7.2.1
       '@ant-design/icons-svg': 4.4.2
-      '@v-c/util': 1.0.15(vue@3.5.28(typescript@5.9.3))
+      '@v-c/util': 1.0.17(vue@3.5.28(typescript@5.9.3))
       vue: 3.5.28(typescript@5.9.3)
 
   '@antdv-next/unocss@1.0.0(unocss@66.5.12(postcss@8.5.6)(vite@7.3.1(@types/node@24.10.13)(jiti@2.6.1)(sass@1.97.3)(tsx@4.21.0)(yaml@2.8.2)))':
     dependencies:
       unocss: 66.5.12(postcss@8.5.6)(vite@7.3.1(@types/node@24.10.13)(jiti@2.6.1)(sass@1.97.3)(tsx@4.21.0)(yaml@2.8.2))
-
-  '@antfu/eslint-config@7.4.3(@unocss/eslint-plugin@66.5.12(eslint@9.39.3(jiti@2.6.1))(typescript@5.9.3))(@vue/compiler-sfc@3.5.28)(eslint-plugin-format@1.4.0(eslint@9.39.3(jiti@2.6.1)))(eslint@9.39.3(jiti@2.6.1))(typescript@5.9.3)':
-    dependencies:
-      '@antfu/install-pkg': 1.1.0
-      '@clack/prompts': 1.0.1
-      '@eslint-community/eslint-plugin-eslint-comments': 4.6.0(eslint@9.39.3(jiti@2.6.1))
-      '@eslint/markdown': 7.5.1
-      '@stylistic/eslint-plugin': 5.9.0(eslint@9.39.3(jiti@2.6.1))
-      '@typescript-eslint/eslint-plugin': 8.56.0(@typescript-eslint/parser@8.56.0(eslint@9.39.3(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.3(jiti@2.6.1))(typescript@5.9.3)
-      '@typescript-eslint/parser': 8.56.0(eslint@9.39.3(jiti@2.6.1))(typescript@5.9.3)
-      '@vitest/eslint-plugin': 1.6.9(eslint@9.39.3(jiti@2.6.1))(typescript@5.9.3)
-      ansis: 4.2.0
-      cac: 6.7.14
-      eslint: 9.39.3(jiti@2.6.1)
-      eslint-config-flat-gitignore: 2.2.1(eslint@9.39.3(jiti@2.6.1))
-      eslint-flat-config-utils: 3.0.1
-      eslint-merge-processors: 2.0.0(eslint@9.39.3(jiti@2.6.1))
-      eslint-plugin-antfu: 3.2.2(eslint@9.39.3(jiti@2.6.1))
-      eslint-plugin-command: 3.4.0(eslint@9.39.3(jiti@2.6.1))
-      eslint-plugin-import-lite: 0.5.2(eslint@9.39.3(jiti@2.6.1))
-      eslint-plugin-jsdoc: 62.7.0(eslint@9.39.3(jiti@2.6.1))
-      eslint-plugin-jsonc: 2.21.1(eslint@9.39.3(jiti@2.6.1))
-      eslint-plugin-n: 17.24.0(eslint@9.39.3(jiti@2.6.1))(typescript@5.9.3)
-      eslint-plugin-no-only-tests: 3.3.0
-      eslint-plugin-perfectionist: 5.6.0(eslint@9.39.3(jiti@2.6.1))(typescript@5.9.3)
-      eslint-plugin-pnpm: 1.5.0(eslint@9.39.3(jiti@2.6.1))
-      eslint-plugin-regexp: 3.0.0(eslint@9.39.3(jiti@2.6.1))
-      eslint-plugin-toml: 1.1.2(eslint@9.39.3(jiti@2.6.1))
-      eslint-plugin-unicorn: 63.0.0(eslint@9.39.3(jiti@2.6.1))
-      eslint-plugin-unused-imports: 4.4.1(@typescript-eslint/eslint-plugin@8.56.0(@typescript-eslint/parser@8.56.0(eslint@9.39.3(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.3(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.3(jiti@2.6.1))
-      eslint-plugin-vue: 10.8.0(@stylistic/eslint-plugin@5.9.0(eslint@9.39.3(jiti@2.6.1)))(@typescript-eslint/parser@8.56.0(eslint@9.39.3(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.3(jiti@2.6.1))(vue-eslint-parser@10.4.0(eslint@9.39.3(jiti@2.6.1)))
-      eslint-plugin-yml: 3.2.2(eslint@9.39.3(jiti@2.6.1))
-      eslint-processor-vue-blocks: 2.0.0(@vue/compiler-sfc@3.5.28)(eslint@9.39.3(jiti@2.6.1))
-      globals: 17.3.0
-      jsonc-eslint-parser: 2.4.2
-      local-pkg: 1.1.2
-      parse-gitignore: 2.0.0
-      toml-eslint-parser: 1.0.3
-      vue-eslint-parser: 10.4.0(eslint@9.39.3(jiti@2.6.1))
-      yaml-eslint-parser: 2.0.0
-    optionalDependencies:
-      '@unocss/eslint-plugin': 66.5.12(eslint@9.39.3(jiti@2.6.1))(typescript@5.9.3)
-      eslint-plugin-format: 1.4.0(eslint@9.39.3(jiti@2.6.1))
-    transitivePeerDependencies:
-      - '@eslint/json'
-      - '@vue/compiler-sfc'
-      - supports-color
-      - typescript
-      - vitest
 
   '@antfu/eslint-config@7.4.3(@unocss/eslint-plugin@66.6.0(eslint@9.39.3(jiti@2.6.1))(typescript@5.9.3))(@vue/compiler-sfc@3.5.28)(eslint-plugin-format@1.4.0(eslint@9.39.3(jiti@2.6.1)))(eslint@9.39.3(jiti@2.6.1))(typescript@5.9.3)':
     dependencies:
@@ -3842,7 +3823,7 @@ snapshots:
 
   '@babel/generator@7.18.2':
     dependencies:
-      '@babel/types': 7.19.0
+      '@babel/types': 7.29.0
       '@jridgewell/gen-mapping': 0.3.13
       jsesc: 2.5.2
 
@@ -3860,7 +3841,7 @@ snapshots:
 
   '@babel/parser@7.18.4':
     dependencies:
-      '@babel/types': 7.19.0
+      '@babel/types': 7.29.0
 
   '@babel/parser@7.27.7':
     dependencies:
@@ -4519,26 +4500,12 @@ snapshots:
     dependencies:
       '@unocss/core': 66.6.0
       unconfig: 7.5.0
-    optional: true
 
   '@unocss/core@66.5.12': {}
 
   '@unocss/core@66.6.0': {}
 
   '@unocss/core@66.6.2': {}
-
-  '@unocss/eslint-plugin@66.5.12(eslint@9.39.3(jiti@2.6.1))(typescript@5.9.3)':
-    dependencies:
-      '@typescript-eslint/utils': 8.56.0(eslint@9.39.3(jiti@2.6.1))(typescript@5.9.3)
-      '@unocss/config': 66.5.12
-      '@unocss/core': 66.5.12
-      '@unocss/rule-utils': 66.5.12
-      magic-string: 0.30.21
-      synckit: 0.11.12
-    transitivePeerDependencies:
-      - eslint
-      - supports-color
-      - typescript
 
   '@unocss/eslint-plugin@66.6.0(eslint@9.39.3(jiti@2.6.1))(typescript@5.9.3)':
     dependencies:
@@ -4552,7 +4519,6 @@ snapshots:
       - eslint
       - supports-color
       - typescript
-    optional: true
 
   '@unocss/extractor-arbitrary-variants@66.5.12':
     dependencies:
@@ -4637,14 +4603,13 @@ snapshots:
 
   '@unocss/rule-utils@66.5.12':
     dependencies:
-      '@unocss/core': 66.6.0
+      '@unocss/core': 66.6.2
       magic-string: 0.30.21
 
   '@unocss/rule-utils@66.6.0':
     dependencies:
       '@unocss/core': 66.6.2
       magic-string: 0.30.21
-    optional: true
 
   '@unocss/transformer-attributify-jsx@66.5.12':
     dependencies:
@@ -4911,10 +4876,6 @@ snapshots:
   '@v-c/upload@1.0.0(vue@3.5.28(typescript@5.9.3))':
     dependencies:
       '@v-c/util': 1.0.17(vue@3.5.28(typescript@5.9.3))
-      vue: 3.5.28(typescript@5.9.3)
-
-  '@v-c/util@1.0.15(vue@3.5.28(typescript@5.9.3))':
-    dependencies:
       vue: 3.5.28(typescript@5.9.3)
 
   '@v-c/util@1.0.17(vue@3.5.28(typescript@5.9.3))':
@@ -7361,6 +7322,33 @@ snapshots:
   tunnel-agent@0.6.0:
     dependencies:
       safe-buffer: 5.2.1
+
+  turbo-darwin-64@2.8.12:
+    optional: true
+
+  turbo-darwin-arm64@2.8.12:
+    optional: true
+
+  turbo-linux-64@2.8.12:
+    optional: true
+
+  turbo-linux-arm64@2.8.12:
+    optional: true
+
+  turbo-windows-64@2.8.12:
+    optional: true
+
+  turbo-windows-arm64@2.8.12:
+    optional: true
+
+  turbo@2.8.12:
+    optionalDependencies:
+      turbo-darwin-64: 2.8.12
+      turbo-darwin-arm64: 2.8.12
+      turbo-linux-64: 2.8.12
+      turbo-linux-arm64: 2.8.12
+      turbo-windows-64: 2.8.12
+      turbo-windows-arm64: 2.8.12
 
   type-check@0.4.0:
     dependencies:

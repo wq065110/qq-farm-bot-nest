@@ -1,20 +1,21 @@
 {
-  "name": "qq-farm-bot-ui",
+  "name": "qq-farm-bot-ui-better",
+  "private": true,
   "packageManager": "pnpm@10.30.2",
   "scripts": {
-    "dev:core": "pnpm -C core dev",
-    "dev:web": "pnpm -C web dev",
-    "dev": "pnpm build:web && pnpm dev:core",
-    "lint": "pnpm lint:core && pnpm lint:web",
-    "lint:core": "pnpm -C core lint",
-    "lint:web": "pnpm -C web lint",
-    "build:web": "pnpm -C web build",
-    "build": "pnpm build:web",
-    "package:win": "pnpm build:web && pnpm -C core build:win",
-    "package:linux": "pnpm build:web && pnpm -C core build:linux",
-    "package:mac": "pnpm build:web && pnpm -C core build:mac",
-    "package:release": "pnpm build:web && pnpm -C core build:release",
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "dev:core": "turbo run dev -F=core",
+    "dev:web": "turbo run dev -F=web",
+    "lint": "turbo run lint",
+    "package:win": "pnpm build && turbo run build:win -F=core",
+    "package:linux": "pnpm build && turbo run build:linux -F=core",
+    "package:mac": "pnpm build && turbo run build:mac -F=core",
+    "package:release": "pnpm build && turbo run build:release -F=core",
     "install:all": "pnpm install -r"
+  },
+  "devDependencies": {
+    "turbo": "^2.8.12"
   },
   "pnpm": {
     "overrides": {
