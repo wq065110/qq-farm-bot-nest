@@ -1,6 +1,6 @@
 # QQ 农场多账号挂机 + Web 面板
 
-基于 Node.js 的 QQ 农场自动化工具，支持多账号管理、Web 控制面板、实时日志与数据分析。
+QQ 农场自动化挂机工具，支持多账号管理、Web 控制面板、实时日志与数据分析。后端基于 NestJS + SQLite（Drizzle ORM）+ Socket.io，前端基于 Vue 3 + Ant Design Vue + Pinia + UnoCSS，使用 pnpm + Turborepo 管理 monorepo。
 
 ## 技术栈
 
@@ -24,7 +24,6 @@
 
 [<img src="https://skillicons.dev/icons?i=docker" height="48" title="Docker Compose" />](https://docs.docker.com/compose/)
 [<img src="https://skillicons.dev/icons?i=pnpm" height="48" title="pnpm 10" />](https://pnpm.io/)
-[<img src="https://skillicons.dev/icons?i=githubactions" height="48" title="GitHub Actions" />](https://github.com/features/actions)
 
 ---
 
@@ -42,7 +41,7 @@
 
 - 农场：收获、种植、浇水、除草、除虫、铲除、土地升级
 - 仓库：收获后自动出售果实
-- 好友：自动偷菜 / 帮忙 / 捣乱
+- 好友：自动偷菜 / 帮忙 / 捣乱 / 黑名单
 - 任务：自动检查并领取
 - 偷取作物黑名单：跳过指定作物
 - 静默时段：指定时间段内不执行好友操作
@@ -65,8 +64,7 @@
 
 ## 环境要求
 
-- 源码运行：Node.js 20+，pnpm（推荐通过 `corepack enable` 启用）
-- 二进制发布版：无需安装 Node.js
+- Node.js 20+，pnpm（推荐通过 `corepack enable` 启用）
 
 ## 安装与启动（源码方式）
 
@@ -155,50 +153,16 @@ environment:
 
 ---
 
-## 二进制发布版（无需 Node.js）
-
-### 构建
-
-```bash
-pnpm install
-pnpm package:release
-```
-
-产物输出在 `apps/core/release/` 目录：
-
-| 平台                | 文件名                 |
-| ------------------- | ---------------------- |
-| Windows x64         | `core-win-x64.exe`     |
-| Linux x64           | `core-linux-x64`       |
-| macOS Intel         | `core-macos-x64`       |
-| macOS Apple Silicon | `core-macos-arm64`     |
-
-### 运行
-
-```bash
-# Windows：双击 exe 或在终端执行
-.\core-win-x64.exe
-
-# Linux / macOS
-chmod +x ./core-linux-x64 && ./core-linux-x64
-```
-
-程序会在可执行文件同级目录自动创建 `data/` 并写入 SQLite 数据库。
-
----
-
 ## 常用脚本
 
-| 命令              | 说明                         |
-| ----------------- | ---------------------------- |
-| `pnpm build`      | 构建 web + core              |
-| `pnpm dev`        | 同时启动 web 开发服务器与 core |
-| `pnpm dev:core`   | 仅启动 core（含预构建的 web） |
-| `pnpm dev:web`    | 仅启动 web 开发服务器        |
-| `pnpm lint`       | 执行 ESLint 检查             |
-| `pnpm package:win`   | 构建 Windows 二进制       |
-| `pnpm package:linux` | 构建 Linux 二进制         |
-| `pnpm package:mac`   | 构建 macOS 二进制         |
+| 命令            | 说明                           |
+| --------------- | ------------------------------ |
+| `pnpm build`    | 构建 web + core                |
+| `pnpm dev`      | 同时启动 web 开发服务器与 core |
+| `pnpm dev:core` | 仅启动 core（含预构建的 web）   |
+| `pnpm dev:web`  | 仅启动 web 开发服务器          |
+| `pnpm start`    | 生产模式启动 core              |
+| `pnpm lint`     | 执行 ESLint 检查               |
 
 ---
 
@@ -217,14 +181,14 @@ chmod +x ./core-linux-x64 && ./core-linux-x64
 qq-farm-bot-ui/
 ├── apps/
 │   ├── core/              # 后端（NestJS + SQLite + 机器人引擎）
-│   │   ├── src/           # NestJS 模块（TypeScript）
+│   │   ├── src/           # NestJS 源码（TypeScript）
 │   │   │   ├── modules/   # API 控制器与服务
+│   │   │   ├── game/      # 游戏协议、WebSocket 客户端与 Worker
 │   │   │   ├── database/  # Drizzle ORM 与 SQLite
+│   │   │   ├── store/     # 账号与配置存储
 │   │   │   └── common/    # 守卫、拦截器、装饰器
-│   │   ├── legacy/        # 游戏协议与 Worker 运行时（JavaScript）
 │   │   ├── dist/          # 构建产物
-│   │   ├── data/          # 运行时数据（SQLite、logs）
-│   │   └── release/       # pkg 二进制输出
+│   │   └── data/          # 运行时数据（SQLite、logs）
 │   └── web/               # 前端（Vue 3 + Vite + Ant Design Vue）
 │       ├── src/
 │       │   ├── api/       # API 客户端
