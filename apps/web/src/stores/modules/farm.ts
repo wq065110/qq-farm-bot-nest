@@ -54,5 +54,11 @@ export const useFarmStore = defineStore('farm', () => {
     await fetchLands(accountId)
   }
 
-  return { lands, summary, seeds, loading, fetchLands, fetchSeeds, operate }
+  function resetState() {
+    lands.value = []
+    summary.value = {}
+    seeds.value = []
+  }
+
+  return { lands, summary, seeds, loading, fetchLands, fetchSeeds, operate, resetState }
 })

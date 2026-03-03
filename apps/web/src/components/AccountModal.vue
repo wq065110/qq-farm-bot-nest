@@ -203,10 +203,9 @@ watch(
 </script>
 
 <template>
-  <a-modal :open="show" :footer="null" :mask-closable="!loading" :width="420" destroy-on-hidden @cancel="close">
+  <a-modal :open="show" :footer="null" :mask-closable="!loading" :width="420" centered destroy-on-hidden @cancel="close">
     <template #title>
       <div class="flex items-center gap-2">
-        <div :class="editData ? 'i-twemoji-memo' : 'i-twemoji-plus'" class="text-lg" />
         <span>{{ editData ? '编辑账号' : '添加账号' }}</span>
       </div>
     </template>

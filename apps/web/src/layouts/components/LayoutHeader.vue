@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { MenuFoldOutlined, MenuOutlined, MenuUnfoldOutlined } from '@antdv-next/icons'
+import { MenuFoldOutlined, MenuOutlined } from '@antdv-next/icons'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import { useAppStore, useUserStore } from '@/stores'
@@ -22,8 +22,9 @@ function logout() {
     <div class="flex items-center">
       <a-button class="hidden xl:inline-flex" type="text" @click="appStore.toggleSidebarCollapsed()">
         <template #icon>
-          <MenuUnfoldOutlined v-if="sidebarCollapsed" />
-          <MenuFoldOutlined v-else />
+          <span class="inline-flex transition-transform duration-200" :class="{ 'rotate-180': sidebarCollapsed }">
+            <MenuFoldOutlined />
+          </span>
         </template>
       </a-button>
 

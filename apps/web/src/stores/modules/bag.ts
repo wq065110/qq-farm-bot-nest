@@ -35,5 +35,9 @@ export const useBagStore = defineStore('bag', () => {
     }
   }
 
-  return { items, allItems, dashboardItems, loading, fetchBag }
+  function resetState() {
+    allItems.value = []
+  }
+
+  return { items, allItems, dashboardItems, loading, fetchBag, resetState }
 })

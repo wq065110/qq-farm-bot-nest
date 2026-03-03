@@ -51,7 +51,7 @@ async function save() {
 </script>
 
 <template>
-  <a-modal :open="show" :footer="null" :width="380" :mask-closable="!loading" destroy-on-hidden @cancel="handleClose">
+  <a-modal :open="show" :footer="null" :width="380" :mask-closable="!loading" centered destroy-on-hidden @cancel="handleClose">
     <template #title>
       <div class="flex items-center gap-2">
         <div class="i-twemoji-label text-lg" />

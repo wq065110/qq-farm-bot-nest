@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { accountApi } from '@/api'
+import { useBagStore } from './bag'
+import { useFarmStore } from './farm'
 import { useStatusStore } from './status'
 
 export interface Account {
@@ -84,6 +86,8 @@ export const useAccountStore = defineStore('account', () => {
     if (currentAccountId.value === id) {
       currentAccountId.value = ''
       useStatusStore().resetState()
+      useBagStore().resetState()
+      useFarmStore().resetState()
     }
     await fetchAccounts()
   }

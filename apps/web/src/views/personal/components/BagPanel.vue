@@ -29,7 +29,7 @@ function onImageError(id: string | number) {
     </div>
     <div class="min-h-0 flex-1 overflow-y-auto">
       <div v-if="!items.length" class="h-full flex items-center justify-center">
-        <EmptyState icon="i-twemoji-package text-3xl" description="背包空空" />
+        <EmptyState icon="i-twemoji-backpack text-3xl" description="背包空空" />
       </div>
       <div v-else class="space-y-1">
         <div
