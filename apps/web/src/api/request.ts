@@ -13,7 +13,7 @@ interface NestResponse<T = unknown> {
 
 const api = axios.create({
   baseURL: '/',
-  timeout: 10_000,
+  timeout: 10_000
 })
 
 api.interceptors.request.use((config) => {
@@ -75,7 +75,7 @@ api.interceptors.response.use(
     const msg = pickErrorNotify(error)
     error.response?.status === 401 ? handleUnauthorized() : msg && notify.error(msg)
     return Promise.reject(error)
-  },
+  }
 )
 
 function handleUnauthorized() {

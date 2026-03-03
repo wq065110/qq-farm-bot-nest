@@ -14,7 +14,7 @@ export function useFriendLandsWithCountdown(friendLandsRef: Ref<Record<string, a
       result[gid] = (lands || []).map((l: any) => ({
         ...l,
         matureInSec:
-          l.matureAt != null ? Math.max(0, l.matureAt - nowSec) : (l.matureInSec ?? 0),
+          l.matureAt != null ? Math.max(0, l.matureAt - nowSec) : (l.matureInSec ?? 0)
       }))
     }
     return result

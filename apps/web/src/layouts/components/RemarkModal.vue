@@ -25,7 +25,7 @@ watch(
     if (val && props.account) {
       name.value = props.account.name || ''
     }
-  },
+  }
 )
 
 async function save() {
@@ -36,17 +36,15 @@ async function save() {
   try {
     const payload = {
       id: props.account.id,
-      name: name.value,
+      name: name.value
     }
 
     await accountApi.saveAccount(payload)
     emit('saved')
     emit('close')
-  }
-  catch (e: any) {
+  } catch (e: any) {
     errorMessage.value = `保存失败: ${e.message}`
-  }
-  finally {
+  } finally {
     loading.value = false
   }
 }

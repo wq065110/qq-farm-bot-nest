@@ -49,8 +49,7 @@ async function confirmDelete() {
       await accountStore.deleteAccount(accountToDelete.value.id)
       accountToDelete.value = null
       showDeleteConfirm.value = false
-    }
-    finally {
+    } finally {
       deleteLoading.value = false
     }
   }

@@ -5,6 +5,6 @@ import { clearValidation, ensureTokenValid } from './validate'
 export function setupAuthGuard(router: Router): void {
   createAuthGuard(router, {
     ensureTokenValid,
-    clearValidation,
+    clearValidation
   })
 }

@@ -28,7 +28,7 @@ function getFriendStatusTags(friend: any) {
     tags.push({
       label: `可偷 ${p.stealNum}`,
       icon: 'i-twemoji-pinching-hand',
-      class: 'a-bg-fill-tertiary a-color-text-secondary',
+      class: 'a-bg-fill-tertiary a-color-text-secondary'
     })
   }
   if (p.dryNum) {

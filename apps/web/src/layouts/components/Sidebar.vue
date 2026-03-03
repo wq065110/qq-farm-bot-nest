@@ -31,7 +31,7 @@ const {
   onMenuClick,
 
   version,
-  appStore,
+  appStore
 } = useSidebarData()
 </script>
 

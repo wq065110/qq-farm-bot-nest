@@ -36,8 +36,7 @@ async function executeOperate() {
   operating.value = true
   try {
     await farmStore.operate(currentAccountId.value, confirmConfig.value.opType)
-  }
-  finally {
+  } finally {
     operating.value = false
   }
 }
@@ -50,7 +49,7 @@ function handleOperate(opType: string) {
     clear: '确定要一键除草/除虫吗？',
     plant: '确定要一键种植吗？',
     upgrade: '确定要升级所有可升级的土地吗？',
-    all: '确定要一键全收吗？',
+    all: '确定要一键全收吗？'
   }
   confirmConfig.value = { title: '确认操作', message: msgs[opType] || '确定执行此操作吗？', opType }
   confirmVisible.value = true

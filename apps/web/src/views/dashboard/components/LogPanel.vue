@@ -44,7 +44,7 @@ const logContainer = ref<HTMLElement | null>(null)
 const autoScroll = ref(true)
 
 const eventLabelMap: Record<string, string> = Object.fromEntries(
-  EVENTS.filter(e => e.value).map(e => [e.value, e.label]),
+  EVENTS.filter(e => e.value).map(e => [e.value, e.label])
 )
 
 function getEventLabel(event: string): string {
@@ -79,7 +79,7 @@ function scrollLogsToBottom(force = false) {
 watch(
   () => props.logs,
   () => scrollLogsToBottom(),
-  { deep: true },
+  { deep: true }
 )
 
 onMounted(() => {

@@ -47,8 +47,7 @@ export function useSidebarData() {
       if (accountRef) {
         statusStore.connectRealtime(String(accountRef))
       }
-    }
-    catch {
+    } catch {
       systemConnected.value = false
     }
   }
@@ -95,7 +94,7 @@ export function useSidebarData() {
       statusStore.connectRealtime(String(accountRef || ''))
       refreshStatusFallback()
     },
-    { immediate: true },
+    { immediate: true }
   )
 
   // WS error watch
@@ -115,7 +114,7 @@ export function useSidebarData() {
       accountToEdit.value = currentAccount.value
       showAccountModal.value = true
     },
-    { deep: true },
+    { deep: true }
   )
 
   // Auto-close sidebar on mobile route change
@@ -124,7 +123,7 @@ export function useSidebarData() {
     () => {
       if (window.innerWidth < 1024)
         appStore.closeSidebar()
-    },
+    }
   )
 
   // Computed
@@ -148,7 +147,7 @@ export function useSidebarData() {
 
     return {
       primary: isOnline ? liveName : (acc.nick),
-      secondary: isOnline && acc.name ? acc.name : '',
+      secondary: isOnline && acc.name ? acc.name : ''
     }
   })
 
@@ -158,14 +157,14 @@ export function useSidebarData() {
       if (!val)
         return
       accountStore.selectAccount(String(val))
-    },
+    }
   })
 
   const accountOptions = computed(() => {
     return (accounts.value || []).map((acc: any) => ({
       ...acc,
       label: acc.name || acc.nick || acc.uin || acc.id,
-      value: String(acc.id),
+      value: String(acc.id)
     }))
   })
 
@@ -190,7 +189,7 @@ export function useSidebarData() {
         return {
           key: path,
           icon: r.meta?.icon as string,
-          label: r.meta!.label as string,
+          label: r.meta!.label as string
         }
       })
   })
@@ -243,6 +242,6 @@ export function useSidebarData() {
 
     // App
     version,
-    appStore,
+    appStore
   }
 }

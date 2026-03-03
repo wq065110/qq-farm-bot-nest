@@ -37,7 +37,7 @@ const filteredList = computed(() => {
     item =>
       (item.name || '').toLowerCase().includes(q)
       || String(item.seedId || '').includes(q)
-      || String(item.level || '').includes(q),
+      || String(item.level || '').includes(q)
   )
 })
 
@@ -64,16 +64,13 @@ async function loadAnalytics() {
           return bv - av
         })
       }
-    }
-    else {
+    } else {
       list.value = []
     }
-  }
-  catch (e) {
+  } catch (e) {
     console.error(e)
     list.value = []
-  }
-  finally {
+  } finally {
     loading.value = false
   }
 }

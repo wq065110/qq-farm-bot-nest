@@ -17,8 +17,8 @@ function createProxy(path: string, extra: Record<string, any> = {}) {
     [path]: {
       target: TARGET,
       changeOrigin: true,
-      ...extra,
-    },
+      ...extra
+    }
   }
 }
 
@@ -27,21 +27,21 @@ function createPlugins(mode: string) {
     vue(),
     Components({
       resolvers: [AntdvNextResolver()],
-      dts: false,
+      dts: false
     }),
     UnoCSS(),
     viteCompression({
       threshold: 10240,
       algorithm: 'gzip',
-      ext: '.gz',
-    }),
+      ext: '.gz'
+    })
   ]
 
   if (mode === 'analyzer') {
     base.push(
       analyzer({
-        openAnalyzer: true,
-      }),
+        openAnalyzer: true
+      })
     )
   }
 
@@ -53,25 +53,25 @@ export default defineConfig(({ mode }) => {
     plugins: createPlugins(mode),
 
     define: {
-      __APP_VERSION__: JSON.stringify(version),
+      __APP_VERSION__: JSON.stringify(version)
     },
 
     resolve: {
       alias: {
-        '@': fileURLToPath(new URL('./src', import.meta.url)),
-      },
+        '@': fileURLToPath(new URL('./src', import.meta.url))
+      }
     },
 
     server: {
       proxy: {
         ...createProxy('/socket.io', { ws: true }),
         ...createProxy('/api'),
-        ...createProxy('/game-config'),
-      },
+        ...createProxy('/game-config')
+      }
     },
 
     build: {
-      chunkSizeWarningLimit: 1000,
-    },
+      chunkSizeWarningLimit: 1000
+    }
   }
 })

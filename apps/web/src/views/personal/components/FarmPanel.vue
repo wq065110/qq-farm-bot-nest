@@ -18,7 +18,7 @@ const operations = [
   { type: 'clear', label: '除草', icon: 'i-twemoji-herb' },
   { type: 'plant', label: '种植', icon: 'i-twemoji-seedling' },
   { type: 'upgrade', label: '升级', icon: 'i-twemoji-building-construction' },
-  { type: 'all', label: '全收', icon: 'i-twemoji-sparkles' },
+  { type: 'all', label: '全收', icon: 'i-twemoji-sparkles' }
 ]
 
 function handleOperate(opType: string) {

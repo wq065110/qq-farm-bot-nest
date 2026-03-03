@@ -46,7 +46,7 @@ export const useStatusStore = defineStore('status', () => {
     return {
       ...entry,
       ts,
-      time: entry.time || new Date(ts).toISOString().replace('T', ' ').slice(0, 19),
+      time: entry.time || new Date(ts).toISOString().replace('T', ' ').slice(0, 19)
     }
   }
 
@@ -108,16 +108,15 @@ export const useStatusStore = defineStore('status', () => {
       autoConnect: false,
       transports: ['websocket'],
       auth: {
-        token,
-      },
+        token
+      }
     })
 
     socket.on('connect', () => {
       realtimeConnected.value = true
       if (currentRealtimeAccountId.value) {
         socket?.emit('subscribe', { accountId: currentRealtimeAccountId.value })
-      }
-      else {
+      } else {
         socket?.emit('subscribe', { accountId: 'all' })
       }
     })
@@ -148,7 +147,7 @@ export const useStatusStore = defineStore('status', () => {
     const client = ensureRealtimeSocket()
     client.auth = {
       token,
-      accountId: currentRealtimeAccountId.value || 'all',
+      accountId: currentRealtimeAccountId.value || 'all'
     }
 
     if (client.connected) {
@@ -182,11 +181,9 @@ export const useStatusStore = defineStore('status', () => {
       const res = await statusApi.fetchStatus()
       status.value = normalizeStatusPayload(res)
       error.value = ''
-    }
-    catch (e: any) {
+    } catch (e: any) {
       error.value = e.message
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -198,8 +195,7 @@ export const useStatusStore = defineStore('status', () => {
       const res = await statusApi.fetchLogs(accountId, options)
       logs.value = (res || []).map((item: any) => normalizeLogEntry(item))
       error.value = ''
-    }
-    catch (e: any) {
+    } catch (e: any) {
       console.error(e)
     }
   }
@@ -210,8 +206,7 @@ export const useStatusStore = defineStore('status', () => {
     try {
       const res = await statusApi.fetchDailyGifts()
       dailyGifts.value = res || null
-    }
-    catch (e) {
+    } catch (e) {
       console.error('获取每日奖励失败', e)
     }
   }
@@ -220,8 +215,7 @@ export const useStatusStore = defineStore('status', () => {
     try {
       const res = await statusApi.fetchAccountLogs(limit)
       accountLogs.value = Array.isArray(res) ? res : []
-    }
-    catch (e) {
+    } catch (e) {
       console.error(e)
     }
   }
@@ -245,6 +239,6 @@ export const useStatusStore = defineStore('status', () => {
     fetchDailyGifts,
     setRealtimeLogsEnabled,
     connectRealtime,
-    disconnectRealtime,
+    disconnectRealtime
   }
 })

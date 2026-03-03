@@ -1,6 +1,6 @@
 export const ROUTE_NAMES = {
   LOGIN: 'login',
-  DASHBOARD: 'dashboard',
+  DASHBOARD: 'dashboard'
 } as const
 
 export const ROUTE_PATHS = {
@@ -11,5 +11,5 @@ export const ROUTE_PATHS = {
   FRIENDS: '/friends',
   ANALYTICS: '/analytics',
   ACCOUNTS: '/accounts',
-  SETTINGS: '/settings',
+  SETTINGS: '/settings'
 } as const

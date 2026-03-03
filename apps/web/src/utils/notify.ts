@@ -17,7 +17,7 @@ const notify = {
   success: (msg: string, duration = 3) => show('success', msg, duration),
   error: (msg: string, duration = 5) => show('error', msg, duration),
   warning: (msg: string, duration = 4) => show('warning', msg, duration),
-  info: (msg: string, duration = 3) => show('info', msg, duration),
+  info: (msg: string, duration = 3) => show('info', msg, duration)
 }
 
 export default notify

@@ -14,8 +14,8 @@ const props = withDefaults(
   }>(),
   {
     size: 36,
-    ring: false,
-  },
+    ring: false
+  }
 )
 
 const emit = defineEmits<{ error: [] }>()

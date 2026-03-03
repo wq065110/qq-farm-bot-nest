@@ -27,12 +27,10 @@ export const useBagStore = defineStore('bag', () => {
       if (res) {
         allItems.value = Array.isArray(res.items) ? res.items : []
       }
-    }
-    catch (e) {
+    } catch (e) {
       lastErrorAt.value = Date.now()
       console.error('获取背包失败:', e)
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }

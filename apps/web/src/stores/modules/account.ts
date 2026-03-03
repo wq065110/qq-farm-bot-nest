@@ -34,7 +34,7 @@ export const useAccountStore = defineStore('account', () => {
   const logs = ref<AccountLog[]>([])
 
   const currentAccount = computed(() =>
-    accounts.value.find(a => String(a.id) === currentAccountId.value),
+    accounts.value.find(a => String(a.id) === currentAccountId.value)
   )
 
   async function fetchAccounts() {
@@ -53,11 +53,9 @@ export const useAccountStore = defineStore('account', () => {
           }
         }
       }
-    }
-    catch (e) {
+    } catch (e) {
       console.error('获取账号失败', e)
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -92,8 +90,7 @@ export const useAccountStore = defineStore('account', () => {
     try {
       const res = await accountApi.fetchAccountLogs(100)
       logs.value = Array.isArray(res) ? res : []
-    }
-    catch (e) {
+    } catch (e) {
       console.error('获取账号日志失败', e)
     }
   }
@@ -102,8 +99,7 @@ export const useAccountStore = defineStore('account', () => {
     try {
       await accountApi.saveAccount(payload)
       await fetchAccounts()
-    }
-    catch (e) {
+    } catch (e) {
       console.error('添加账号失败', e)
       throw e
     }
@@ -114,8 +110,7 @@ export const useAccountStore = defineStore('account', () => {
       // core uses POST /api/accounts for both add and update (if id is present)
       await accountApi.saveAccount({ ...payload, id })
       await fetchAccounts()
-    }
-    catch (e) {
+    } catch (e) {
       console.error('更新账号失败', e)
       throw e
     }
@@ -135,11 +130,11 @@ export const useAccountStore = defineStore('account', () => {
     fetchLogs,
     addAccount,
     updateAccount,
-    setCurrentAccount,
+    setCurrentAccount
   }
 }, {
   persist: {
     pick: ['currentAccountId'],
-    storage: localStorage,
-  },
+    storage: localStorage
+  }
 })

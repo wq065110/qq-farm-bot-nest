@@ -7,10 +7,10 @@ export default defineConfig({
   content: {
     pipeline: {
       include: [
-        /\.(vue|svelte|[jt]sx|[jt]s|vine.ts|mdx?|astro|elm|php|phtml|html)($|\?)/,
+        /\.(vue|svelte|[jt]sx|[jt]s|vine.ts|mdx?|astro|elm|php|phtml|html)($|\?)/
       ],
-      exclude: [/node_modules/],
-    },
+      exclude: [/node_modules/]
+    }
   },
   theme: {
     colors: {
@@ -18,30 +18,30 @@ export default defineConfig({
       'fill-secondary': 'var(--ant-color-fill-secondary)',
       'fill-tertiary': 'var(--ant-color-fill-tertiary)',
       'fill-quaternary': 'var(--ant-color-fill-quaternary)',
-      'primary-text': 'var(--ant-color-primary-text)',
-    },
+      'primary-text': 'var(--ant-color-primary-text)'
+    }
   },
   presets: [
     presetWind3(),
     presetAntd({
       prefix: 'a',
-      antPrefix: 'ant',
+      antPrefix: 'ant'
     }),
     presetIcons({
       scale: 1.2,
-      warn: true,
+      warn: true
     }),
     presetWebFonts({
       fonts: {
         sans: 'DM Sans',
         serif: 'DM Serif Display',
-        mono: 'DM Mono',
+        mono: 'DM Mono'
       },
       processors: createLocalFontProcessor({
         cacheDir: 'node_modules/.cache/unocss/fonts',
         fontAssetsDir: 'public/fonts',
-        fontServeBaseUrl: '/fonts',
-      }),
-    }),
-  ],
+        fontServeBaseUrl: '/fonts'
+      })
+    })
+  ]
 })

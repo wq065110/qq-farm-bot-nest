@@ -11,7 +11,7 @@ const { isDark, themeTokens } = storeToRefs(appStore)
 
 const themeConfig = computed(() => ({
   algorithm: isDark.value ? theme.darkAlgorithm : theme.defaultAlgorithm,
-  token: { ...themeTokens.value },
+  token: { ...themeTokens.value }
 }))
 </script>
 

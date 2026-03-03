@@ -9,7 +9,7 @@ export function createAuthGuard(
   deps: {
     ensureTokenValid: () => Promise<boolean>
     clearValidation: () => void
-  },
+  }
 ): void {
   const { ensureTokenValid, clearValidation } = deps
 

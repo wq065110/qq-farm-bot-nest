@@ -9,7 +9,7 @@ export const SOCKET_PATH = '/socket.io'
 export const DEFAULT_FRIEND_QUIET_HOURS = {
   enabled: false,
   start: '23:00',
-  end: '07:00',
+  end: '07:00'
 } as const
 
 export const DEFAULT_OFFLINE_REMINDER = {
@@ -19,5 +19,5 @@ export const DEFAULT_OFFLINE_REMINDER = {
   token: '',
   title: '账号下线提醒',
   msg: '账号下线',
-  offlineDeleteSec: 120,
+  offlineDeleteSec: 120
 } as const

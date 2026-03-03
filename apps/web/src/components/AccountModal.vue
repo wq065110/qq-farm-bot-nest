@@ -19,7 +19,7 @@ const errorMessage = ref('')
 const form = reactive({
   name: '',
   code: '',
-  platform: 'qq',
+  platform: 'qq'
 })
 
 const { pause: stopQRCheck, resume: startQRCheck } = useIntervalFn(
@@ -45,26 +45,22 @@ const { pause: stopQRCheck, resume: startQRCheck } = useIntervalFn(
           code: authCode,
           loginType: 'qr',
           name: props.editData ? props.editData.name || accName : accName,
-          platform: 'qq',
+          platform: 'qq'
         })
-      }
-      else if (status === 'Used') {
+      } else if (status === 'Used') {
         qrStatus.value = '二维码已失效'
         stopQRCheck()
-      }
-      else if (status === 'Wait') {
+      } else if (status === 'Wait') {
         qrStatus.value = '等待扫码...'
-      }
-      else {
+      } else {
         qrStatus.value = `错误: ${res.error || '未知'}`
       }
-    }
-    catch (e) {
+    } catch (e) {
       console.error(e)
     }
   },
   1000,
-  { immediate: false },
+  { immediate: false }
 )
 
 async function loadQRCode() {
@@ -78,12 +74,10 @@ async function loadQRCode() {
     qrData.value = res
     qrStatus.value = '请使用手机QQ扫码'
     startQRCheck()
-  }
-  catch (e: any) {
+  } catch (e: any) {
     qrStatus.value = `获取失败: ${e.message}`
     console.error(e)
-  }
-  finally {
+  } finally {
     loading.value = false
   }
 }
@@ -104,8 +98,7 @@ function openQRCodeLoginUrl() {
     const b64 = btoa(unescape(encodeURIComponent(url)))
     const qqDeepLink = `mqqapi://forward/url?url_prefix=${encodeURIComponent(b64)}&version=1&src_type=web`
     window.location.href = qqDeepLink
-  }
-  catch (e) {
+  } catch (e) {
     console.error('深度链接错误:', e)
     window.location.href = url
   }
@@ -118,11 +111,9 @@ async function addAccount(data: any) {
     await accountApi.saveAccount(data)
     emit('saved')
     close()
-  }
-  catch (e: any) {
+  } catch (e: any) {
     errorMessage.value = `保存失败: ${e.message}`
-  }
-  finally {
+  } finally {
     loading.value = false
   }
 }
@@ -156,25 +147,23 @@ async function submitManual() {
     if (onlyNameChanged) {
       payload = {
         id: props.editData.id,
-        name: form.name,
+        name: form.name
       }
-    }
-    else {
+    } else {
       payload = {
         id: props.editData.id,
         name: form.name,
         code,
         platform: form.platform,
-        loginType: 'manual',
+        loginType: 'manual'
       }
     }
-  }
-  else {
+  } else {
     payload = {
       name: form.name,
       code,
       platform: form.platform,
-      loginType: 'manual',
+      loginType: 'manual'
     }
   }
 
@@ -197,21 +186,19 @@ watch(
         form.code = props.editData.code || ''
         form.platform = props.editData.platform || 'qq'
         loadQRCode()
-      }
-      else {
+      } else {
         activeTab.value = 'qr'
         form.name = ''
         form.code = ''
         form.platform = 'qq'
         loadQRCode()
       }
-    }
-    else {
+    } else {
       stopQRCheck()
       qrData.value = null
       qrStatus.value = ''
     }
-  },
+  }
 )
 </script>
 

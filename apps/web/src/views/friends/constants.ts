@@ -3,5 +3,5 @@ export const OP_BUTTONS = [
   { type: 'water', label: '浇水', icon: 'i-twemoji-droplet' },
   { type: 'weed', label: '除草', icon: 'i-twemoji-herb' },
   { type: 'bug', label: '除虫', icon: 'i-twemoji-bug' },
-  { type: 'bad', label: '捣乱', icon: 'i-twemoji-smiling-face-with-horns' },
+  { type: 'bad', label: '捣乱', icon: 'i-twemoji-smiling-face-with-horns' }
 ]

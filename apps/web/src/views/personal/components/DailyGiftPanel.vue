@@ -12,7 +12,7 @@ const GIFT_ICONS: Record<string, string> = {
   daily_share: 'i-twemoji-loudspeaker',
   vip_daily_gift: 'i-twemoji-crown',
   month_card_gift: 'i-twemoji-calendar',
-  open_server_gift: 'i-twemoji-wrapped-gift',
+  open_server_gift: 'i-twemoji-wrapped-gift'
 }
 
 function getGiftIcon(key: string) {

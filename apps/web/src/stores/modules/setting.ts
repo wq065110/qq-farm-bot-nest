@@ -66,7 +66,7 @@ export const useSettingStore = defineStore('setting', () => {
     stealCropBlacklist: [],
     automation: {},
     ui: {},
-    offlineReminder: { ...DEFAULT_OFFLINE_REMINDER },
+    offlineReminder: { ...DEFAULT_OFFLINE_REMINDER }
   })
   const loading = ref(false)
 
@@ -86,8 +86,7 @@ export const useSettingStore = defineStore('setting', () => {
         settings.value.ui = d.ui || {}
         settings.value.offlineReminder = d.offlineReminder || { ...DEFAULT_OFFLINE_REMINDER }
       }
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -105,8 +104,7 @@ export const useSettingStore = defineStore('setting', () => {
 
       await fetchSettings(accountId)
       return { ok: true }
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -117,11 +115,9 @@ export const useSettingStore = defineStore('setting', () => {
       await settingsApi.saveOfflineReminder(config)
       settings.value.offlineReminder = config
       return { ok: true }
-    }
-    catch (e: any) {
+    } catch (e: any) {
       return { ok: false, error: e.message || '保存失败' }
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -131,11 +127,9 @@ export const useSettingStore = defineStore('setting', () => {
     try {
       await settingsApi.changePassword(oldPassword, newPassword)
       return { ok: true }
-    }
-    catch (e: any) {
+    } catch (e: any) {
       return { ok: false, error: e.message || '修改失败' }
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -144,6 +138,6 @@ export const useSettingStore = defineStore('setting', () => {
 }, {
   persist: {
     pick: ['settings'],
-    storage: sessionStorage,
-  },
+    storage: sessionStorage
+  }
 })

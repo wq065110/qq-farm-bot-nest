@@ -31,12 +31,11 @@ export const useFarmStore = defineStore('farm', () => {
         const nowSec = Math.floor(Date.now() / 1000)
         lands.value = (res.lands || []).map((l: any) => ({
           ...l,
-          matureAt: nowSec + (l.matureInSec ?? 0),
+          matureAt: nowSec + (l.matureInSec ?? 0)
         }))
         summary.value = res.summary || {}
       }
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }

@@ -11,7 +11,7 @@ const LAND_LEVEL_CLASS: Record<number, string> = {
   1: 'bg-yellow-1/80 border-yellow-2',
   2: 'bg-red-1/80 border-red-2',
   3: 'bg-slate-1 border-slate-300',
-  4: 'bg-amber-1/80 border-amber-300',
+  4: 'bg-amber-1/80 border-amber-300'
 }
 
 const RING_HARVESTABLE = 'ring-2 ring-yellow-5 ring-offset-1'

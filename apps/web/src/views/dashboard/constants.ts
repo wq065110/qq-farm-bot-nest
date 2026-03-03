@@ -4,7 +4,7 @@ export const MODULES = [
   { label: '好友', value: 'friend' },
   { label: '仓库', value: 'warehouse' },
   { label: '任务', value: 'task' },
-  { label: '系统', value: 'system' },
+  { label: '系统', value: 'system' }
 ]
 
 export const EVENTS = [
@@ -39,13 +39,13 @@ export const EVENTS = [
   { label: '土地升级', value: 'upgrade_land' },
   { label: '土地解锁', value: 'unlock_land' },
   { label: '好友巡查', value: 'friend_cycle' },
-  { label: '访问好友', value: 'visit_friend' },
+  { label: '访问好友', value: 'visit_friend' }
 ]
 
 export const LOG_LEVELS = [
   { label: '所有等级', value: '' },
   { label: '普通', value: 'info' },
-  { label: '警告', value: 'warn' },
+  { label: '警告', value: 'warn' }
 ]
 
 export const OP_META: Record<string, { label: string, icon: string }> = {
@@ -62,5 +62,5 @@ export const OP_META: Record<string, { label: string, icon: string }> = {
   helpWeed: { label: '帮除草', icon: 'i-twemoji-four-leaf-clover' },
   helpBug: { label: '帮除虫', icon: 'i-twemoji-lady-beetle' },
   taskClaim: { label: '任务', icon: 'i-twemoji-check-mark-button' },
-  sell: { label: '出售', icon: 'i-twemoji-coin' },
+  sell: { label: '出售', icon: 'i-twemoji-coin' }
 }

@@ -12,7 +12,7 @@ export function useLandsWithCountdown(landsRef: Ref<any[]>) {
     return (landsRef.value || []).map((l: any) => ({
       ...l,
       matureInSec:
-        l.matureAt != null ? Math.max(0, l.matureAt - nowSec) : (l.matureInSec ?? 0),
+        l.matureAt != null ? Math.max(0, l.matureAt - nowSec) : (l.matureInSec ?? 0)
     }))
   })
 }

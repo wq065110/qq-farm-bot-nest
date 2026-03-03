@@ -44,7 +44,7 @@ export const useFriendStore = defineStore('friend', () => {
       stealNum: Number(stealNum) || 0,
       dryNum: Number(dryNum) || 0,
       weedNum: Number(weedNum) || 0,
-      insectNum: Number(insectNum) || 0,
+      insectNum: Number(insectNum) || 0
     }
   }
 
@@ -57,7 +57,7 @@ export const useFriendStore = defineStore('friend', () => {
     const nextPlant = buildPlantSummaryFromDetail(lands, summary)
     friends.value[idx] = {
       ...friends.value[idx],
-      plant: nextPlant,
+      plant: nextPlant
     }
   }
 
@@ -68,8 +68,7 @@ export const useFriendStore = defineStore('friend', () => {
     try {
       const res = await friendApi.fetchFriends()
       friends.value = res || []
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -80,8 +79,7 @@ export const useFriendStore = defineStore('friend', () => {
     try {
       const res = await friendApi.fetchBlacklist()
       blacklist.value = res || []
-    }
-    catch { /* ignore */ }
+    } catch { /* ignore */ }
   }
 
   async function toggleBlacklist(accountId: string, gid: number) {
@@ -101,13 +99,12 @@ export const useFriendStore = defineStore('friend', () => {
       const nowSec = Math.floor(Date.now() / 1000)
       const lands = rawLands.map((l: any) => ({
         ...l,
-        matureAt: nowSec + (l.matureInSec ?? 0),
+        matureAt: nowSec + (l.matureInSec ?? 0)
       }))
       const summary = res?.summary ?? null
       friendLands.value[friendId] = lands
       syncFriendPlantSummary(friendId, lands, summary)
-    }
-    finally {
+    } finally {
       friendLandsLoading.value[friendId] = false
     }
   }
@@ -131,6 +128,6 @@ export const useFriendStore = defineStore('friend', () => {
     fetchBlacklist,
     toggleBlacklist,
     fetchFriendLands,
-    operate,
+    operate
   }
 })

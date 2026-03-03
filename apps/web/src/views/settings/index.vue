@@ -27,7 +27,7 @@ const modalConfig = ref({
   title: '',
   message: '',
   type: 'primary' as 'primary' | 'danger',
-  isAlert: true,
+  isAlert: true
 })
 
 function showAlert(message: string, type: 'primary' | 'danger' = 'primary') {
@@ -35,7 +35,7 @@ function showAlert(message: string, type: 'primary' | 'danger' = 'primary') {
     title: type === 'danger' ? '错误' : '提示',
     message,
     type,
-    isAlert: true,
+    isAlert: true
   }
   modalVisible.value = true
 }
@@ -56,7 +56,7 @@ const localSettings = ref({
   intervals: { farmMin: 2, farmMax: 2, friendMin: 10, friendMax: 10 },
   friendQuietHours: { enabled: false, start: '23:00', end: '07:00' },
   stealCropBlacklist: [] as number[],
-  automation: { ...AUTOMATION_DEFAULTS },
+  automation: { ...AUTOMATION_DEFAULTS }
 })
 
 const localOffline = ref({
@@ -66,13 +66,13 @@ const localOffline = ref({
   token: '',
   title: '',
   msg: '',
-  offlineDeleteSec: 120,
+  offlineDeleteSec: 120
 })
 
 const passwordForm = ref({
   old: '',
   new: '',
-  confirm: '',
+  confirm: ''
 })
 
 function syncLocalSettings() {
@@ -84,17 +84,16 @@ function syncLocalSettings() {
         intervals: settings.value.intervals,
         friendQuietHours: settings.value.friendQuietHours,
         stealCropBlacklist: Array.isArray(settings.value.stealCropBlacklist) ? settings.value.stealCropBlacklist : [],
-        automation: settings.value.automation,
-      }),
+        automation: settings.value.automation
+      })
     )
 
     if (!localSettings.value.automation) {
       localSettings.value.automation = { ...AUTOMATION_DEFAULTS }
-    }
-    else {
+    } else {
       localSettings.value.automation = {
         ...AUTOMATION_DEFAULTS,
-        ...localSettings.value.automation,
+        ...localSettings.value.automation
       }
     }
 
@@ -122,12 +121,10 @@ async function saveAccountSettings() {
     const res = await settingStore.saveSettings(currentAccountId.value, localSettings.value)
     if (res.ok) {
       showAlert('账号设置已保存')
-    }
-    else {
+    } else {
       showAlert(`保存失败: ${res.error}`, 'danger')
     }
-  }
-  finally {
+  } finally {
     saving.value = false
   }
 }
@@ -153,12 +150,10 @@ async function handleChangePassword() {
     if (res.ok) {
       showAlert('密码修改成功')
       passwordForm.value = { old: '', new: '', confirm: '' }
-    }
-    else {
+    } else {
       showAlert(`修改失败: ${res.error || '未知错误'}`, 'danger')
     }
-  }
-  finally {
+  } finally {
     passwordSaving.value = false
   }
 }
@@ -170,12 +165,10 @@ async function handleSaveOffline() {
 
     if (res.ok) {
       showAlert('下线提醒设置已保存')
-    }
-    else {
+    } else {
       showAlert(`保存失败: ${res.error || '未知错误'}`, 'danger')
     }
-  }
-  finally {
+  } finally {
     offlineSaving.value = false
   }
 }

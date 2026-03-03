@@ -33,8 +33,8 @@ const preferredSeedOptions = computed(() => {
       ...props.seeds.map((seed: any) => ({
         label: `${seed.requiredLevel}级 ${seed.name} (${seed.price}金)`,
         value: seed.seedId,
-        disabled: seed.locked || seed.soldOut,
-      })),
+        disabled: seed.locked || seed.soldOut
+      }))
     )
   }
   return options
@@ -45,7 +45,7 @@ const stealBlacklistOptions = computed(() => {
     return []
   return props.seeds.map((seed: any) => ({
     label: `${seed.requiredLevel}级 ${seed.name}`,
-    value: seed.seedId,
+    value: seed.seedId
   }))
 })
 
@@ -81,12 +81,10 @@ watchEffect(async () => {
       if (match) {
         const seed = available.find((s: any) => s.seedId === Number(match.seedId))
         strategyPreviewLabel.value = seed ? `${seed.requiredLevel}级 ${seed.name}` : null
-      }
-      else {
+      } else {
         strategyPreviewLabel.value = '暂无匹配种子'
       }
-    }
-    catch {
+    } catch {
       strategyPreviewLabel.value = null
     }
   }

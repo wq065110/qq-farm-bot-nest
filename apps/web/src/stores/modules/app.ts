@@ -12,7 +12,7 @@ const lightTokens: Partial<GlobalToken> = {
   colorError: '#ef4444',
   colorInfo: '#3b82f6',
   colorLink: '#22c55e',
-  borderRadius: 8,
+  borderRadius: 8
 }
 
 const darkTokens: Partial<GlobalToken> = {
@@ -24,7 +24,7 @@ const darkTokens: Partial<GlobalToken> = {
   colorError: '#f87171',
   colorInfo: '#60a5fa',
   colorLink: '#4ade80',
-  borderRadius: 8,
+  borderRadius: 8
 }
 
 export const useAppStore = defineStore('app', () => {
@@ -61,8 +61,7 @@ export const useAppStore = defineStore('app', () => {
         const t = res.ui.theme
         isDark.value = t === 'dark'
       }
-    }
-    catch {
+    } catch {
       // 未登录时静默失败，使用本地缓存值
     }
   }
@@ -70,8 +69,7 @@ export const useAppStore = defineStore('app', () => {
   async function setTheme(t: 'light' | 'dark') {
     try {
       isDark.value = t === 'dark'
-    }
-    catch (e) {
+    } catch (e) {
       console.error('设置主题失败:', e)
     }
   }
@@ -100,11 +98,11 @@ export const useAppStore = defineStore('app', () => {
     setSidebarCollapsed,
     toggleSidebarCollapsed,
     fetchTheme,
-    setTheme,
+    setTheme
   }
 }, {
   persist: {
     pick: ['isDark', 'sidebarCollapsed'],
-    storage: localStorage,
-  },
+    storage: localStorage
+  }
 })

@@ -26,7 +26,7 @@ const allLogs = computed(() => {
     time: l.time,
     tag: l.action === 'Error' ? '错误' : '系统',
     msg: l.reason ? `${l.msg} (${l.reason})` : l.msg,
-    isAccountLog: true,
+    isAccountLog: true
   }))
   return [...sLogs, ...aLogs].sort((a: any, b: any) => a.ts - b.ts).filter((l: any) => !l.isAccountLog)
 })
@@ -35,7 +35,7 @@ const filter = reactive({
   module: '',
   event: '',
   keyword: '',
-  isWarn: '',
+  isWarn: ''
 })
 
 const hasActiveLogFilter = computed(() => !!(filter.module || filter.event || filter.keyword || filter.isWarn))
@@ -123,15 +123,13 @@ function updateCountdowns() {
   if (localNextFarmRemainSec > 0) {
     localNextFarmRemainSec--
     nextFarmCheck.value = formatDuration(localNextFarmRemainSec)
-  }
-  else {
+  } else {
     nextFarmCheck.value = '巡查中...'
   }
   if (localNextFriendRemainSec > 0) {
     localNextFriendRemainSec--
     nextFriendCheck.value = formatDuration(localNextFriendRemainSec)
-  }
-  else {
+  } else {
     nextFriendCheck.value = '巡查中...'
   }
 }
@@ -148,7 +146,7 @@ watch(
       localUptime.value = newVal.uptime
     }
   },
-  { deep: true },
+  { deep: true }
 )
 
 async function refreshBag(force = false) {
@@ -181,7 +179,7 @@ async function refresh(forceReloadLogs = false) {
       module: filter.module || undefined,
       event: filter.event || undefined,
       keyword: filter.keyword || undefined,
-      isWarn: filter.isWarn === 'warn' ? true : filter.isWarn === 'info' ? false : undefined,
+      isWarn: filter.isWarn === 'warn' ? true : filter.isWarn === 'info' ? false : undefined
     })
   }
   await refreshBag()
@@ -196,13 +194,13 @@ useAccountRefresh(refresh)
 watchThrottled(
   () => ({
     connected: status.value?.connection?.connected,
-    ops: status.value?.operations,
+    ops: status.value?.operations
   }),
   ({ connected }) => {
     if (connected)
       refreshBag(true)
   },
-  { throttle: 3000, deep: true },
+  { throttle: 3000, deep: true }
 )
 
 watch(hasActiveLogFilter, (enabled) => {

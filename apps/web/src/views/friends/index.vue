@@ -32,7 +32,7 @@ const filteredFriends = computed(() => {
   if (!q)
     return friends.value
   return friends.value.filter(
-    f => (f.name || '').toLowerCase().includes(q) || String(f.uin || '').includes(q) || String(f.gid || '').includes(q),
+    f => (f.name || '').toLowerCase().includes(q) || String(f.uin || '').includes(q) || String(f.gid || '').includes(q)
   )
 })
 
@@ -51,12 +51,10 @@ async function onConfirm() {
       await pendingAction.value()
       pendingAction.value = null
       showConfirm.value = false
-    }
-    finally {
+    } finally {
       confirmLoading.value = false
     }
-  }
-  else {
+  } else {
     showConfirm.value = false
   }
 }
@@ -95,8 +93,7 @@ useIntervalFn(() => loadFriends(), 30000)
 function toggleFriend(friendId: string) {
   if (expandedFriends.value.has(friendId)) {
     expandedFriends.value.delete(friendId)
-  }
-  else {
+  } else {
     expandedFriends.value.clear()
     expandedFriends.value.add(friendId)
     if (currentAccountId.value && currentAccount.value?.running && connected.value)
