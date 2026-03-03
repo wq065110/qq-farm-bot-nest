@@ -1,9 +1,8 @@
 import type { OnModuleInit } from '@nestjs/common'
-import fs from 'node:fs'
 import path from 'node:path'
 import { Injectable, Logger } from '@nestjs/common'
 import * as protobuf from 'protobufjs'
-import { ASSETS_DIR, CORE_ROOT, DIST_ROOT } from '../config/paths'
+import { ASSETS_DIR } from '../config/paths'
 
 @Injectable()
 export class ProtoService implements OnModuleInit {
@@ -20,12 +19,7 @@ export class ProtoService implements OnModuleInit {
   }
 
   private resolveProtoDir(): string {
-    const candidates = [
-      path.join(ASSETS_DIR, 'proto'),
-      path.join(DIST_ROOT, 'assets', 'proto'),
-      path.join(CORE_ROOT, 'src', 'assets', 'proto')
-    ]
-    return candidates.find(p => fs.existsSync(p)) || candidates[0]
+    return path.join(ASSETS_DIR, 'proto')
   }
 
   async loadProto() {

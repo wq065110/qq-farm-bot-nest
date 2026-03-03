@@ -1,12 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common'
 import { AccountManagerService } from '../../game/account-manager.service'
+import { GameLogService } from '../../game/game-log.service'
 import { StoreService } from '../../store/store.service'
 
 @Injectable()
 export class AccountService {
   constructor(
     private manager: AccountManagerService,
-    private store: StoreService
+    private store: StoreService,
+    private gameLog: GameLogService
   ) {}
 
   getAccounts() {
@@ -99,6 +101,7 @@ export class AccountService {
 
     this.manager.stopAccount(resolvedId)
     const data = this.store.deleteAccount(resolvedId)
+    this.gameLog.deleteAccountLogs(resolvedId)
 
     this.manager.addAccountLog(
       'delete',

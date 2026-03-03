@@ -1,7 +1,7 @@
 import type { DrizzleDB } from '../database/drizzle.provider'
 import { Inject, Injectable, Logger } from '@nestjs/common'
 import { Cron } from '@nestjs/schedule'
-import { sql } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 import { DRIZZLE_TOKEN } from '../database/drizzle.provider'
 import * as schema from '../database/schema'
 
@@ -96,6 +96,21 @@ export class GameLogService {
 
   getAccountLogs(limit = 50) {
     return this.accountLogs.slice(-limit)
+  }
+
+  /** 删除指定账号的日志（数据库 + 内存），删除账号时调用 */
+  deleteAccountLogs(accountId: string) {
+    if (!accountId)
+      return
+    try {
+      this.db.delete(schema.logs).where(eq(schema.logs.accountId, accountId)).run()
+      this.db.delete(schema.accountLogs).where(eq(schema.accountLogs.accountId, accountId)).run()
+    } catch (e: any) {
+      this.logger.warn(`删除账号日志失败: ${e?.message}`)
+    }
+    this.perAccountLogs.delete(accountId)
+    this.globalLogs = this.globalLogs.filter(l => l.accountId !== accountId)
+    this.accountLogs = this.accountLogs.filter(l => l.accountId !== accountId)
   }
 
   private async persistLog(entry: any) {

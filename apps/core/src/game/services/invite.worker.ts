@@ -3,7 +3,7 @@ import { Buffer } from 'node:buffer'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { Logger } from '@nestjs/common'
-import { resolveAssetsDir } from '../../config/paths'
+import { ASSETS_DIR } from '../../config/paths'
 import { sleep, toLong } from '../utils'
 
 const INVITE_REQUEST_DELAY = 2000
@@ -40,7 +40,7 @@ export class InviteWorker {
   private get t() { return this.client.protoTypes }
 
   private getShareFilePath(): string {
-    return path.join(resolveAssetsDir(), 'share.txt')
+    return path.join(ASSETS_DIR, 'share.txt')
   }
 
   private parseShareLink(link: string): ParsedInvite {

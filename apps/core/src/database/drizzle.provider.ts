@@ -1,6 +1,5 @@
 import fs from 'node:fs'
 import path from 'node:path'
-import process from 'node:process'
 import Database from 'better-sqlite3'
 import { drizzle } from 'drizzle-orm/better-sqlite3'
 import * as schema from './schema'
@@ -8,8 +7,7 @@ import * as schema from './schema'
 export const DRIZZLE_TOKEN = 'DRIZZLE_DB'
 
 function getDataDir(): string {
-  const isPackaged = !!(process as any).pkg
-  const root = isPackaged ? path.dirname(process.execPath) : path.join(__dirname, '../..')
+  const root = path.join(__dirname, '../..')
   const dir = path.join(root, 'data')
   if (!fs.existsSync(dir))
     fs.mkdirSync(dir, { recursive: true })

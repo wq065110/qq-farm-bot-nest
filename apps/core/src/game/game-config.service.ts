@@ -2,7 +2,7 @@ import type { OnModuleInit } from '@nestjs/common'
 import fs from 'node:fs'
 import path from 'node:path'
 import { Injectable, Logger } from '@nestjs/common'
-import { ASSETS_DIR, CORE_ROOT, DIST_ROOT } from '../config/paths'
+import { ASSETS_DIR } from '../config/paths'
 
 export interface PlantInfo {
   id: number
@@ -52,12 +52,7 @@ export class GameConfigService implements OnModuleInit {
   }
 
   private resolveConfigDir(): string {
-    const candidates = [
-      path.join(ASSETS_DIR, 'gameConfig'),
-      path.join(DIST_ROOT, 'assets', 'gameConfig'),
-      path.join(CORE_ROOT, 'src', 'assets', 'gameConfig')
-    ]
-    return candidates.find(p => fs.existsSync(p)) || candidates[0]
+    return path.join(ASSETS_DIR, 'gameConfig')
   }
 
   getConfigDir(): string {

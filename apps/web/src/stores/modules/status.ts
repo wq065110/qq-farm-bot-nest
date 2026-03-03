@@ -224,6 +224,13 @@ export const useStatusStore = defineStore('status', () => {
     realtimeLogsEnabled.value = !!enabled
   }
 
+  function resetState() {
+    status.value = null
+    logs.value = []
+    accountLogs.value = []
+    dailyGifts.value = null
+  }
+
   return {
     status,
     logs,
@@ -238,6 +245,7 @@ export const useStatusStore = defineStore('status', () => {
     fetchAccountLogs,
     fetchDailyGifts,
     setRealtimeLogsEnabled,
+    resetState,
     connectRealtime,
     disconnectRealtime
   }

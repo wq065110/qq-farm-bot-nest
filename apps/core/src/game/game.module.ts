@@ -10,6 +10,6 @@ import { QRLoginService } from './services/qrlogin.worker'
 @Global()
 @Module({
   providers: [ProtoService, GameConfigService, GameClientFactory, GameLogService, GamePushService, AccountManagerService, QRLoginService],
-  exports: [GameConfigService, AccountManagerService, QRLoginService]
+  exports: [GameConfigService, GameLogService, AccountManagerService, QRLoginService]
 })
 export class GameModule {}

@@ -1,4 +1,3 @@
-import fs from 'node:fs'
 import path from 'node:path'
 import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
@@ -21,13 +20,8 @@ import { StatusModule } from './modules/status/status.module'
 import { RealtimeModule } from './modules/websocket/realtime.module'
 import { StoreModule } from './store/store.module'
 
-function resolveGameConfig(): string {
-  const dir = path.join(ASSETS_DIR, 'gameConfig')
-  return fs.existsSync(dir) ? dir : ''
-}
-
 const webDist = resolveWebDist()
-const gameConfigDir = resolveGameConfig()
+const gameConfigDir = path.join(ASSETS_DIR, 'gameConfig')
 
 const webStaticOptions = {
   fallthrough: true,

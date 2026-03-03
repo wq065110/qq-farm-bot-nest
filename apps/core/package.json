@@ -1,7 +1,7 @@
 {
   "name": "core",
   "type": "commonjs",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "description": "",
   "author": "",
   "license": "ISC",
@@ -10,11 +10,7 @@
   "scripts": {
     "start": "node dist/main.js",
     "dev": "nest start --watch",
-    "build": "node scripts/deploy.mjs",
-    "build:release": "node scripts/deploy.mjs --release",
-    "build:win": "node scripts/deploy.mjs --win",
-    "build:linux": "node scripts/deploy.mjs --linux",
-    "build:mac": "node scripts/deploy.mjs --mac",
+    "build": "nest build",
     "lint": "eslint . --fix"
   },
   "dependencies": {
@@ -56,15 +52,8 @@
     "@types/qrcode": "^1.5.6",
     "@types/ws": "^8.18.1",
     "eslint": "^9.39.1",
-    "pkg": "^5.8.1",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "typescript": "~5.9.3"
-  },
-  "pkg": {
-    "assets": [
-      "../web/dist/**/*",
-      "dist/assets/**/*"
-    ]
   }
 }

@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { accountApi } from '@/api'
+import { useStatusStore } from './status'
 
 export interface Account {
   id: string
@@ -82,6 +83,7 @@ export const useAccountStore = defineStore('account', () => {
     await accountApi.deleteAccount(id)
     if (currentAccountId.value === id) {
       currentAccountId.value = ''
+      useStatusStore().resetState()
     }
     await fetchAccounts()
   }
