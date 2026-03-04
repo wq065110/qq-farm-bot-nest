@@ -18,22 +18,22 @@ function getOpIcon(key: string | number): string {
 <template>
   <a-card
     variant="borderless"
-    class="min-h-0 flex-1"
+    class="flex-1 min-h-0"
     :classes="{ body: '!p-4 !h-full !flex !flex-col !overflow-hidden' }"
   >
-    <div class="mb-3 flex items-center gap-2 font-medium a-color-text">
+    <div class="mb-3 flex gap-2 items-center a-color-text">
       <div class="i-twemoji-bar-chart text-lg" />
       今日统计
     </div>
-    <div v-if="operations && Object.keys(operations).length" class="grid grid-cols-2 min-h-20 gap-2 overflow-y-auto">
+    <div v-if="operations && Object.keys(operations).length" class="gap-2 grid grid-cols-2 min-h-20 overflow-y-auto">
       <div
         v-for="(val, key) in operations"
         :key="key"
-        class="flex items-center justify-between rounded-lg px-2.5 py-2 a-bg-fill-tertiary"
+        class="px-2.5 py-2 flex items-center justify-between a-bg-layout rounded-lg"
       >
-        <div class="flex items-center gap-1.5">
+        <div class="flex gap-1.5 items-center">
           <div class="" :class="getOpIcon(key)" />
-          <span class="text-sm a-color-text-secondary">{{ getOpName(key) }}</span>
+          <span class="a-color-text-secondary text-sm">{{ getOpName(key) }}</span>
         </div>
         <span class="font-bold a-color-text">{{ val }}</span>
       </div>

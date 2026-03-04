@@ -13,25 +13,25 @@ defineProps<{
 </script>
 
 <template>
-  <div class="border-t border-t-solid px-3 py-3 a-border-t-border-sec">
+  <div class="px-3 py-3 border-t border-t-solid a-border-t-border-sec">
     <template v-if="collapsed">
-      <div class="flex flex-col items-center gap-2.5">
+      <div class="flex flex-col gap-2.5 items-center">
         <a-badge :status="connectionStatus.badge" />
         <ThemeToggle />
       </div>
     </template>
     <template v-else>
       <div class="flex items-center justify-between">
-        <div class="flex items-center gap-1.5 text-sm a-color-text-tertiary">
+        <div class="flex gap-1.5 items-center a-color-text-tertiary text-sm">
           <div class="i-twemoji-timer-clock" />
           {{ uptime }}
         </div>
         <ThemeToggle />
       </div>
-      <div class="mt-1.5 flex items-center justify-between text-xs font-mono a-color-text-tertiary">
+      <div class="font-mono mt-1.5 flex items-center justify-between a-color-text-tertiary text-xs">
         <span>{{ formattedTime }}</span>
       </div>
-      <div class="mt-0.5 flex items-center justify-between text-xs font-mono a-color-text-tertiary">
+      <div class="font-mono mt-0.5 flex items-center justify-between a-color-text-tertiary text-xs">
         <span>Web v{{ version }}</span>
         <span v-if="serverVersion">Core v{{ serverVersion }}</span>
       </div>

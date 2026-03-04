@@ -44,7 +44,7 @@ const {
     :collapsed="sidebarCollapsed"
     theme="light"
   >
-    <div class="h-full flex flex-col a-bg-container">
+    <div class="flex flex-col h-full a-bg-container">
       <SidebarBrand :collapsed="sidebarCollapsed" />
       <SidebarAccountPanel
         v-model:selected-account-id="selectedAccountId"
@@ -83,7 +83,7 @@ const {
     :styles="{ body: { padding: '0px' } }"
     @close="appStore.closeSidebar()"
   >
-    <div class="h-full flex flex-col a-bg-container">
+    <div class="flex flex-col h-full a-bg-container">
       <SidebarBrand />
       <SidebarAccountPanel
         v-model:selected-account-id="selectedAccountId"

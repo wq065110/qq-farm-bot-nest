@@ -18,10 +18,10 @@ function getExpPercent(p: { current: number, needed: number } | null | undefined
 <template>
   <a-card variant="borderless" size="small" :classes="{ body: '!px-4 !py-3.5' }">
     <div class="flex items-center justify-between">
-      <div class="flex items-center gap-4">
+      <div class="flex gap-4 items-center">
         <div class="i-twemoji-farmer text-3xl" />
         <div class="min-w-0">
-          <div class="truncate font-bold leading-snug a-color-text" :title="displayName">
+          <div class="leading-snug font-bold truncate a-color-text" :title="displayName">
             {{ displayName }}
           </div>
           <div class="a-color-text-secondary">
@@ -33,7 +33,7 @@ function getExpPercent(p: { current: number, needed: number } | null | undefined
     </div>
     <div class="mt-4">
       <div class="mb-1 flex items-center justify-between a-color-text-secondary">
-        <span class="flex items-center gap-1">
+        <span class="flex gap-1 items-center">
           <div class="i-twemoji-glowing-star" />
           经验
         </span>
@@ -45,7 +45,7 @@ function getExpPercent(p: { current: number, needed: number } | null | undefined
         size="small"
         stroke-color="var(--ant-color-primary)"
       />
-      <div class="mt-1.5 flex items-center justify-between text-sm a-color-text-tertiary">
+      <div class="mt-1.5 flex items-center justify-between a-color-text-tertiary text-sm">
         <span>{{ expRate }}</span>
         <span>{{ timeToLevel }}</span>
       </div>

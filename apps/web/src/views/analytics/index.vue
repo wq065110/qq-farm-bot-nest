@@ -80,8 +80,8 @@ watch(sortKey, loadAnalytics)
 </script>
 
 <template>
-  <div class="h-full flex flex-col gap-3">
-    <div class="flex items-center gap-2 font-bold a-color-text">
+  <div class="flex flex-col gap-3 h-full">
+    <div class="font-bold flex gap-2 items-center a-color-text">
       <div class="i-twemoji-bar-chart text-lg" />
       数据分析
     </div>
@@ -98,7 +98,7 @@ watch(sortKey, loadAnalytics)
     >
       <SortToolbar v-model:sort-key="sortKey" v-model:search-query="searchQuery" :total-count="filteredList.length" />
 
-      <div ref="tableWrapperRef" class="min-h-0 flex-1">
+      <div ref="tableWrapperRef" class="flex-1 min-h-0">
         <CropTable
           :list="list"
           :loading="loading"

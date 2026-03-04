@@ -29,33 +29,30 @@ function handleOperate(opType: string) {
 <template>
   <a-card variant="borderless" class="flex-1 overflow-hidden" :classes="{ body: '!p-0 !h-full !flex !flex-col' }">
     <div
-      class="flex flex-wrap items-center justify-between gap-2 border-b border-b-solid px-3 py-2 a-border-b-border-sec"
+      class="px-3 py-2 border-b border-b-solid flex flex-wrap gap-2 items-center justify-between a-border-b-border-sec"
     >
-      <div class="min-w-0 flex shrink flex-wrap items-center gap-2">
-        <div class="flex items-center gap-1.5 rounded-lg px-2.5 py-1 a-bg-fill-tertiary">
+      <div class="flex shrink flex-wrap gap-2 min-w-0 items-center">
+        <div class="px-2.5 py-1 flex gap-1.5 items-center a-bg-layout rounded-lg">
           <div class="i-twemoji-sheaf-of-rice" />
-          <span class="text-sm a-color-text-secondary">可收</span>
+          <span class="a-color-text-secondary text-sm">可收</span>
           <span class="font-bold a-color-text">{{ summary?.harvestable || 0 }}</span>
         </div>
-        <div class="flex items-center gap-1.5 rounded-lg px-2.5 py-1 a-bg-fill-tertiary">
+        <div class="px-2.5 py-1 flex gap-1.5 items-center a-bg-layout rounded-lg">
           <div class="i-twemoji-seedling" />
-          <span class="text-sm a-color-text-secondary">生长</span>
+          <span class="a-color-text-secondary text-sm">生长</span>
           <span class="font-bold a-color-text">{{ summary?.growing || 0 }}</span>
         </div>
-        <div class="flex items-center gap-1.5 rounded-lg px-2.5 py-1 a-bg-fill-tertiary">
-          <span class="text-sm a-color-text-secondary">空闲</span>
+        <div class="px-2.5 py-1 flex gap-1.5 items-center a-bg-layout rounded-lg">
+          <span class="a-color-text-secondary text-sm">空闲</span>
           <span class="font-bold a-color-text">{{ summary?.empty || 0 }}</span>
         </div>
-        <div
-          v-if="(summary?.dead || 0) > 0"
-          class="flex items-center gap-1.5 rounded-lg px-2.5 py-1 a-bg-fill-tertiary"
-        >
-          <span class="text-sm a-color-text-secondary">枯萎</span>
+        <div v-if="(summary?.dead || 0) > 0" class="px-2.5 py-1 flex gap-1.5 items-center a-bg-layout rounded-lg">
+          <span class="a-color-text-secondary text-sm">枯萎</span>
           <span class="font-bold a-color-error">{{ summary?.dead || 0 }}</span>
         </div>
       </div>
 
-      <div class="flex shrink-0 flex-wrap items-center justify-end gap-1">
+      <div class="flex shrink-0 flex-wrap gap-1 items-center justify-end">
         <a-tooltip v-for="op in operations" :key="op.type" :title="op.label" placement="bottom">
           <a-button
             :disabled="operating || !connected"
@@ -72,15 +69,12 @@ function handleOperate(opType: string) {
         </a-tooltip>
       </div>
     </div>
-    <div class="min-h-0 flex flex-1 flex-col overflow-y-auto p-3">
-      <div
-        v-if="!connected || !lands || lands.length === 0"
-        class="min-h-0 flex flex-1 items-center justify-center"
-      >
+    <div class="p-3 flex flex-1 flex-col min-h-0 overflow-y-auto">
+      <div v-if="!connected || !lands || lands.length === 0" class="flex flex-1 min-h-0 items-center justify-center">
         <EmptyState v-if="!connected" icon="i-twemoji-satellite-antenna text-4xl" description="账号未连接" />
         <EmptyState v-else icon="i-twemoji-seedling text-4xl" description="暂无土地数据" />
       </div>
-      <div v-else class="grid grid-cols-3 gap-2.5 lg:grid-cols-4 xl:grid-cols-5">
+      <div v-else class="gap-2.5 grid grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
         <LandCard v-for="land in lands" :key="land.id" :land="land" />
       </div>
     </div>

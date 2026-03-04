@@ -1,7 +1,7 @@
-import { presetAntd } from '@antdv-next/unocss'
+import { presetAntdTailwind4 } from '@antdv-next/unocss'
 import presetWebFonts from '@unocss/preset-web-fonts'
 import { createLocalFontProcessor } from '@unocss/preset-web-fonts/local'
-import { defineConfig, presetIcons, presetWind3 } from 'unocss'
+import { defineConfig, presetIcons, presetWind4 } from 'unocss'
 
 export default defineConfig({
   content: {
@@ -12,18 +12,9 @@ export default defineConfig({
       exclude: [/node_modules/]
     }
   },
-  theme: {
-    colors: {
-      'fill': 'var(--ant-color-fill)',
-      'fill-secondary': 'var(--ant-color-fill-secondary)',
-      'fill-tertiary': 'var(--ant-color-fill-tertiary)',
-      'fill-quaternary': 'var(--ant-color-fill-quaternary)',
-      'primary-text': 'var(--ant-color-primary-text)'
-    }
-  },
   presets: [
-    presetWind3(),
-    presetAntd({
+    presetWind4(),
+    presetAntdTailwind4({
       prefix: 'a',
       antPrefix: 'ant'
     }),

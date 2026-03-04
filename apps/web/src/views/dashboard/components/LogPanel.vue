@@ -95,11 +95,11 @@ onMounted(() => {
     :classes="{ body: '!flex !flex-col !flex-1 !overflow-hidden !p-4' }"
   >
     <div class="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-      <div class="mr-2.5 flex items-center gap-2 font-medium a-color-text">
+      <div class="mr-2.5 flex gap-2 items-center a-color-text">
         <div class="i-twemoji-scroll text-lg" />
         <span class="whitespace-nowrap">农场日志</span>
       </div>
-      <div class="flex flex-wrap items-center gap-2">
+      <div class="flex flex-wrap gap-2 items-center">
         <a-select
           :value="filter.module"
           :options="MODULES"
@@ -143,10 +143,10 @@ onMounted(() => {
 
     <div
       ref="logContainer"
-      class="max-h-[50vh] min-h-0 flex-1 overflow-y-auto rounded-lg p-3 leading-relaxed font-mono a-bg-fill-tertiary md:max-h-none"
+      class="leading-relaxed font-mono p-3 flex-1 max-h-[50vh] min-h-0 overflow-y-auto a-bg-layout rounded-lg md:max-h-none"
       @scroll="onLogScroll"
     >
-      <div v-if="!logs.length" class="h-full flex items-center justify-center">
+      <div v-if="!logs.length" class="flex h-full items-center justify-center">
         <EmptyState icon="i-twemoji-scroll text-4xl" description="暂无日志" />
       </div>
       <div v-for="log in logs" v-else :key="log.ts + log.msg" class="mb-1 break-all text-xs">
@@ -157,7 +157,9 @@ onMounted(() => {
         <a-tag v-if="log.meta?.event" color="processing" size="small" class="mr-1">
           {{ getEventLabel(log.meta.event) }}
         </a-tag>
-        <span :class="log.tag === '错误' ? 'a-color-error' : log.isWarn ? 'a-color-warning' : 'a-color-text'">{{ log.msg }}</span>
+        <span :class="log.tag === '错误' ? 'a-color-error' : log.isWarn ? 'a-color-warning' : 'a-color-text'">{{
+          log.msg
+        }}</span>
       </div>
     </div>
   </a-card>

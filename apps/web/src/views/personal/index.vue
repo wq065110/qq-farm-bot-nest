@@ -86,8 +86,8 @@ useIntervalFn(refresh, 60000)
 
 <template>
   <div class="flex flex-col gap-3 md:h-full">
-    <div class="flex flex-wrap items-center justify-between gap-2">
-      <div class="flex items-center gap-2 font-bold a-color-text">
+    <div class="flex flex-wrap gap-2 items-center justify-between">
+      <div class="font-bold flex gap-2 items-center a-color-text">
         <div class="i-twemoji-ear-of-corn text-lg" />
         我的农场
       </div>
@@ -102,7 +102,7 @@ useIntervalFn(refresh, 60000)
         @operate="handleOperate"
       />
 
-      <div class="hidden w-72 shrink-0 flex-col gap-3 overflow-hidden xl:w-80 md:flex">
+      <div class="shrink-0 flex-col gap-3 w-72 hidden overflow-hidden md:flex xl:w-80">
         <DailyGiftPanel :gifts="gifts" />
         <GrowthTaskPanel :growth="growth" />
         <BagPanel :key="currentAccountId" :items="bagItems" />

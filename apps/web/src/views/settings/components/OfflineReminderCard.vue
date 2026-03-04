@@ -42,7 +42,7 @@ function openChannelDocs() {
 <template>
   <a-card variant="borderless" :classes="{ body: '!p-4' }">
     <div class="flex items-center justify-between">
-      <div class="flex items-center gap-2 font-bold a-color-text">
+      <div class="font-bold flex gap-2 items-center a-color-text">
         <div class="i-twemoji-bell" />
         下线提醒
       </div>
@@ -51,9 +51,9 @@ function openChannelDocs() {
       </a-button>
     </div>
     <a-form layout="vertical">
-      <div class="grid grid-cols-2 gap-x-3">
+      <div class="gap-x-3 grid grid-cols-2">
         <a-form-item label="推送渠道">
-          <div class="flex items-center gap-2">
+          <div class="flex gap-2 items-center">
             <a-select v-model:value="localOffline.channel" :options="CHANNEL_OPTIONS" class="flex-1" />
             <a-tooltip v-if="currentChannelDocUrl" title="查看渠道文档" placement="top">
               <a-button size="small" @click="openChannelDocs">
@@ -66,7 +66,7 @@ function openChannelDocs() {
           <a-select v-model:value="localOffline.reloginUrlMode" :options="RELOGIN_URL_MODE_OPTIONS" />
         </a-form-item>
       </div>
-      <div class="grid grid-cols-2 gap-x-3">
+      <div class="gap-x-3 grid grid-cols-2">
         <a-form-item label="接口地址">
           <a-input v-model:value="localOffline.endpoint" :disabled="localOffline.channel !== 'webhook'" />
         </a-form-item>
@@ -74,7 +74,7 @@ function openChannelDocs() {
           <a-input v-model:value="localOffline.token" placeholder="接收端 token" />
         </a-form-item>
       </div>
-      <div class="grid grid-cols-3 gap-x-3">
+      <div class="gap-x-3 grid grid-cols-3">
         <a-form-item label="标题">
           <a-input v-model:value="localOffline.title" placeholder="提醒标题" />
         </a-form-item>

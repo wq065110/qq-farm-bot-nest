@@ -10,24 +10,24 @@ defineProps<{
 
 <template>
   <a-card variant="borderless" class="shrink-0" :classes="{ body: '!px-4 !py-3' }">
-    <div v-if="accountId" class="flex items-center gap-4">
+    <div v-if="accountId" class="flex gap-4 items-center">
       <QqAvatar :uin="accountUin" :size="44" ring />
-      <div class="min-w-0 flex-1">
-        <div class="flex items-center gap-2">
-          <span class="truncate font-bold a-color-text">{{ accountName }}</span>
+      <div class="flex-1 min-w-0">
+        <div class="flex gap-2 items-center">
+          <span class="font-bold truncate a-color-text">{{ accountName }}</span>
         </div>
-        <div class="mt-0.5 text-sm a-color-text-tertiary">
+        <div class="mt-0.5 a-color-text-tertiary text-sm">
           UIN: {{ accountUin || '-' }}
         </div>
       </div>
     </div>
-    <div v-else class="flex items-center gap-3 py-1">
-      <div class="i-twemoji-gear text-2xl opacity-40" />
+    <div v-else class="py-1 flex gap-3 items-center">
+      <div class="i-twemoji-gear opacity-40 text-2xl" />
       <div>
-        <div class="font-medium a-color-text-secondary">
+        <div class="a-color-text-secondary">
           未选择账号
         </div>
-        <div class="text-sm a-color-text-tertiary">
+        <div class="a-color-text-tertiary text-sm">
           请先在侧边栏选择一个账号来配置设置
         </div>
       </div>

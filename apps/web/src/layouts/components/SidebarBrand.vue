@@ -8,14 +8,14 @@ defineProps<{
 
 <template>
   <div
-    class="brand-header h-12 flex shrink-0 items-center border-b border-b-solid a-border-b-border-sec"
+    class="brand-header border-b border-b-solid flex shrink-0 h-12 items-center a-border-b-border-sec"
     :class="collapsed ? 'justify-center px-2' : 'gap-2 px-4'"
   >
-    <div class="brand-icon relative flex items-center justify-center">
-      <img src="/icon.ico" alt="" class="h-8 w-8 shrink-0">
+    <div class="brand-icon flex items-center justify-center relative">
+      <img src="/icon.ico" alt="" class="shrink-0 h-8 w-8">
     </div>
     <template v-if="!collapsed">
-      <span class="brand-title whitespace-nowrap text-lg font-bold tracking-wide font-serif">{{ BRAND_TITLE }}</span>
+      <span class="brand-title tracking-wide font-bold font-serif whitespace-nowrap text-lg">{{ BRAND_TITLE }}</span>
       <span class="brand-plus">{{ BRAND_PLUS }}</span>
       <span class="brand-sparkle text-xs">✦</span>
     </template>

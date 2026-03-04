@@ -64,9 +64,9 @@ function getLandTypeName(level: number) {
     :classes="{ body: '!p-2 !flex !flex-col !items-center !min-h-[130px]' }"
     :class="getLandStatusClass(land)"
   >
-    <span class="self-start text-xs font-mono a-color-text-tertiary">#{{ land.id }}</span>
+    <span class="font-mono self-start a-color-text-tertiary text-xs">#{{ land.id }}</span>
 
-    <div class="my-1 h-10 w-10 flex items-center justify-center">
+    <div class="my-1 flex h-10 w-10 items-center justify-center">
       <img
         v-if="land.seedImage"
         :src="getSafeImageUrl(land.seedImage)"
@@ -74,14 +74,14 @@ function getLandTypeName(level: number) {
         loading="lazy"
         referrerpolicy="no-referrer"
       >
-      <div v-else class="i-twemoji-seedling text-xl a-color-text-quat" />
+      <div v-else class="i-twemoji-seedling a-color-text-quat text-xl" />
     </div>
 
-    <div class="w-full truncate px-1 text-center text-sm font-bold" :title="land.plantName">
+    <div class="font-bold px-1 text-center w-full truncate text-sm" :title="land.plantName">
       {{ land.plantName || '-' }}
     </div>
 
-    <div class="mt-0.5 w-full text-center text-xs a-color-text-secondary">
+    <div class="mt-0.5 text-center w-full a-color-text-secondary text-xs">
       <span v-if="land.matureInSec > 0" class="a-color-warning">
         预计 {{ formatTime(land.matureInSec) }} 后成熟
       </span>
@@ -90,21 +90,21 @@ function getLandTypeName(level: number) {
       </span>
     </div>
 
-    <div class="text-xs a-color-text-tertiary">
+    <div class="a-color-text-tertiary text-xs">
       {{ getLandTypeName(land.level) }}
     </div>
 
     <div class="mt-auto flex gap-0.5">
-      <a-tag v-if="land.needWater" color="blue" class="!m-0 !px-1 !py-0 !text-xs !leading-tight">
+      <a-tag v-if="land.needWater" color="blue" class="!leading-tight !m-0 !px-1 !py-0 !text-xs">
         水
       </a-tag>
-      <a-tag v-if="land.needWeed" color="green" class="!m-0 !px-1 !py-0 !text-xs !leading-tight">
+      <a-tag v-if="land.needWeed" color="green" class="!leading-tight !m-0 !px-1 !py-0 !text-xs">
         草
       </a-tag>
-      <a-tag v-if="land.needBug" color="red" class="!m-0 !px-1 !py-0 !text-xs !leading-tight">
+      <a-tag v-if="land.needBug" color="red" class="!leading-tight !m-0 !px-1 !py-0 !text-xs">
         虫
       </a-tag>
-      <a-tag v-if="land.status === 'harvestable'" color="orange" class="!m-0 !px-1 !py-0 !text-xs !leading-tight">
+      <a-tag v-if="land.status === 'harvestable'" color="orange" class="!leading-tight !m-0 !px-1 !py-0 !text-xs">
         可偷
       </a-tag>
     </div>

@@ -17,10 +17,10 @@ const passwordForm = defineModel<{ old: string, new: string, confirm: string }>(
 <template>
   <a-card variant="borderless" :classes="{ body: '!p-4' }">
     <div class="mb-3 flex items-center justify-between">
-      <div class="flex items-center gap-2 font-bold a-color-text">
+      <div class="font-bold flex gap-2 items-center a-color-text">
         <div class="i-twemoji-locked" />
         管理密码
-        <span class="ml-1 text-sm font-normal a-color-text-tertiary">建议修改默认密码</span>
+        <span class="font-normal ml-1 a-color-text-tertiary text-sm">建议修改默认密码</span>
       </div>
       <a-button type="primary" size="small" :loading="saving" @click="handleSubmit">
         修改密码

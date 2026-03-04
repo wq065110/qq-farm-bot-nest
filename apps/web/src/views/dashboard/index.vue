@@ -218,7 +218,7 @@ useIntervalFn(updateCountdowns, 1000)
 
 <template>
   <div class="flex flex-col gap-3 md:h-full">
-    <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
+    <div class="gap-3 grid grid-cols-1 md:grid-cols-3">
       <AccountExpCard
         :display-name="displayName"
         :level="status?.status?.level || 0"
@@ -242,7 +242,7 @@ useIntervalFn(updateCountdowns, 1000)
       />
     </div>
 
-    <div class="flex flex-1 flex-col items-stretch gap-3 md:flex-row md:overflow-hidden">
+    <div class="flex flex-1 flex-col gap-3 items-stretch md:flex-row md:overflow-hidden">
       <div class="flex flex-1 flex-col md:w-3/4 md:overflow-hidden">
         <LogPanel
           :logs="allLogs"

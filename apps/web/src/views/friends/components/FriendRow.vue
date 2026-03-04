@@ -28,17 +28,17 @@ function getFriendStatusTags(friend: any) {
     tags.push({
       label: `可偷 ${p.stealNum}`,
       icon: 'i-twemoji-pinching-hand',
-      class: 'a-bg-fill-tertiary a-color-text-secondary'
+      class: 'a-bg-layout a-color-text-secondary'
     })
   }
   if (p.dryNum) {
-    tags.push({ label: `浇水 ${p.dryNum}`, icon: 'i-twemoji-droplet', class: 'a-bg-fill-tertiary a-color-info' })
+    tags.push({ label: `浇水 ${p.dryNum}`, icon: 'i-twemoji-droplet', class: 'a-bg-layout a-color-info' })
   }
   if (p.weedNum) {
-    tags.push({ label: `除草 ${p.weedNum}`, icon: 'i-twemoji-herb', class: 'a-bg-fill-tertiary a-color-success' })
+    tags.push({ label: `除草 ${p.weedNum}`, icon: 'i-twemoji-herb', class: 'a-bg-layout a-color-success' })
   }
   if (p.insectNum) {
-    tags.push({ label: `除虫 ${p.insectNum}`, icon: 'i-twemoji-bug', class: 'a-bg-fill-tertiary a-color-warning' })
+    tags.push({ label: `除虫 ${p.insectNum}`, icon: 'i-twemoji-bug', class: 'a-bg-layout a-color-warning' })
   }
   return tags
 }
@@ -87,8 +87,8 @@ function handleToggleBlacklist(e: Event) {
   <div class="transition-colors" :class="blacklisted ? 'opacity-50' : 'opacity-100'">
     <!-- Friend Row -->
     <div
-      class="flex cursor-pointer items-center gap-3 px-4 py-3 transition-colors"
-      :class="expanded ? 'a-bg-primary-bg' : 'bg-transparent hover:a-bg-fill-tertiary'"
+      class="px-4 py-3 flex gap-3 cursor-pointer transition-colors items-center"
+      :class="expanded ? 'a-bg-primary-bg' : 'bg-transparent hover:a-bg-layout'"
       @click="handleToggle"
     >
       <QqAvatar
@@ -100,34 +100,34 @@ function handleToggleBlacklist(e: Event) {
         @error="handleAvatarError"
       />
 
-      <div class="min-w-0 flex-1">
-        <div class="flex items-center gap-2">
-          <span class="truncate font-semibold a-color-text">{{ friend.name }}</span>
+      <div class="flex-1 min-w-0">
+        <div class="flex gap-2 items-center">
+          <span class="font-semibold truncate a-color-text">{{ friend.name }}</span>
           <a-tag v-if="blacklisted" size="small" color="default">
             屏蔽
           </a-tag>
         </div>
-        <div class="mt-0.5 flex flex-wrap items-center gap-1.5">
+        <div class="mt-0.5 flex flex-wrap gap-1.5 items-center">
           <template v-if="getFriendStatusTags(friend).length">
             <div
               v-for="tag in getFriendStatusTags(friend)"
               :key="tag.label"
-              class="flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs font-medium"
+              class="px-1.5 py-0.5 flex gap-1 items-center text-xs rounded-md"
               :class="tag.class"
             >
               <div class="text-sm" :class="tag.icon" />
               {{ tag.label }}
             </div>
           </template>
-          <span v-else class="text-sm a-color-text-tertiary">无可操作</span>
+          <span v-else class="a-color-text-tertiary text-sm">无可操作</span>
         </div>
       </div>
 
       <!-- Operations (desktop) -->
-      <div class="hidden items-center gap-1 sm:flex">
+      <div class="gap-1 hidden items-center sm:flex">
         <a-tooltip v-for="op in OP_BUTTONS" :key="op.type" :title="op.label" placement="top">
           <a-button
-            class="flex items-center justify-center border rounded-lg border-solid p-1.5 transition-all a-bg-container a-border-border active:scale-95 hover:shadow-sm"
+            class="p-1.5 border-solid flex transition-all items-center justify-center a-bg-container a-border-border border rounded-lg active:scale-95 hover:shadow-sm"
             :disabled="disabled"
             :class="disabled ? 'opacity-40 pointer-events-none' : ''"
             @click="handleOperate(op.type, $event)"
@@ -137,12 +137,13 @@ function handleToggleBlacklist(e: Event) {
         </a-tooltip>
         <a-tooltip :title="blacklisted ? '移出黑名单' : '加入黑名单'" placement="top">
           <a-button
-            class="ml-1 flex items-center justify-center rounded-lg p-1.5 transition-all active:scale-95"
+            class="ml-1 p-1.5 flex transition-all items-center justify-center rounded-lg active:scale-95"
             :disabled="disabled"
             :class="
               (blacklisted
                 ? 'border border-solid a-border-success a-bg-primary-bg'
-                : 'border border-solid a-border-border a-bg-container') + (disabled ? ' opacity-40 pointer-events-none' : '')
+                : 'border border-solid a-border-border a-bg-container')
+                + (disabled ? ' opacity-40 pointer-events-none' : '')
             "
             @click="handleToggleBlacklist($event)"
           >
@@ -159,12 +160,12 @@ function handleToggleBlacklist(e: Event) {
     <!-- Mobile operations -->
     <div
       v-if="expanded"
-      class="flex flex-wrap gap-1.5 border-t border-t-solid px-4 py-2 a-border-t-border-sec sm:hidden"
+      class="px-4 py-2 border-t border-t-solid flex flex-wrap gap-1.5 a-border-t-border-sec sm:hidden"
     >
       <a-button
         v-for="op in OP_BUTTONS"
         :key="op.type"
-        class="flex items-center gap-1 border rounded-lg border-solid px-2 py-1 text-sm transition-all a-bg-container a-border-border active:scale-95"
+        class="px-2 py-1 border-solid flex gap-1 transition-all items-center a-bg-container a-border-border border text-sm rounded-lg active:scale-95"
         :disabled="disabled"
         :class="disabled ? 'opacity-40 pointer-events-none' : ''"
         @click="handleOperate(op.type, $event)"
@@ -173,12 +174,13 @@ function handleToggleBlacklist(e: Event) {
         {{ op.label }}
       </a-button>
       <a-button
-        class="flex items-center gap-1 rounded-lg px-2 py-1 text-sm transition-all active:scale-95"
+        class="px-2 py-1 flex gap-1 transition-all items-center text-sm rounded-lg active:scale-95"
         :disabled="disabled"
         :class="
           (blacklisted
             ? 'border border-solid a-border-success a-bg-primary-bg'
-            : 'border border-solid a-border-border a-bg-container') + (disabled ? ' opacity-40 pointer-events-none' : '')
+            : 'border border-solid a-border-border a-bg-container')
+            + (disabled ? ' opacity-40 pointer-events-none' : '')
         "
         @click="handleToggleBlacklist($event)"
       >

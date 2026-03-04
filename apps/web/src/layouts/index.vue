@@ -10,7 +10,7 @@ import Sidebar from './components/Sidebar.vue'
     <a-layout>
       <LayoutHeader />
 
-      <a-layout-content class="overflow-y-auto p-3">
+      <a-layout-content class="p-3 overflow-y-auto">
         <RouterView v-slot="{ Component, route }">
           <Transition name="slide-fade" mode="out-in">
             <component :is="Component" :key="route.path" />

@@ -127,8 +127,8 @@ function handleAvatarError(key: string) {
 </script>
 
 <template>
-  <div class="h-full flex flex-col gap-3">
-    <div class="flex items-center gap-2 font-bold a-color-text">
+  <div class="flex flex-col gap-3 h-full">
+    <div class="font-bold flex gap-2 items-center a-color-text">
       <div class="i-twemoji-people-hugging text-lg" />
       好友农场
     </div>
@@ -157,8 +157,8 @@ function handleAvatarError(key: string) {
         :blacklisted-count="blacklistedCount"
       />
 
-      <div class="min-h-0 flex-1 overflow-y-auto">
-        <div v-if="filteredFriends.length === 0" class="flex items-center justify-center py-16">
+      <div class="flex-1 min-h-0 overflow-y-auto">
+        <div v-if="filteredFriends.length === 0" class="py-16 flex items-center justify-center">
           <EmptyState icon="i-twemoji-magnifying-glass-tilted-left text-4xl" description="未找到匹配的好友" />
         </div>
 

@@ -176,7 +176,7 @@ async function handleSaveOffline() {
 
 <template>
   <a-spin :spinning="loading" class="h-full">
-    <div class="h-full flex flex-col gap-3">
+    <div class="flex flex-col gap-3 h-full">
       <AccountInfoCard
         :account-id="currentAccountId"
         :account-name="currentAccountName"
@@ -192,7 +192,7 @@ async function handleSaveOffline() {
         @save="saveAccountSettings"
       />
 
-      <div class="grid grid-cols-1 shrink-0 gap-3 pb-3 md:grid-cols-2">
+      <div class="pb-3 shrink-0 gap-3 grid grid-cols-1 md:grid-cols-2">
         <PasswordCard
           v-model:password-form="passwordForm"
           :saving="passwordSaving"

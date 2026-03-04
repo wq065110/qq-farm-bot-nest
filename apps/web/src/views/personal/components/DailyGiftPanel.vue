@@ -34,21 +34,21 @@ function getGiftStatus(gift: any) {
 
 <template>
   <a-card variant="borderless" size="small" :classes="{ body: '!p-3' }">
-    <div class="mb-2 flex items-center gap-2 font-bold a-color-text">
+    <div class="font-bold mb-2 flex gap-2 items-center a-color-text">
       <div class="i-twemoji-wrapped-gift" />
       每日礼包
     </div>
     <EmptyState v-if="!gifts.length" icon="i-twemoji-wrapped-gift text-3xl" description="暂无数据" />
-    <div v-else class="grid grid-cols-2 gap-1.5">
+    <div v-else class="gap-1.5 grid grid-cols-2">
       <div
         v-for="gift in gifts"
         :key="gift.key"
-        class="flex items-center gap-2 rounded-lg px-2 py-1.5"
-        :class="gift.doneToday ? 'a-bg-primary-bg' : 'a-bg-fill-tertiary'"
+        class="px-2 py-1.5 flex gap-2 items-center rounded-lg"
+        :class="gift.doneToday ? 'a-bg-primary-bg' : 'a-bg-layout'"
       >
         <div class="shrink-0" :class="getGiftIcon(gift.key)" />
-        <div class="min-w-0 flex-1">
-          <div class="mb-0.5 truncate text-sm font-medium leading-tight a-color-text">
+        <div class="flex-1 min-w-0">
+          <div class="leading-tight mb-0.5 truncate a-color-text text-sm">
             {{ gift.label }}
           </div>
           <div class="text-sm" :class="gift.doneToday ? 'a-color-success' : 'a-color-text-tertiary'">

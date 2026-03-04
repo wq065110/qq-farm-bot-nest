@@ -17,7 +17,7 @@ function logout() {
 
 <template>
   <a-layout-header
-    class="flex items-center justify-between border-b border-b-solid px-3 a-bg-container a-border-b-border-sec h-12!"
+    class="px-3 border-b border-b-solid flex items-center justify-between a-bg-container a-border-b-border-sec h-12!"
   >
     <div class="flex items-center">
       <a-button class="hidden xl:inline-flex" type="text" @click="appStore.toggleSidebarCollapsed()">

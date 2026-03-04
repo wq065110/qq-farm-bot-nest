@@ -42,7 +42,7 @@ const avatarClass = computed(() => {
 </script>
 
 <template>
-  <div class="relative flex">
+  <div class="flex relative">
     <a-avatar
       :size="size"
       :src="avatarSrc"
@@ -56,7 +56,7 @@ const avatarClass = computed(() => {
     </a-avatar>
     <div
       v-if="iconClass && platform"
-      class="absolute shrink-0 text-[13px] text-primary -bottom-0.7 -right-1"
+      class="text-[13px] text-primary shrink-0 absolute -bottom-0.7 -right-1"
       :class="iconClass"
     />
   </div>

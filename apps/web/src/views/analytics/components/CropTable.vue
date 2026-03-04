@@ -67,7 +67,7 @@ function getHighlightColor(key: string): string {
 </script>
 
 <template>
-  <div class="min-h-0 flex flex-1 flex-col">
+  <div class="flex flex-1 flex-col min-h-0">
     <a-table
       :columns="COLUMNS"
       :data-source="pagedList"
@@ -85,7 +85,7 @@ function getHighlightColor(key: string): string {
               :class="[
                 (currentPage - 1) * pageSize + index === 0 ? 'i-twemoji-1st-place-medal' : '',
                 (currentPage - 1) * pageSize + index === 1 ? 'i-twemoji-2nd-place-medal' : '',
-                (currentPage - 1) * pageSize + index === 2 ? 'i-twemoji-3rd-place-medal' : '',
+                (currentPage - 1) * pageSize + index === 2 ? 'i-twemoji-3rd-place-medal' : ''
               ]"
             />
           </div>
@@ -93,10 +93,8 @@ function getHighlightColor(key: string): string {
         </template>
 
         <template v-else-if="column.key === 'name'">
-          <div class="flex items-center gap-2.5">
-            <div
-              class="h-9 w-9 flex shrink-0 items-center justify-center overflow-hidden rounded-lg a-bg-fill-tertiary"
-            >
+          <div class="flex gap-2.5 items-center">
+            <div class="flex shrink-0 h-9 w-9 items-center justify-center overflow-hidden a-bg-layout rounded-lg">
               <img
                 v-if="record.image && !imageErrors[record.seedId]"
                 :src="record.image"
@@ -106,13 +104,13 @@ function getHighlightColor(key: string): string {
               >
               <div v-else class="i-twemoji-seedling text-lg" />
             </div>
-            <div class="min-w-0 flex flex-col gap-1.5">
+            <div class="flex flex-col gap-1.5 min-w-0">
               <div class="font-semibold a-color-text">
                 {{ record.name }}
               </div>
-              <div class="flex items-center gap-1.5">
-                <span class="rounded px-1.5 py-px text-xs font-medium a-color-primary-text a-bg-primary-bg">Lv{{ formatLv(record.level) }}</span>
-                <span class="text-xs a-color-text-tertiary">{{ record.seasons }}季</span>
+              <div class="flex gap-1.5 items-center">
+                <span class="px-1.5 py-px a-color-primary a-bg-primary-bg text-xs rounded">Lv{{ formatLv(record.level) }}</span>
+                <span class="a-color-text-tertiary text-xs">{{ record.seasons }}季</span>
               </div>
             </div>
           </div>
@@ -147,7 +145,7 @@ function getHighlightColor(key: string): string {
           <span
             class="font-bold"
             :style="{
-              color: sortKey === 'fert_profit' ? getHighlightColor('fert_profit') : 'var(--ant-color-text)',
+              color: sortKey === 'fert_profit' ? getHighlightColor('fert_profit') : 'var(--ant-color-text)'
             }"
           >{{ record.normalFertilizerProfitPerHour ?? '-' }}</span>
         </template>
@@ -165,7 +163,7 @@ function getHighlightColor(key: string): string {
     <!-- Pagination -->
     <div
       v-if="filteredList.length"
-      class="flex items-center justify-between border-t border-t-solid px-4 py-3 a-border-t-border-sec"
+      class="px-4 py-3 border-t border-t-solid flex items-center justify-between a-border-t-border-sec"
     >
       <span class="a-color-text-tertiary">共 {{ filteredList.length }} 种作物</span>
       <a-pagination

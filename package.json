@@ -17,6 +17,6 @@
     "install:all": "pnpm install -r"
   },
   "devDependencies": {
-    "turbo": "^2.8.12"
+    "turbo": "^2.8.13"
   }
 }

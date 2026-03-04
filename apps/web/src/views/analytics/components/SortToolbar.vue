@@ -10,18 +10,18 @@ const searchQuery = defineModel<string>('searchQuery', { required: true })
 
 <template>
   <div
-    class="flex flex-wrap items-center justify-between gap-2 border-b border-b-solid px-4 py-2.5 a-border-b-border-sec"
+    class="px-4 py-2.5 border-b border-b-solid flex flex-wrap gap-2 items-center justify-between a-border-b-border-sec"
   >
-    <div class="flex items-center gap-3">
-      <div class="flex items-center gap-1 rounded-lg p-0.5 a-bg-fill-tertiary">
+    <div class="flex gap-3 items-center">
+      <div class="p-0.5 flex gap-1 items-center a-bg-layout rounded-lg">
         <a-button
           v-for="opt in SORT_OPTIONS"
           :key="opt.value"
           type="text"
-          class="rounded-md px-2.5 py-1 text-sm transition-all"
+          class="px-2.5 py-1 transition-all text-sm rounded-md"
           :class="
             sortKey === opt.value
-              ? 'a-bg-container a-color-primary-text font-semibold shadow-sm a-bg-primary-bg hover:!a-bg-primary-bg hover:!a-color-primary-text'
+              ? 'a-bg-container a-color-primary font-semibold shadow-sm a-bg-primary-bg hover:!a-bg-primary-bg hover:!a-color-primary'
               : 'a-color-text-secondary'
           "
           @click="sortKey = opt.value"
@@ -32,7 +32,7 @@ const searchQuery = defineModel<string>('searchQuery', { required: true })
       </div>
     </div>
 
-    <div class="flex items-center gap-3">
+    <div class="flex gap-3 items-center">
       <a-input v-model:value="searchQuery" placeholder="搜索作物..." allow-clear class="w-35 md:w-48">
         <template #prefix>
           <div class="i-twemoji-magnifying-glass-tilted-left text-sm" />

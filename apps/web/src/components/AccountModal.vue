@@ -203,9 +203,17 @@ watch(
 </script>
 
 <template>
-  <a-modal :open="show" :footer="null" :mask-closable="!loading" :width="420" centered destroy-on-hidden @cancel="close">
+  <a-modal
+    :open="show"
+    :footer="null"
+    :mask-closable="!loading"
+    :width="420"
+    centered
+    destroy-on-hidden
+    @cancel="close"
+  >
     <template #title>
-      <div class="flex items-center gap-2">
+      <div class="flex gap-2 items-center">
         <span>{{ editData ? '编辑账号' : '添加账号' }}</span>
       </div>
     </template>
@@ -213,20 +221,20 @@ watch(
     <!-- Error -->
     <div
       v-if="errorMessage"
-      class="mb-4 flex items-center gap-2 rounded-lg px-3 py-2 opacity-90 a-color-white a-bg-error"
+      class="mb-4 px-3 py-2 opacity-90 flex gap-2 items-center a-color-white a-bg-error rounded-lg"
     >
       <div class="i-twemoji-warning shrink-0" />
       {{ errorMessage }}
     </div>
 
     <!-- Tab switcher -->
-    <div class="mb-4 flex items-center gap-1 rounded-lg p-0.5 a-bg-fill-tertiary">
+    <div class="mb-4 p-0.5 flex gap-1 items-center a-bg-layout rounded-lg">
       <a-button
         type="text"
-        class="flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-1.5 transition-all"
+        class="px-3 py-1.5 flex flex-1 gap-1.5 transition-all items-center justify-center rounded-md"
         :class="
           activeTab === 'qr'
-            ? 'a-bg-container a-color-primary-text font-semibold shadow-sm a-bg-primary-bg hover:!a-bg-primary-bg hover:!a-color-primary-text'
+            ? 'a-bg-container a-color-primary font-semibold shadow-sm a-bg-primary-bg hover:!a-bg-primary-bg hover:!a-color-primary'
             : 'a-color-text-secondary'
         "
         @click="((activeTab = 'qr'), loadQRCode())"
@@ -236,10 +244,10 @@ watch(
       </a-button>
       <a-button
         type="text"
-        class="flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-1.5 transition-all"
+        class="px-3 py-1.5 flex flex-1 gap-1.5 transition-all items-center justify-center rounded-md"
         :class="
           activeTab === 'manual'
-            ? 'a-bg-container a-color-primary-text font-semibold shadow-sm a-bg-primary-bg hover:!a-bg-primary-bg hover:!a-color-primary-text'
+            ? 'a-bg-container a-color-primary font-semibold shadow-sm a-bg-primary-bg hover:!a-bg-primary-bg hover:!a-color-primary'
             : 'a-color-text-secondary'
         "
         @click="((activeTab = 'manual'), stopQRCheck())"
@@ -250,13 +258,13 @@ watch(
     </div>
 
     <!-- QR Tab -->
-    <div v-if="activeTab === 'qr'" class="flex flex-col items-center gap-3">
-      <div class="text-sm a-color-text-tertiary">
+    <div v-if="activeTab === 'qr'" class="flex flex-col gap-3 items-center">
+      <div class="a-color-text-tertiary text-sm">
         使用手机QQ扫码，默认使用QQ昵称
       </div>
 
       <div
-        class="relative overflow-hidden border-2 rounded-xl border-dashed p-2 transition-colors a-bg-container"
+        class="p-2 border-2 border-dashed transition-colors relative overflow-hidden a-bg-container rounded-xl"
         :class="
           qrStatus === '登录成功!'
             ? 'a-border a-border-success a-bg-container'
@@ -275,31 +283,31 @@ watch(
             class="h-52 w-52 rounded-lg"
           >
         </div>
-        <div v-else class="h-52 w-52 flex flex-col items-center justify-center gap-2 rounded-lg a-bg-fill-tertiary">
+        <div v-else class="flex flex-col gap-2 h-52 w-52 items-center justify-center a-bg-layout rounded-lg">
           <a-spin v-if="loading" />
           <template v-else>
-            <div class="i-twemoji-framed-picture text-3xl opacity-30" />
-            <span class="text-sm a-color-text-tertiary">二维码区域</span>
+            <div class="i-twemoji-framed-picture opacity-30 text-3xl" />
+            <span class="a-color-text-tertiary text-sm">二维码区域</span>
           </template>
         </div>
         <div
           v-if="qrStatus === '登录成功!'"
-          class="absolute inset-0 flex items-center justify-center rounded-xl backdrop-blur-[1px] a-bg-primary-bg"
+          class="flex items-center inset-0 justify-center absolute backdrop-blur-[1px] a-bg-primary-bg rounded-xl"
         >
-          <div class="flex flex-col items-center gap-1">
+          <div class="flex flex-col gap-1 items-center">
             <div class="i-twemoji-check-mark-button text-4xl" />
-            <span class="font-bold a-color-primary-text">登录成功</span>
+            <span class="font-bold a-color-primary">登录成功</span>
           </div>
         </div>
       </div>
 
-      <div class="flex items-center gap-1.5 a-color-text-secondary">
-        <div v-if="qrStatus === '等待扫码...'" class="h-1.5 w-1.5 animate-pulse rounded-full a-bg-info" />
+      <div class="flex gap-1.5 items-center a-color-text-secondary">
+        <div v-if="qrStatus === '等待扫码...'" class="rounded-full h-1.5 w-1.5 animate-pulse a-bg-info" />
         <div v-else-if="qrStatus.includes('失效')" class="i-twemoji-warning" />
         {{ qrStatus }}
       </div>
 
-      <div class="flex items-center gap-2">
+      <div class="flex gap-2 items-center">
         <a-button @click="loadQRCode">
           <template #icon>
             <div class="i-twemoji-counterclockwise-arrows-button" />
@@ -335,13 +343,13 @@ watch(
             v-model:value="form.platform"
             :options="[
               { label: 'QQ小程序', value: 'qq' },
-              { label: '微信小程序', value: 'wx' },
+              { label: '微信小程序', value: 'wx' }
             ]"
           />
         </a-form-item>
       </a-form>
 
-      <div class="flex items-center justify-end gap-2 border-t border-t-solid pt-3 a-border-t-border-sec">
+      <div class="pt-3 border-t border-t-solid flex gap-2 items-center justify-end a-border-t-border-sec">
         <a-button @click="close">
           取消
         </a-button>

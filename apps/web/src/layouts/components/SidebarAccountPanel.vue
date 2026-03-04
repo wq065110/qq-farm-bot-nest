@@ -21,15 +21,15 @@ const selectedAccountId = defineModel<any>('selectedAccountId', { required: true
 <template>
   <!-- Expanded -->
   <div v-if="!collapsed" class="px-3 py-3">
-    <div class="overflow-hidden border rounded-xl border-solid shadow-sm a-border-border-sec">
-      <div class="flex items-center gap-3 px-3 py-2.5 a-bg-primary-bg">
+    <div class="border-solid overflow-hidden a-border-border-sec border rounded-xl shadow-sm">
+      <div class="px-3 py-2.5 flex gap-3 items-center a-bg-primary-bg">
         <QqAvatar :uin="currentAccount?.uin" :size="40" ring :platform="currentAccount?.platform" />
 
-        <div class="min-w-0 flex flex-1 flex-col gap-0.5">
-          <div class="truncate font-semibold leading-snug a-color-text">
+        <div class="flex flex-1 flex-col gap-0.5 min-w-0">
+          <div class="leading-snug font-semibold truncate a-color-text">
             {{ displayInfo.primary }}
           </div>
-          <div class="truncate text-sm leading-snug a-color-text-tertiary">
+          <div class="leading-snug truncate a-color-text-tertiary text-sm">
             {{ displayInfo.secondary }}
           </div>
         </div>
@@ -45,14 +45,14 @@ const selectedAccountId = defineModel<any>('selectedAccountId', { required: true
           class="w-full"
         >
           <template #optionRender="{ option }">
-            <div class="flex items-center gap-1">
+            <div class="flex gap-1 items-center">
               <i class="text-primary" :class="getPlatformIcon(option.data?.platform)" />
               <QqAvatar :uin="option.data?.uin" :size="18" />
               <span>{{ option.data?.label }}</span>
             </div>
           </template>
         </a-select>
-        <div v-else class="py-1 text-center text-sm a-color-text-tertiary">
+        <div v-else class="py-1 text-center a-color-text-tertiary text-sm">
           暂无账号
         </div>
         <div class="mt-1.5 flex items-center justify-between">
@@ -74,7 +74,7 @@ const selectedAccountId = defineModel<any>('selectedAccountId', { required: true
   </div>
 
   <!-- Collapsed -->
-  <div v-else class="flex justify-center py-3">
+  <div v-else class="py-3 flex justify-center">
     <QqAvatar :uin="currentAccount?.uin" :size="36" ring />
   </div>
 </template>

@@ -21,7 +21,7 @@ function formatTaskProgress(task: any) {
 <template>
   <a-card variant="borderless" size="small" :classes="{ body: '!p-3' }">
     <div class="mb-2 flex items-center justify-between">
-      <div class="flex items-center gap-2 font-bold a-color-text">
+      <div class="font-bold flex gap-2 items-center a-color-text">
         <div class="i-twemoji-check-mark-button" />
         成长任务
       </div>
@@ -34,9 +34,9 @@ function formatTaskProgress(task: any) {
       <div
         v-for="(task, idx) in growth.tasks"
         :key="idx"
-        class="flex items-center justify-between rounded-lg px-2.5 py-1.5 a-bg-fill-tertiary"
+        class="px-2.5 py-1.5 flex items-center justify-between a-bg-layout rounded-lg"
       >
-        <span class="truncate text-sm a-color-text-secondary">{{ task.desc || task.name }}</span>
+        <span class="truncate a-color-text-secondary text-sm">{{ task.desc || task.name }}</span>
         <a-tag :color="formatTaskProgress(task) === '已完成' ? 'green' : 'default'" size="small" class="shrink-0 !ml-2">
           {{ formatTaskProgress(task) }}
         </a-tag>
