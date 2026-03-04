@@ -78,16 +78,22 @@ export const useAccountStore = defineStore('account', () => {
   }
 
   async function startAccount(uin: string) {
+    if (!uin)
+      throw new Error('账号标识为空，无法启动')
     await accountApi.startAccount(uin)
     await fetchAccounts()
   }
 
   async function stopAccount(uin: string) {
+    if (!uin)
+      throw new Error('账号标识为空，无法停止')
     await accountApi.stopAccount(uin)
     await fetchAccounts()
   }
 
   async function deleteAccount(ref: string) {
+    if (!ref)
+      throw new Error('账号标识为空，无法删除')
     await accountApi.deleteAccount(ref)
     if (currentAccountId.value === ref) {
       currentAccountId.value = ''
