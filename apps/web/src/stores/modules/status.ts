@@ -66,9 +66,6 @@ export const useStatusStore = defineStore('status', () => {
 
   function handleRealtimeStatus(payload: any) {
     const body = (payload && typeof payload === 'object') ? payload : {}
-    const accountId = String(body.accountId || '')
-    if (currentRealtimeAccountId.value && accountId !== currentRealtimeAccountId.value)
-      return
     if (body.status && typeof body.status === 'object') {
       status.value = normalizeStatusPayload(body.status)
       error.value = ''
