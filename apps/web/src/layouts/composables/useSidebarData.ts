@@ -43,7 +43,7 @@ export function useSidebarData() {
           serverVersion.value = res.version
         }
       }
-      const accountRef = currentAccount.value?.id || currentAccount.value?.uin
+      const accountRef = currentAccount.value?.uin
       if (accountRef) {
         statusStore.connectRealtime(String(accountRef))
       }
@@ -56,7 +56,7 @@ export function useSidebarData() {
     if (realtimeConnected.value)
       return
     const acc = currentAccount.value
-    const accountRef = acc?.id || acc?.uin
+    const accountRef = acc?.uin
     if (accountRef)
       await statusStore.fetchStatus(String(accountRef))
   }
@@ -88,9 +88,9 @@ export function useSidebarData() {
 
   // Watch account changes
   watch(
-    () => currentAccount.value?.id || currentAccount.value?.uin || '',
+    () => currentAccount.value?.uin || '',
     () => {
-      const accountRef = currentAccount.value?.id || currentAccount.value?.uin
+      const accountRef = currentAccount.value?.uin
       statusStore.connectRealtime(String(accountRef || ''))
       refreshStatusFallback()
     },
@@ -105,7 +105,7 @@ export function useSidebarData() {
         return
 
       const errAt = Number(wsError.at) || 0
-      const accId = String(currentAccount.value.id || currentAccount.value.uin || '')
+      const accId = String(currentAccount.value.uin || '')
       const lastNotified = wsErrorNotifiedAt.value[accId] || 0
       if (errAt <= lastNotified)
         return
@@ -152,7 +152,7 @@ export function useSidebarData() {
   })
 
   const selectedAccountId = computed({
-    get: () => currentAccount.value?.id || '',
+    get: () => String(currentAccount.value?.uin ?? ''),
     set: (val: any) => {
       if (!val)
         return
@@ -163,15 +163,15 @@ export function useSidebarData() {
   const accountOptions = computed(() => {
     return (accounts.value || []).map((acc: any) => ({
       ...acc,
-      label: acc.name || acc.nick || acc.uin || acc.id,
-      value: String(acc.id)
+      label: acc.name || acc.nick || acc.uin,
+      value: String(acc.uin)
     }))
   })
 
   const connectionStatus = computed<{ text: string, badge: 'error' | 'default' | 'processing' }>(() => {
     if (!systemConnected.value)
       return { text: '系统离线', badge: 'error' }
-    if (!currentAccount.value?.id)
+    if (!currentAccount.value?.uin)
       return { text: '请添加账号', badge: 'default' }
     if (status.value?.connection?.connected)
       return { text: '运行中', badge: 'processing' }

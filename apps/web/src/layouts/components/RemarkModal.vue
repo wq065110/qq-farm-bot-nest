@@ -35,7 +35,7 @@ async function save() {
   errorMessage.value = ''
   try {
     const payload = {
-      id: props.account.id,
+      uin: props.account.uin,
       name: name.value
     }
 
@@ -76,7 +76,7 @@ async function save() {
     </div>
 
     <div v-if="account" class="mb-4 px-3 py-2.5 flex gap-3 items-center a-bg-layout rounded-lg">
-      <QqAvatar :src="account.avatar || account.status?.status?.avatarUrl" :uin="account.uin" :size="36" ring />
+      <QqAvatar :src="account.avatar" :uin="account.uin" :size="36" ring />
       <div class="flex flex-1 flex-col gap-0.5 min-w-0">
         <div class="truncate">
           {{ account.nick }}

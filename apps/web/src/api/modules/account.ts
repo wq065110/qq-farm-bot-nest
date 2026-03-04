@@ -8,16 +8,16 @@ export function saveAccount(payload: any) {
   return api.post('/api/accounts', payload)
 }
 
-export function startAccount(id: string) {
-  return api.post(`/api/accounts/${id}/start`)
+export function startAccount(uin: string) {
+  return api.post(`/api/accounts/${uin}/start`)
 }
 
-export function stopAccount(id: string) {
-  return api.post(`/api/accounts/${id}/stop`)
+export function stopAccount(uin: string) {
+  return api.post(`/api/accounts/${uin}/stop`)
 }
 
-export function deleteAccount(id: string) {
-  return api.delete(`/api/accounts/${id}`)
+export function deleteAccount(uin: string) {
+  return api.delete(`/api/accounts/${uin}`)
 }
 
 export function fetchAccountLogs(limit = 100) {

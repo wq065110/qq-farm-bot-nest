@@ -275,12 +275,16 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
 
   getAccounts() {
     const dbAccounts = this.store.getAllAccounts()
-    const accounts = dbAccounts.map(acc => ({
-      ...acc,
-      running: this.isAccountRunning(acc.id),
-      status: this.runners.get(acc.id)?.status || null,
-      wsError: this.runners.get(acc.id)?.wsError || null
-    }))
+    const accounts = dbAccounts.map((acc) => {
+      const record = this.runners.get(acc.id)
+      const { code, loginType, ...rest } = acc
+      return {
+        ...rest,
+        running: this.isAccountRunning(acc.id),
+        connected: !!record?.status?.connection?.connected,
+        wsError: record?.wsError || null
+      }
+    })
     return { accounts }
   }
 

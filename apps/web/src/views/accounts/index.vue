@@ -23,7 +23,7 @@ onMounted(() => accountStore.fetchAccounts())
 useIntervalFn(() => accountStore.fetchAccounts(), 3000)
 
 function openSettings(account: any) {
-  accountStore.selectAccount(account.id)
+  accountStore.selectAccount(String(account.uin))
   router.push('/settings')
 }
 
@@ -46,7 +46,7 @@ async function confirmDelete() {
   if (accountToDelete.value) {
     try {
       deleteLoading.value = true
-      await accountStore.deleteAccount(accountToDelete.value.id)
+      await accountStore.deleteAccount(String(accountToDelete.value.uin))
       accountToDelete.value = null
       showDeleteConfirm.value = false
     } finally {
@@ -56,9 +56,10 @@ async function confirmDelete() {
 }
 
 async function toggleAccount(account: any) {
+  const ref = String(account.uin)
   if (account.running)
-    await accountStore.stopAccount(account.id)
-  else await accountStore.startAccount(account.id)
+    await accountStore.stopAccount(ref)
+  else await accountStore.startAccount(ref)
 }
 
 function handleSaved() {
@@ -104,7 +105,7 @@ function getDisplayName(acc: any) {
       <div class="gap-3 grid grid-cols-1 lg:grid-cols-3 md:grid-cols-2 xl:grid-cols-4">
         <div
           v-for="acc in accounts"
-          :key="acc.id"
+          :key="acc.uin"
           class="group border-solid transition-all overflow-hidden a-bg-container a-border-border-sec border rounded-xl hover:shadow-md"
         >
           <!-- Status banner -->
@@ -119,7 +120,7 @@ function getDisplayName(acc: any) {
               />
               {{ acc.running ? '运行中' : '已停止' }}
             </div>
-            <span class="opacity-60 text-xs">ID: {{ acc.id }}</span>
+            <span class="opacity-60 text-xs">UIN: {{ acc.uin }}</span>
           </div>
 
           <!-- Body -->
@@ -162,7 +163,7 @@ function getDisplayName(acc: any) {
       :show="showDeleteConfirm"
       :loading="deleteLoading"
       title="删除账号"
-      :message="accountToDelete ? `确定要删除账号 ${accountToDelete.name || accountToDelete.id} 吗?` : ''"
+      :message="accountToDelete ? `确定要删除账号 ${accountToDelete.name || accountToDelete.uin} 吗?` : ''"
       confirm-text="删除"
       type="danger"
       @close="!deleteLoading && (showDeleteConfirm = false)"

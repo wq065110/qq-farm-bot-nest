@@ -40,12 +40,9 @@ export class AccountService {
       wasRunning = this.manager.isAccountRunning(String(targetBefore.id))
 
     let onlyRemarkChanged = false
-    if (isUpdateById) {
-      const oldAccount = beforeAccounts.find((a: any) => String(a.id) === String(body.id))
-      if (oldAccount) {
-        const keys = Object.keys(body)
-        onlyRemarkChanged = keys.length === 2 && keys.includes('id') && keys.includes('name')
-      }
+    if (targetBefore) {
+      const keys = Object.keys(body).filter(k => k !== 'id' && k !== 'uin' && k !== 'platform')
+      onlyRemarkChanged = keys.length === 1 && keys[0] === 'name'
     }
 
     const data = this.store.addOrUpdateAccount(body)

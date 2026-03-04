@@ -13,9 +13,7 @@ export interface Account {
   platform?: string
   running?: boolean
   avatar?: string
-  status?: {
-    status?: { avatarUrl?: string, openId?: string }
-  }
+  connected?: boolean
   // Add other fields as discovered
 }
 
@@ -41,7 +39,7 @@ export const useAccountStore = defineStore('account', () => {
   const logs = ref<AccountLog[]>([])
 
   const currentAccount = computed(() =>
-    accounts.value.find(a => String(a.id) === currentAccountId.value)
+    accounts.value.find(a => String(a.uin) === currentAccountId.value)
   )
 
   async function fetchAccounts() {
@@ -53,9 +51,9 @@ export const useAccountStore = defineStore('account', () => {
         accounts.value = res.accounts as Account[]
 
         if (accounts.value.length > 0) {
-          const found = accounts.value.find(a => String(a.id) === currentAccountId.value)
+          const found = accounts.value.find(a => String(a.uin) === currentAccountId.value)
           if (!found && accounts.value[0]) {
-            currentAccountId.value = String(accounts.value[0].id)
+            currentAccountId.value = String(accounts.value[0].uin)
           }
         } else if (currentAccountId.value) {
           currentAccountId.value = ''
@@ -76,22 +74,22 @@ export const useAccountStore = defineStore('account', () => {
   }
 
   function setCurrentAccount(acc: Account) {
-    selectAccount(acc.id)
+    selectAccount(String(acc.uin))
   }
 
-  async function startAccount(id: string) {
-    await accountApi.startAccount(id)
+  async function startAccount(uin: string) {
+    await accountApi.startAccount(uin)
     await fetchAccounts()
   }
 
-  async function stopAccount(id: string) {
-    await accountApi.stopAccount(id)
+  async function stopAccount(uin: string) {
+    await accountApi.stopAccount(uin)
     await fetchAccounts()
   }
 
-  async function deleteAccount(id: string) {
-    await accountApi.deleteAccount(id)
-    if (currentAccountId.value === id) {
+  async function deleteAccount(ref: string) {
+    await accountApi.deleteAccount(ref)
+    if (currentAccountId.value === ref) {
       currentAccountId.value = ''
       useStatusStore().resetState()
       useBagStore().resetState()
@@ -119,10 +117,9 @@ export const useAccountStore = defineStore('account', () => {
     }
   }
 
-  async function updateAccount(id: string, payload: any) {
+  async function updateAccount(uin: string, payload: any) {
     try {
-      // core uses POST /api/accounts for both add and update (if id is present)
-      await accountApi.saveAccount({ ...payload, id })
+      await accountApi.saveAccount({ ...payload, uin })
       await fetchAccounts()
     } catch (e) {
       console.error('更新账号失败', e)

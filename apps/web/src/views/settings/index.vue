@@ -42,7 +42,7 @@ function showAlert(message: string, type: 'primary' | 'danger' = 'primary') {
 
 const currentAccountName = computed(() => {
   const acc = currentAccount.value
-  return acc ? acc.name || acc.nick || acc.id : null
+  return acc ? String(acc.name || acc.nick || acc.uin || '') || null : null
 })
 
 const currentAccountUin = computed(() => {
@@ -50,10 +50,7 @@ const currentAccountUin = computed(() => {
   return uin != null ? uin : undefined
 })
 
-const currentAccountAvatar = computed(() => {
-  const acc = currentAccount.value
-  return acc?.avatar || acc?.status?.status?.avatarUrl || undefined
-})
+const currentAccountAvatar = computed(() => currentAccount.value?.avatar ?? undefined)
 
 const localSettings = ref({
   plantingStrategy: 'preferred',

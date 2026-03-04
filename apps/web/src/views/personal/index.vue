@@ -61,7 +61,7 @@ async function refresh() {
 
   const firstAcc = accountStore.accounts[0]
   if (!currentAccountId.value && firstAcc)
-    accountStore.selectAccount(String(firstAcc.id))
+    accountStore.selectAccount(String(firstAcc.uin))
 
   const acc = currentAccount.value
   if (!acc || !currentAccountId.value)
