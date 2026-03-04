@@ -16,6 +16,6 @@ export const useUserStore = defineStore('user', () => {
 }, {
   persist: {
     pick: ['adminToken'],
-    storage: localStorage
+    storage: sessionStorage
   }
 })

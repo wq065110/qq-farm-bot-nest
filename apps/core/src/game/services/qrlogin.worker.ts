@@ -3,7 +3,8 @@ import { Logger } from '@nestjs/common'
 import axios from 'axios'
 import { CookieUtils, HashUtils } from '../utils'
 
-const ChromeUA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+const ChromeUA
+  = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
 
 interface QRPreset {
   name: string
@@ -27,7 +28,8 @@ const QR_PRESETS: Record<string, QRPreset> = {
     aid: '8000201',
     daid: '18',
     redirectUri: 'https://vip.qq.com/loginsuccess.html',
-    referrer: 'https://xui.ptlogin2.qq.com/cgi-bin/xlogin?appid=8000201&style=20&s_url=https%3A%2F%2Fvip.qq.com%2Floginsuccess.html&maskOpacity=60&daid=18&target=self'
+    referrer:
+      'https://xui.ptlogin2.qq.com/cgi-bin/xlogin?appid=8000201&style=20&s_url=https%3A%2F%2Fvip.qq.com%2Floginsuccess.html&maskOpacity=60&daid=18&target=self'
   },
   qzone: {
     name: 'QQ空间 (QZone)',
@@ -86,7 +88,11 @@ export class QRLoginService {
     })
     const api = `https://ssl.ptlogin2.qq.com/ptqrlogin?${params.toString()}`
     const response = await axios.get(api, {
-      headers: { 'Cookie': `qrsig=${qrsig}`, 'Referer': config.referrer || 'https://xui.ptlogin2.qq.com/', 'User-Agent': ChromeUA }
+      headers: {
+        'Cookie': `qrsig=${qrsig}`,
+        'Referer': config.referrer || 'https://xui.ptlogin2.qq.com/',
+        'User-Agent': ChromeUA
+      }
     })
     const text = response.data
     const match = text.match(/ptuiCB\((.+)\)/)
@@ -101,7 +107,13 @@ export class QRLoginService {
 
   async requestMiniProgramLoginCode() {
     const QUA = 'V1_HT5_QDT_0.70.2209190_x64_0_DEV_D'
-    const headers = { 'qua': QUA, 'host': 'q.qq.com', 'accept': 'application/json', 'content-type': 'application/json', 'user-agent': ChromeUA }
+    const headers = {
+      'qua': QUA,
+      'host': 'q.qq.com',
+      'accept': 'application/json',
+      'content-type': 'application/json',
+      'user-agent': ChromeUA
+    }
     const response = await axios.get('https://q.qq.com/ide/devtoolAuth/GetLoginCode', { headers })
     const { code, data } = response.data
     if (+code !== 0)
@@ -110,18 +122,28 @@ export class QRLoginService {
     const loginUrl = `https://h5.qzone.qq.com/qqq/code/${loginCode}?_proxy=1&from=ide`
     let QRCode: any
     try {
-      QRCode = (await import('qrcode'))
+      QRCode = await import('qrcode')
     } catch {
       QRCode = null
     }
-    const image = QRCode ? await QRCode.toDataURL(loginUrl, { width: 300, margin: 1, errorCorrectionLevel: 'M' }) : loginUrl
+    const image = QRCode
+      ? await QRCode.toDataURL(loginUrl, { width: 300, margin: 1, errorCorrectionLevel: 'M' })
+      : loginUrl
     return { code: loginCode, url: loginUrl, image }
   }
 
   async queryMiniProgramStatus(loginCode: string) {
     const QUA = 'V1_HT5_QDT_0.70.2209190_x64_0_DEV_D'
-    const headers = { 'qua': QUA, 'host': 'q.qq.com', 'accept': 'application/json', 'content-type': 'application/json', 'user-agent': ChromeUA }
-    const response = await axios.get(`https://q.qq.com/ide/devtoolAuth/syncScanSateGetTicket?code=${loginCode}`, { headers })
+    const headers = {
+      'qua': QUA,
+      'host': 'q.qq.com',
+      'accept': 'application/json',
+      'content-type': 'application/json',
+      'user-agent': ChromeUA
+    }
+    const response = await axios.get(`https://q.qq.com/ide/devtoolAuth/syncScanSateGetTicket?code=${loginCode}`, {
+      headers
+    })
     if (response.status !== 200)
       return { status: 'Error' as const }
     const { code, data } = response.data
@@ -137,10 +159,19 @@ export class QRLoginService {
 
   async getMiniProgramAuthCode(ticket: string, appid = '1112386029') {
     const QUA = 'V1_HT5_QDT_0.70.2209190_x64_0_DEV_D'
-    const headers = { 'qua': QUA, 'host': 'q.qq.com', 'accept': 'application/json', 'content-type': 'application/json', 'user-agent': ChromeUA }
-    try {
-      const response = await axios.post('https://q.qq.com/ide/login', { appid, ticket }, { headers })
-      return response.status === 200 ? (response.data.code || '') : ''
-    } catch { return '' }
+    const headers = {
+      'qua': QUA,
+      'host': 'q.qq.com',
+      'accept': 'application/json',
+      'content-type': 'application/json',
+      'user-agent': ChromeUA
+    }
+    const response = await axios.post('https://q.qq.com/ide/login', { appid, ticket }, { headers })
+    const code = response.data?.code
+    if (!code || typeof code === 'number' || /^-?\d+$/.test(String(code))) {
+      this.logger.warn(`ide/login 返回错误: code=${code}, data=${JSON.stringify(response.data)}`)
+      throw new Error(`获取农场登录 code 失败 (code=${code})`)
+    }
+    return code
   }
 }

@@ -10,7 +10,7 @@ const props = defineProps<{
 
 const emit = defineEmits(['close', 'saved'])
 
-const activeTab = ref('qr')
+const activeTab = ref('manual')
 const loading = ref(false)
 const qrData = ref<{ image?: string, code: string, qrcode?: string, url?: string } | null>(null)
 const qrStatus = ref('')
@@ -175,28 +175,29 @@ function close() {
   emit('close')
 }
 
+// 扫码暂时不可用
 watch(
   () => props.show,
   (newVal) => {
     if (newVal) {
       errorMessage.value = ''
       if (props.editData) {
-        activeTab.value = 'qr'
+        // activeTab.value = 'qr'
         form.name = props.editData.name
         form.code = props.editData.code || ''
         form.platform = props.editData.platform || 'qq'
-        loadQRCode()
+        // loadQRCode()
       } else {
-        activeTab.value = 'qr'
+        // activeTab.value = 'qr'
         form.name = ''
         form.code = ''
         form.platform = 'qq'
-        loadQRCode()
+        // loadQRCode()
       }
     } else {
-      stopQRCheck()
-      qrData.value = null
-      qrStatus.value = ''
+      // stopQRCheck()
+      // qrData.value = null
+      // qrStatus.value = ''
     }
   }
 )
@@ -229,6 +230,7 @@ watch(
 
     <!-- Tab switcher -->
     <div class="mb-4 p-0.5 flex gap-1 items-center a-bg-layout rounded-lg">
+      <!-- 扫码暂时不可用 -->
       <a-button
         type="text"
         class="px-3 py-1.5 flex flex-1 gap-1.5 transition-all items-center justify-center rounded-md"
@@ -237,6 +239,7 @@ watch(
             ? 'a-bg-container a-color-primary font-semibold shadow-sm a-bg-primary-bg hover:!a-bg-primary-bg hover:!a-color-primary'
             : 'a-color-text-secondary'
         "
+        disabled
         @click="((activeTab = 'qr'), loadQRCode())"
       >
         <div class="i-twemoji-camera-with-flash" />

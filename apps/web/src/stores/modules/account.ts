@@ -48,12 +48,16 @@ export const useAccountStore = defineStore('account', () => {
       if (res && res.accounts) {
         accounts.value = res.accounts
 
-        // Auto-select first account if none selected or selected not found
         if (accounts.value.length > 0) {
           const found = accounts.value.find(a => String(a.id) === currentAccountId.value)
           if (!found && accounts.value[0]) {
             currentAccountId.value = String(accounts.value[0].id)
           }
+        } else if (currentAccountId.value) {
+          currentAccountId.value = ''
+          useStatusStore().resetState()
+          useBagStore().resetState()
+          useFarmStore().resetState()
         }
       }
     } catch (e) {

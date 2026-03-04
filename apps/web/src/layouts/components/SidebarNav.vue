@@ -24,7 +24,7 @@ const emit = defineEmits<{
       ]"
       @click="emit('menuClick', item.key)"
     >
-      <div class="shrink-0 transition-all duration-350 text-sm group-hover:scale-115" :class="item.icon" />
+      <div class="shrink-0 transition-all duration-350 text-lg group-hover:scale-115" :class="item.icon" />
       <span v-if="!collapsed" class="text-[14px] truncate">{{ item.label }}</span>
     </div>
   </nav>

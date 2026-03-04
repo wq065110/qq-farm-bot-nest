@@ -24,9 +24,13 @@ export class QrController {
       const ticket = result.ticket
       const uin = result.uin || ''
       const nickname = result.nickname || ''
-      const authCode = await this.qrLogin.getMiniProgramAuthCode(ticket!, '1112386029')
-      const avatar = uin ? `https://q1.qlogo.cn/g?b=qq&nk=${uin}&s=640` : ''
-      return { status: 'OK', code: authCode, uin, avatar, nickname }
+      try {
+        const authCode = await this.qrLogin.getMiniProgramAuthCode(ticket!, '1112386029')
+        const avatar = uin ? `https://q1.qlogo.cn/g?b=qq&nk=${uin}&s=640` : ''
+        return { status: 'OK', code: authCode, uin, avatar, nickname }
+      } catch (e: any) {
+        return { status: 'Error', error: e?.message || '获取登录码失败' }
+      }
     }
     if (result.status === 'Used')
       return { status: 'Used' }
