@@ -156,16 +156,31 @@ ADMIN_PASSWORD='你的强密码' pnpm dev:core
 
 ## Docker 部署
 
+项目包含两个服务：**Link**（游戏连接进程）和 **Core**（业务引擎 + Web 面板），通过 Docker Compose 统一编排。
+
 ```bash
-# 构建并后台启动
+# 构建并后台启动（Link + Core）
 docker compose up -d --build
 
 # 查看日志
 docker compose logs -f
 
+# 仅查看某个服务日志
+docker compose logs -f core
+docker compose logs -f link
+
 # 停止并移除容器
 docker compose down
 ```
+
+### 服务说明
+
+| 服务 | 容器名 | 端口 | 说明 |
+| ---- | ------ | ---- | ---- |
+| `link` | link | 9800（内部） | 游戏 WebSocket 长连接进程，Core 通过 TCP 连接 |
+| `core` | core | 3000（对外） | 业务逻辑 + Web API + 前端面板 |
+
+Core 通过环境变量 `LINK_HOST` 和 `LINK_PORT` 连接 Link 服务，在 Docker Compose 网络中已自动配置。
 
 ### 数据持久化
 
@@ -254,6 +269,8 @@ qq-farm-bot-nest/
 │           ├── stores/    # Pinia 状态管理
 │           ├── layouts/   # 布局与侧边栏
 │           └── views/     # 页面视图
+├── packages/
+│   └── constants/         # Core + Link 共享常量
 ├── docker-compose.yml
 ├── pnpm-workspace.yaml
 ├── turbo.json

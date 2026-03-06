@@ -8,8 +8,7 @@ RUN corepack enable
 COPY pnpm-workspace.yaml pnpm-lock.yaml package.json turbo.json ./
 
 # Copy project package.json files
-COPY apps/core/package.json ./apps/core/
-COPY apps/web/package.json ./apps/web/
+COPY apps/link/package.json ./apps/link/
 COPY packages/constants/package.json ./packages/constants/
 
 # Install all deps for build
@@ -17,12 +16,11 @@ RUN npm config set registry https://registry.npmmirror.com/
 RUN pnpm install --frozen-lockfile
 
 # Copy source code
-COPY apps/core ./apps/core
-COPY apps/web ./apps/web
+COPY apps/link ./apps/link
 COPY packages/constants ./packages/constants
 
-# Build web + core (NestJS)
-RUN pnpm turbo run build --filter=core --filter=web
+# Build constants + link
+RUN pnpm turbo run build --filter=link
 
 # ==========================================
 
@@ -37,19 +35,17 @@ ENV TZ=Asia/Shanghai
 COPY --from=builder /app/package.json /app/pnpm-lock.yaml /app/pnpm-workspace.yaml ./
 COPY --from=builder /app/node_modules ./node_modules
 
-# Copy core dist (含 assets) 与 package.json
-COPY --from=builder /app/apps/core/dist ./apps/core/dist
-COPY --from=builder /app/apps/core/package.json ./apps/core/
-
-# Copy web assets
-COPY --from=builder /app/apps/web/dist ./apps/web/dist
+# Copy link dist (including assets) and package.json
+COPY --from=builder /app/apps/link/dist ./apps/link/dist
+COPY --from=builder /app/apps/link/package.json ./apps/link/
+COPY --from=builder /app/apps/link/node_modules ./apps/link/node_modules
 
 # Copy constants dist
 COPY --from=builder /app/packages/constants/dist ./packages/constants/dist
 COPY --from=builder /app/packages/constants/package.json ./packages/constants/
 
-WORKDIR /app/apps/core
+WORKDIR /app/apps/link
 
-EXPOSE 3000
+EXPOSE 9800
 
 CMD ["node", "dist/main.js"]

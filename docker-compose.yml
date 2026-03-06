@@ -1,6 +1,18 @@
 services:
-  qq-farm-bot:
-    image: qq-farm-bot-ui-better
+  link:
+    image: qq-farm-link
+    build:
+      context: .
+      dockerfile: apps/link/Dockerfile
+    container_name: link
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Shanghai
+    expose:
+      - "9800"
+
+  core:
+    image: qq-farm-core
     build:
       context: .
       dockerfile: apps/core/Dockerfile
@@ -8,8 +20,12 @@ services:
     restart: unless-stopped
     environment:
       ADMIN_PASSWORD: admin
+      LINK_HOST: link
+      LINK_PORT: 9800
       TZ: Asia/Shanghai
     ports:
       - "3000:3000"
     volumes:
       - ./data:/app/core/data
+    depends_on:
+      - link
