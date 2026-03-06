@@ -105,7 +105,7 @@ export class GameLogService {
     if (!accountId)
       return
     try {
-      this.db.delete(schema.logs).where(eq(schema.logs.accountId, accountId)).run()
+      this.db.delete(schema.gameLogs).where(eq(schema.gameLogs.accountId, accountId)).run()
       this.db.delete(schema.accountLogs).where(eq(schema.accountLogs.accountId, accountId)).run()
     } catch (e: any) {
       this.logger.warn(`删除账号日志失败: ${e?.message}`)
@@ -117,7 +117,7 @@ export class GameLogService {
 
   private async persistLog(entry: any) {
     try {
-      await this.db.insert(schema.logs).values({
+      await this.db.insert(schema.gameLogs).values({
         accountId: entry?.accountId || '',
         accountName: entry?.accountName || '',
         tag: entry?.tag || '',
@@ -136,9 +136,9 @@ export class GameLogService {
   cleanupOldLogs() {
     try {
       const logsResult = this.db.run(sql`
-        DELETE FROM logs WHERE id IN (
-          SELECT l.id FROM logs l
-          INNER JOIN (SELECT account_id, MAX(created_at) AS last_created_at FROM logs GROUP BY account_id) g
+        DELETE FROM game_logs WHERE id IN (
+          SELECT l.id FROM game_logs l
+          INNER JOIN (SELECT account_id, MAX(created_at) AS last_created_at FROM game_logs GROUP BY account_id) g
           ON l.account_id = g.account_id
           WHERE l.created_at < g.last_created_at - ${RETENTION_MS}
         )

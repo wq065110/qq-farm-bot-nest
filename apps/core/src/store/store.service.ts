@@ -28,17 +28,17 @@ export class StoreService {
   // ========== Global Config Helpers ==========
 
   private getGlobalValue<T>(key: string, fallback: T): T {
-    const row = this.db.select().from(schema.globalConfig).where(eq(schema.globalConfig.key, key)).get()
+    const row = this.db.select().from(schema.globalConfigs).where(eq(schema.globalConfigs.key, key)).get()
     return row?.value !== undefined && row?.value !== null ? (row.value as T) : fallback
   }
 
   private setGlobalValue(key: string, value: any): void {
     const now = Date.now()
-    const existing = this.db.select().from(schema.globalConfig).where(eq(schema.globalConfig.key, key)).get()
+    const existing = this.db.select().from(schema.globalConfigs).where(eq(schema.globalConfigs.key, key)).get()
     if (existing) {
-      this.db.update(schema.globalConfig).set({ value, updatedAt: now }).where(eq(schema.globalConfig.key, key)).run()
+      this.db.update(schema.globalConfigs).set({ value, updatedAt: now }).where(eq(schema.globalConfigs.key, key)).run()
     } else {
-      this.db.insert(schema.globalConfig).values({ key, value, createdAt: now, updatedAt: now }).run()
+      this.db.insert(schema.globalConfigs).values({ key, value, createdAt: now, updatedAt: now }).run()
     }
   }
 

@@ -4,10 +4,10 @@ import process from 'node:process'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { StoreService } from '../store/store.service'
 import { AccountRunner } from './account-runner'
-import { LinkClient } from './link-client'
 import { GameConfigService } from './game-config.service'
 import { GameLogService } from './game-log.service'
 import { GamePushService } from './game-push.service'
+import { LinkClient } from './link-client'
 import { ProtoService } from './proto.service'
 
 interface RunningAccount {

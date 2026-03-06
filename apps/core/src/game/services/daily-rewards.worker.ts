@@ -84,7 +84,7 @@ export class DailyRewardsWorker {
   /** 将协议/编码类错误转为友好提示，避免直接展示 undefined.encode 等 */
   private friendlyErrorMessage(msg: string, fallback: string): string {
     const s = String(msg ?? '')
-    if (/undefined|\.encode|\.decode|proto|protobuf/i.test(s))
+    if (/undefined|\.encode|\.decode|proto/i.test(s))
       return fallback
     return s
   }

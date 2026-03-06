@@ -22,18 +22,18 @@ export class AuthService {
   private async getAdminPasswordHash(): Promise<string> {
     const row = await this.db
       .select()
-      .from(schema.globalConfig)
-      .where(eq(schema.globalConfig.key, 'adminPasswordHash'))
+      .from(schema.globalConfigs)
+      .where(eq(schema.globalConfigs.key, 'adminPasswordHash'))
       .get()
     return row?.value ? String(row.value) : ''
   }
 
   private async setAdminPasswordHash(hash: string): Promise<void> {
     await this.db
-      .insert(schema.globalConfig)
+      .insert(schema.globalConfigs)
       .values({ key: 'adminPasswordHash', value: hash as any })
       .onConflictDoUpdate({
-        target: schema.globalConfig.key,
+        target: schema.globalConfigs.key,
         set: { value: hash as any }
       })
   }
