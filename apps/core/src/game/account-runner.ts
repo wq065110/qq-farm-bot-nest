@@ -401,7 +401,7 @@ export class AccountRunner {
         this.onWsError(data)
         break
       case 'reconnecting':
-        this.log(`WS 断开，正在重连 (${data?.attempt}/${data?.maxAttempts})...`)
+        this.log(`WS 断开，正在重连 (${data?.attempt}/${data?.maxAttempts})...`, 'reconnecting')
         break
       case 'disconnected':
         if (this.loginReady) {

@@ -68,33 +68,26 @@ export const useSettingStore = defineStore('setting', () => {
     ui: {},
     offlineReminder: { ...DEFAULT_OFFLINE_REMINDER }
   })
-  const loading = ref(false)
 
   async function fetchSettings(accountId: string) {
     if (!accountId)
       return
-    loading.value = true
-    try {
-      const d = await settingsApi.fetchSettings()
-      if (d) {
-        settings.value.plantingStrategy = d.strategy || 'preferred'
-        settings.value.preferredSeedId = d.preferredSeed || 0
-        settings.value.intervals = d.intervals || {}
-        settings.value.friendQuietHours = d.friendQuietHours || { ...DEFAULT_FRIEND_QUIET_HOURS }
-        settings.value.stealCropBlacklist = Array.isArray(d.stealCropBlacklist) ? d.stealCropBlacklist : []
-        settings.value.automation = d.automation || {}
-        settings.value.ui = d.ui || {}
-        settings.value.offlineReminder = d.offlineReminder || { ...DEFAULT_OFFLINE_REMINDER }
-      }
-    } finally {
-      loading.value = false
+    const d = await settingsApi.fetchSettings()
+    if (d) {
+      settings.value.plantingStrategy = d.strategy || 'preferred'
+      settings.value.preferredSeedId = d.preferredSeed || 0
+      settings.value.intervals = d.intervals || {}
+      settings.value.friendQuietHours = d.friendQuietHours || { ...DEFAULT_FRIEND_QUIET_HOURS }
+      settings.value.stealCropBlacklist = Array.isArray(d.stealCropBlacklist) ? d.stealCropBlacklist : []
+      settings.value.automation = d.automation || {}
+      settings.value.ui = d.ui || {}
+      settings.value.offlineReminder = d.offlineReminder || { ...DEFAULT_OFFLINE_REMINDER }
     }
   }
 
   async function saveSettings(accountId: string, newSettings: any) {
     if (!accountId)
       return { ok: false, error: '未选择账号' }
-    loading.value = true
     try {
       await settingsApi.saveSettings(newSettings)
 
@@ -104,37 +97,31 @@ export const useSettingStore = defineStore('setting', () => {
 
       await fetchSettings(accountId)
       return { ok: true }
-    } finally {
-      loading.value = false
+    } catch (e: any) {
+      return { ok: false, error: e.message || '保存失败' }
     }
   }
 
   async function saveOfflineConfig(config: OfflineConfig) {
-    loading.value = true
     try {
       await settingsApi.saveOfflineReminder(config)
       settings.value.offlineReminder = config
       return { ok: true }
     } catch (e: any) {
       return { ok: false, error: e.message || '保存失败' }
-    } finally {
-      loading.value = false
     }
   }
 
   async function changeAdminPassword(oldPassword: string, newPassword: string) {
-    loading.value = true
     try {
       await settingsApi.changePassword(oldPassword, newPassword)
       return { ok: true }
     } catch (e: any) {
       return { ok: false, error: e.message || '修改失败' }
-    } finally {
-      loading.value = false
     }
   }
 
-  return { settings, loading, fetchSettings, saveSettings, saveOfflineConfig, changeAdminPassword }
+  return { settings, fetchSettings, saveSettings, saveOfflineConfig, changeAdminPassword }
 }, {
   persist: {
     pick: ['settings'],

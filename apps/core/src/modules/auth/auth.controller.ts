@@ -1,5 +1,5 @@
 import process from 'node:process'
-import { Body, Controller, Get, Post } from '@nestjs/common'
+import { Body, Controller, Get, HttpCode, HttpStatus, Post } from '@nestjs/common'
 import { Public } from '../../common/decorators/public.decorator'
 import { AuthService } from './auth.service'
 
@@ -9,6 +9,7 @@ export class AuthController {
 
   @Public()
   @Post('login')
+  @HttpCode(HttpStatus.OK)
   async login(@Body('password') password: string) {
     return this.authService.login(password)
   }
@@ -19,6 +20,7 @@ export class AuthController {
   }
 
   @Post('admin/change-password')
+  @HttpCode(HttpStatus.OK)
   async changePassword(
     @Body('oldPassword') oldPassword: string,
     @Body('newPassword') newPassword: string
@@ -28,6 +30,7 @@ export class AuthController {
   }
 
   @Post('logout')
+  @HttpCode(HttpStatus.OK)
   async logout() {
     return null
   }

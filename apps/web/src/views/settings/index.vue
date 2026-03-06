@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import { computed, ref } from 'vue'
-import ConfirmModal from '@/components/ConfirmModal.vue'
 import { useAccountRefresh } from '@/composables/useAccountRefresh'
 import { useAccountStore, useFarmStore, useSettingStore } from '@/stores'
+import message from '@/utils/message'
 import AccountInfoCard from './components/AccountInfoCard.vue'
 import OfflineReminderCard from './components/OfflineReminderCard.vue'
 import PasswordCard from './components/PasswordCard.vue'
@@ -14,31 +14,13 @@ const settingStore = useSettingStore()
 const accountStore = useAccountStore()
 const farmStore = useFarmStore()
 
-const { settings, loading } = storeToRefs(settingStore)
+const { settings } = storeToRefs(settingStore)
 const { currentAccountId, currentAccount } = storeToRefs(accountStore)
 const { seeds } = storeToRefs(farmStore)
 
 const saving = ref(false)
 const passwordSaving = ref(false)
 const offlineSaving = ref(false)
-
-const modalVisible = ref(false)
-const modalConfig = ref({
-  title: '',
-  message: '',
-  type: 'primary' as 'primary' | 'danger',
-  isAlert: true
-})
-
-function showAlert(message: string, type: 'primary' | 'danger' = 'primary') {
-  modalConfig.value = {
-    title: type === 'danger' ? '错误' : '提示',
-    message,
-    type,
-    isAlert: true
-  }
-  modalVisible.value = true
-}
 
 const currentAccountName = computed(() => {
   const acc = currentAccount.value
@@ -122,9 +104,9 @@ async function saveAccountSettings() {
   try {
     const res = await settingStore.saveSettings(currentAccountId.value, localSettings.value)
     if (res.ok) {
-      showAlert('账号设置已保存')
+      message.success('账号设置已保存')
     } else {
-      showAlert(`保存失败: ${res.error}`, 'danger')
+      message.error(`保存失败: ${res.error}`)
     }
   } finally {
     saving.value = false
@@ -133,15 +115,15 @@ async function saveAccountSettings() {
 
 async function handleChangePassword() {
   if (!passwordForm.value.old || !passwordForm.value.new) {
-    showAlert('请填写完整', 'danger')
+    message.error('请填写完整')
     return
   }
   if (passwordForm.value.new !== passwordForm.value.confirm) {
-    showAlert('两次密码输入不一致', 'danger')
+    message.error('两次密码输入不一致')
     return
   }
   if (passwordForm.value.new.length < 4) {
-    showAlert('密码长度至少4位', 'danger')
+    message.error('密码长度至少4位')
     return
   }
 
@@ -150,10 +132,10 @@ async function handleChangePassword() {
     const res = await settingStore.changeAdminPassword(passwordForm.value.old, passwordForm.value.new)
 
     if (res.ok) {
-      showAlert('密码修改成功')
+      message.success('密码修改成功')
       passwordForm.value = { old: '', new: '', confirm: '' }
     } else {
-      showAlert(`修改失败: ${res.error || '未知错误'}`, 'danger')
+      message.error(`修改失败: ${res.error || '未知错误'}`)
     }
   } finally {
     passwordSaving.value = false
@@ -166,9 +148,9 @@ async function handleSaveOffline() {
     const res = await settingStore.saveOfflineConfig(localOffline.value)
 
     if (res.ok) {
-      showAlert('下线提醒设置已保存')
+      message.success('下线提醒设置已保存')
     } else {
-      showAlert(`保存失败: ${res.error || '未知错误'}`, 'danger')
+      message.error(`保存失败: ${res.error || '未知错误'}`)
     }
   } finally {
     offlineSaving.value = false
@@ -177,7 +159,7 @@ async function handleSaveOffline() {
 </script>
 
 <template>
-  <a-spin :spinning="loading" class="h-full">
+  <div class="h-full">
     <div class="flex flex-col gap-3 h-full">
       <AccountInfoCard
         :account-id="currentAccountId"
@@ -208,16 +190,5 @@ async function handleSaveOffline() {
         />
       </div>
     </div>
-
-    <ConfirmModal
-      :show="modalVisible"
-      :title="modalConfig.title"
-      :message="modalConfig.message"
-      :type="modalConfig.type"
-      :is-alert="modalConfig.isAlert"
-      confirm-text="知道了"
-      @confirm="modalVisible = false"
-      @cancel="modalVisible = false"
-    />
-  </a-spin>
+  </div>
 </template>

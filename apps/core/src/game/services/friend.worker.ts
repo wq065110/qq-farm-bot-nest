@@ -332,6 +332,7 @@ export class FriendWorker {
           gid: toNum(f.gid),
           name: f.remark || f.name || `GID:${toNum(f.gid)}`,
           avatarUrl: String(f.avatar_url || '').trim(),
+          level: toNum(f.level),
           plant: f.plant ? { stealNum: toNum(f.plant.steal_plant_num), dryNum: toNum(f.plant.dry_num), weedNum: toNum(f.plant.weed_num), insectNum: toNum(f.plant.insect_num) } : null
         }))
         .sort((a: any, b: any) => {
@@ -347,6 +348,15 @@ export class FriendWorker {
       const lands = enterReply.lands || []
       const analyzed = this.analyzeFriendLands(lands, this.client.userState.gid)
       await this.leaveFriendFarm(friendGid)
+
+      if (analyzed.stealable.length > 0) {
+        const pre = await this.checkCanOperateRemote(friendGid, 10008)
+        if (!pre.canOperate) {
+          analyzed.stealable = []
+          analyzed.stealableInfo = []
+        }
+      }
+
       const nowSec = getServerTimeSec()
       const landsList = lands.map((land: any) => {
         const id = toNum(land.id)

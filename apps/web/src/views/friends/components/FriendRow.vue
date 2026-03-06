@@ -103,19 +103,25 @@ function handleToggleBlacklist(e: Event) {
       <div class="flex-1 min-w-0">
         <div class="flex gap-2 items-center">
           <span class="font-semibold truncate a-color-text">{{ friend.name }}</span>
+          <span
+            v-if="friend.level"
+            class="text-[10px] font-medium px-1 py-px inline-flex shrink-0 transition-colors duration-200 items-center a-color-primary a-bg-primary-bg rounded"
+          >
+            Lv.{{ friend.level }}
+          </span>
           <a-tag v-if="blacklisted" size="small" color="default">
             屏蔽
           </a-tag>
         </div>
-        <div class="mt-0.5 flex flex-wrap gap-1.5 items-center">
+        <div class="mt-0.5 flex flex-wrap gap-1 items-center">
           <template v-if="getFriendStatusTags(friend).length">
             <div
               v-for="tag in getFriendStatusTags(friend)"
               :key="tag.label"
-              class="px-1.5 py-0.5 flex gap-1 items-center text-xs rounded-md"
+              class="text-[10px] px-1 py-px flex gap-0.5 items-center rounded"
               :class="tag.class"
             >
-              <div class="text-sm" :class="tag.icon" />
+              <div class="text-xs" :class="tag.icon" />
               {{ tag.label }}
             </div>
           </template>

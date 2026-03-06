@@ -12,18 +12,12 @@ export interface ApiResponse<T> {
 @Injectable()
 export class ResponseInterceptor<T> implements NestInterceptor<T, ApiResponse<T>> {
   intercept(context: ExecutionContext, next: CallHandler): Observable<ApiResponse<T>> {
-    const httpContext = context.switchToHttp()
-    const response = httpContext.getResponse()
-
     return next.handle().pipe(
-      map((data) => {
-        const statusCode = response.statusCode || 200
-        return {
-          code: statusCode,
-          message: 'ok',
-          data: data ?? null
-        }
-      })
+      map((data) => ({
+        code: 200,
+        message: '操作成功',
+        data: data ?? null
+      }))
     )
   }
 }

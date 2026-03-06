@@ -11,6 +11,7 @@ export const EVENTS = [
   { label: '所有事件', value: '' },
   { label: '连接/登录', value: 'connect' },
   { label: '登录成功', value: 'login' },
+  { label: '重连中', value: 'reconnecting' },
   { label: '被踢下线', value: 'kickout' },
   { label: '昵称同步', value: 'nick_sync' },
   { label: '调度异常', value: 'schedule_error' },

@@ -7,8 +7,12 @@ import EmptyState from '@/components/EmptyState.vue'
 import { useAccountRefresh } from '@/composables/useAccountRefresh'
 import { useFriendLandsWithCountdown } from '@/composables/useFriendLandsWithCountdown'
 import { useAccountStore, useFriendStore, useStatusStore } from '@/stores'
+import message from '@/utils/message'
 import FriendRow from './components/FriendRow.vue'
 import FriendToolbar from './components/FriendToolbar.vue'
+import { OP_BUTTONS } from './constants'
+
+const OP_TYPE_LABEL: Record<string, string> = Object.fromEntries(OP_BUTTONS.map(op => [op.type, op.label]))
 
 const accountStore = useAccountStore()
 const friendStore = useFriendStore()
@@ -21,6 +25,7 @@ const showConfirm = ref(false)
 const confirmMessage = ref('')
 const confirmLoading = ref(false)
 const pendingAction = ref<(() => Promise<void>) | null>(null)
+const pendingOpType = ref<string | null>(null)
 const avatarErrorKeys = ref<Set<string>>(new Set())
 const searchQuery = ref('')
 
@@ -38,9 +43,10 @@ const filteredFriends = computed(() => {
 
 const expandedFriends = ref<Set<string>>(new Set())
 
-function confirmAction(msg: string, action: () => Promise<void>) {
+function confirmAction(msg: string, action: () => Promise<void>, opType?: string) {
   confirmMessage.value = msg
   pendingAction.value = action
+  pendingOpType.value = opType ?? null
   showConfirm.value = true
 }
 
@@ -49,10 +55,15 @@ async function onConfirm() {
     try {
       confirmLoading.value = true
       await pendingAction.value()
-      pendingAction.value = null
-      showConfirm.value = false
+      const label = pendingOpType.value ? OP_TYPE_LABEL[pendingOpType.value] || '操作' : '操作'
+      message.success(`${label}成功`)
+    } catch (e: any) {
+      message.error(e?.message || '操作失败')
     } finally {
       confirmLoading.value = false
+      pendingAction.value = null
+      pendingOpType.value = null
+      showConfirm.value = false
     }
   } else {
     showConfirm.value = false
@@ -109,7 +120,7 @@ async function handleOp(friendId: string, type: string, e: Event) {
     return
   confirmAction('确定执行此操作吗?', async () => {
     await friendStore.operate(currentAccountId.value!, friendId, type)
-  })
+  }, type)
 }
 
 async function handleToggleBlacklist(friend: any, e: Event) {
@@ -118,7 +129,13 @@ async function handleToggleBlacklist(friend: any, e: Event) {
     return
   if (!currentAccount.value?.running)
     return
-  await friendStore.toggleBlacklist(currentAccountId.value, Number(friend.gid))
+  try {
+    const wasBlacklisted = blacklist.value.includes(Number(friend.gid))
+    await friendStore.toggleBlacklist(currentAccountId.value, Number(friend.gid))
+    message.success(wasBlacklisted ? '已移出黑名单' : '已加入黑名单')
+  } catch (err: any) {
+    message.error(err?.message || '操作失败')
+  }
 }
 
 function handleAvatarError(key: string) {

@@ -55,6 +55,8 @@ export class ConnectionManagerService {
 
     client.on('close', (_code: number) => {
       this.logger.log(`账号 ${accountId} 连接关闭, code=${_code}`)
+      client.destroy()
+      this.clients.delete(accountId)
       this.emitEvent(accountId, 'disconnected', { code: _code })
     })
 

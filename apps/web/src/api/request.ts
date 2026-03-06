@@ -1,7 +1,7 @@
 import type { AxiosRequestConfig } from 'axios'
 import axios from 'axios'
 import { useAccountStore, useUserStore } from '@/stores'
-import notify from '@/utils/notify'
+import message from '@/utils/message'
 
 const IGNORABLE_ERRORS = ['账号未运行', 'API Timeout'] as const
 
@@ -31,18 +31,24 @@ function unwrapResponse(response: any) {
   const isNest = body && typeof body.code === 'number'
   if (!isNest)
     return response
-  if (body.code >= 200 && body.code < 300)
+  if (body.code >= 200 && body.code < 300) {
+    if (body.code !== 200 && body.message && body.message !== 'ok')
+      message.warning(body.message)
     return body.data as any
+  }
   return Promise.reject(new Error(body.message || '请求失败'))
 }
 
-function pickErrorNotify(error: any): string | null {
-  const { response, request, message } = error
+type NotifyResult = { msg: string, type: 'error' | 'warning' } | null
+
+function pickErrorNotify(error: any): NotifyResult {
+  const { response, request, message: errorMsg } = error
 
   if (!response) {
-    return request
+    const msg = request
       ? '网络错误，无法连接到服务器'
-      : `错误: ${message}`
+      : `错误: ${errorMsg}`
+    return { msg, type: 'error' }
   }
 
   const { status, statusText, data } = response
@@ -50,20 +56,18 @@ function pickErrorNotify(error: any): string | null {
   if (status === 401)
     return null
 
-  if (data?.message)
-    return `${data.message}`
+  const text = data?.message ?? data?.error ?? errorMsg
+  const displayMsg = data?.message
+    ? `${data.message}`
+    : (text ? `请求失败: ${text}` : `请求失败: ${status} ${statusText}`)
 
-  const msg = data?.error || message
-
-  if (status >= 500 && IGNORABLE_ERRORS.includes(msg))
+  if (status >= 500 && IGNORABLE_ERRORS.includes(text))
     return null
 
   if (status >= 500)
-    return `服务器错误: ${status} ${statusText}`
+    return { msg: `服务器错误: ${status} ${statusText}`, type: 'error' }
 
-  return msg
-    ? `请求失败: ${msg}`
-    : `请求失败: ${status} ${statusText}`
+  return { msg: displayMsg, type: 'warning' }
 }
 
 api.interceptors.response.use(
@@ -72,8 +76,12 @@ api.interceptors.response.use(
     const backendMsg = error.response?.data?.message || error.response?.data?.error
     if (backendMsg)
       error.message = backendMsg
-    const msg = pickErrorNotify(error)
-    error.response?.status === 401 ? handleUnauthorized() : msg && notify.error(msg)
+    const result = pickErrorNotify(error)
+    if (error.response?.status === 401) {
+      handleUnauthorized()
+    } else if (result) {
+      message[result.type](result.msg)
+    }
     return Promise.reject(error)
   }
 )
@@ -83,7 +91,7 @@ function handleUnauthorized() {
     return
   useUserStore().clearToken()
   window.location.href = '/login'
-  notify.warning('登录已过期，请重新登录')
+  message.warning('登录已过期，请重新登录')
 }
 
 interface ApiInstance {
