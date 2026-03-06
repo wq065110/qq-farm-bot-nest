@@ -126,7 +126,7 @@ export class AccountRunner {
         const meta = await this.linkClient.getAccountStatus(this.accountId)
         if (meta?.connected && meta.userState) {
           us = meta.userState
-          this.log('复用已有连接', 'connect')
+          this.log('恢复游戏连接', 'connect')
         }
       } catch {}
       if (!us) {

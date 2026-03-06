@@ -103,7 +103,7 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
   private async autoStartAccounts() {
     const accounts = this.store.getAllAccounts()
     for (const acc of accounts) {
-      if (acc.code)
+      if (acc.code && acc.running)
         this.startAccount(acc.id)
     }
   }
@@ -162,10 +162,12 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
       wsError: null
     }
     this.runners.set(id, record)
+    this.store.setAccountRunning(id, true)
 
     runner.start({ code: acc.code, platform: acc.platform || 'qq' }).catch((e) => {
       this.logger.error(`账号 ${acc.name} 启动失败: ${e?.message}`)
       this.runners.delete(id)
+      this.store.setAccountRunning(id, false)
     })
 
     this.gameLog.addAccountLog('start', `启动账号: ${acc.name}`, id, acc.name || '')
@@ -176,9 +178,21 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
     const record = this.runners.get(accountId)
     if (!record)
       return false
+    const name = record.name
+    const lastStatus = record.status
     await record.runner.stop()
     this.runners.delete(accountId)
-    this.gameLog.addAccountLog('stop', `停止账号: ${record.name}`, accountId, record.name)
+    this.store.setAccountRunning(accountId, false)
+
+    const stoppedStatus = {
+      ...(lastStatus || {}),
+      accountId,
+      accountName: name,
+      connection: { connected: false }
+    }
+    this.onStatusSyncCallback?.(accountId, stoppedStatus)
+
+    this.gameLog.addAccountLog('stop', `停止账号: ${name}`, accountId, name)
     return true
   }
 

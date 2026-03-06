@@ -142,12 +142,9 @@ export function useSidebarData() {
       return { primary: '选择账号', secondary: '' }
     }
 
-    const liveName = status.value?.status?.name
-    const isOnline = liveName && liveName !== '未登录'
-
     return {
-      primary: isOnline ? liveName : (acc.nick),
-      secondary: isOnline && acc.name ? acc.name : ''
+      primary: acc?.nick || '',
+      secondary: acc?.name || ''
     }
   })
 
