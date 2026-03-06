@@ -1,10 +1,10 @@
 export {
-  GAME_SERVER_URL,
   CLIENT_VERSION,
   DEFAULT_OS,
+  GAME_SERVER_URL,
   HEARTBEAT_INTERVAL_MS,
-  TCP_PORT,
   TCP_HOST,
+  TCP_PORT
 } from '@qq-farm/constants'
 
 export const DEFAULT_FARM_INTERVAL_MS = 2_000

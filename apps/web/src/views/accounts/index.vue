@@ -107,14 +107,14 @@ function handleSaved() {
               />
               {{ acc.running ? '运行中' : '已停止' }}
             </div>
-            <span class="min-w-0 opacity-60 text-xs truncate">UIN: {{ acc.uin }}</span>
+            <span class="opacity-60 min-w-0 truncate text-xs">UIN: {{ acc.uin }}</span>
           </div>
 
           <!-- Body -->
           <div class="px-4 py-3">
             <div class="flex gap-3 items-center">
               <QqAvatar :src="acc.avatar" :uin="acc.uin" :size="44" ring :platform="acc.platform" />
-              <div class="flex flex-1 flex-col gap-1.5 min-w-0">
+              <div class="flex flex-1 flex-col gap-0.5 min-w-0">
                 <div class="font-bold truncate a-color-text">
                   {{ acc.nick }}
                 </div>

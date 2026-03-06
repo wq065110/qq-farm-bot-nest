@@ -8,10 +8,10 @@ const props = defineProps<{
 const land = computed(() => props.land)
 
 const LAND_LEVEL_CLASS: Record<number, string> = {
-  1: 'bg-yellow-1/80 border-yellow-2',
-  2: 'bg-red-1/80 border-red-2',
-  3: 'bg-slate-1 border-slate-300',
-  4: 'bg-amber-1/80 border-amber-300'
+  1: 'land-yellow',
+  2: 'land-red',
+  3: 'land-black',
+  4: 'land-gold'
 }
 
 const RING_HARVESTABLE = 'ring-2 ring-yellow-5 ring-offset-1'
@@ -110,3 +110,49 @@ function getLandTypeName(level: number) {
     </div>
   </a-card>
 </template>
+
+<style scoped>
+/* 土地等级：边框颜色与背景同色，仅提高透明度以略突出 */
+
+/* 1 黄土地 - 偏柠檬黄、略冷 */
+.land-yellow {
+  background-color: rgb(254 252 232 / 72%);
+  border-color: rgb(254 252 232 / 100%);
+}
+
+/* 2 红土地 */
+.land-red {
+  background-color: rgb(255 237 243 / 70%);
+  border-color: rgb(255 237 243 / 100%);
+}
+
+/* 3 黑土地 */
+.land-black {
+  background-color: rgb(241 245 249 / 75%);
+  border-color: rgb(241 245 249 / 100%);
+}
+
+/* 4 金土地 - 明亮金灿灿，略深一档 */
+.land-gold {
+  background-color: rgb(255 253 156 / 50%);
+  border-color: rgb(255 253 156 / 100%);
+}
+
+/* ========== 暗色模式：边框与背景同色，更高透明度 ========== */
+:root.dark .land-yellow {
+  background-color: rgb(253 230 138 / 5%);
+  border-color: rgb(252 211 77 / 15%);
+}
+:root.dark .land-red {
+  background-color: rgb(251 113 133 / 10%);
+  border-color: rgb(251 113 133 / 20%);
+}
+:root.dark .land-black {
+  background-color: rgb(148 163 184 / 10%);
+  border-color: rgb(148 163 184 / 20%);
+}
+:root.dark .land-gold {
+  background-color: rgb(250 204 21 / 10%);
+  border-color: rgb(250 204 21 / 20%);
+}
+</style>

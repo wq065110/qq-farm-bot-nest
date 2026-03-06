@@ -88,11 +88,11 @@ function syncLocalSettings() {
 }
 
 async function loadData() {
-  syncLocalSettings()
   if (!currentAccountId.value)
     return
   await settingStore.fetchSettings(currentAccountId.value)
   await farmStore.fetchSeeds(currentAccountId.value)
+  syncLocalSettings()
 }
 
 useAccountRefresh(loadData)
