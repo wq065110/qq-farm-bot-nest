@@ -107,7 +107,7 @@ export class AccountRunner {
     this.warehouse.onLog = this.forwardLog
     this.farm = new FarmWorker(this.accountId, this.transport, this.gameConfig, this.store, this.stats, this.analytics)
     this.farm.onLog = this.forwardLog
-    this.friend = new FriendWorker(this.accountId, this.transport, this.gameConfig, this.store, this.stats, this.farm, this.warehouse)
+    this.friend = new FriendWorker(this.accountId, this.transport, this.gameConfig, this.store, this.stats, this.farm, this.warehouse, config.platform)
     this.friend.onLog = this.forwardLog
     this.task = new TaskWorker(this.accountId, this.transport, this.gameConfig, this.store, this.stats, this.warehouse)
     this.task.onLog = this.forwardLog

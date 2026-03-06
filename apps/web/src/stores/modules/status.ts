@@ -33,6 +33,7 @@ export const useStatusStore = defineStore('status', () => {
   const realtimeConnected = ref(false)
   const realtimeLogsEnabled = ref(true)
   const currentRealtimeAccountId = ref('')
+  const subscribedResolvedAccountId = ref('')
 
   let socket: Socket | null = null
 
@@ -72,6 +73,10 @@ export const useStatusStore = defineStore('status', () => {
 
   function handleRealtimeStatus(payload: any) {
     const body = (payload && typeof payload === 'object') ? payload : {}
+    const incomingId = String(body.accountId || '').trim()
+    const resolvedId = subscribedResolvedAccountId.value
+    if (resolvedId && incomingId && incomingId !== resolvedId)
+      return
     if (body.status && typeof body.status === 'object') {
       status.value = normalizeStatusPayload(body.status)
       error.value = ''
@@ -133,6 +138,12 @@ export const useStatusStore = defineStore('status', () => {
       console.error('[realtime] 连接失败:', err.message)
     })
 
+    function handleSubscribed(payload: any) {
+      const id = (payload && typeof payload === 'object' && payload.accountId === 'all') ? '' : String((payload && payload.accountId) || '').trim()
+      subscribedResolvedAccountId.value = id
+    }
+    socket.on('subscribed', handleSubscribed)
+
     socket.on('status:update', handleRealtimeStatus)
     socket.on('log:new', handleRealtimeLog)
     socket.on('account-log:new', handleRealtimeAccountLog)
@@ -142,7 +153,11 @@ export const useStatusStore = defineStore('status', () => {
   }
 
   function connectRealtime(accountId: string) {
-    currentRealtimeAccountId.value = String(accountId || '').trim()
+    const id = String(accountId || '').trim()
+    if (!id)
+      return
+    currentRealtimeAccountId.value = id
+    subscribedResolvedAccountId.value = ''
     const token = useUserStore().adminToken
     if (!token)
       return
@@ -150,11 +165,11 @@ export const useStatusStore = defineStore('status', () => {
     const client = ensureRealtimeSocket()
     client.auth = {
       token,
-      accountId: currentRealtimeAccountId.value || 'all'
+      accountId: currentRealtimeAccountId.value
     }
 
     if (client.connected) {
-      client.emit('subscribe', { accountId: currentRealtimeAccountId.value || 'all' })
+      client.emit('subscribe', { accountId: currentRealtimeAccountId.value })
       return
     }
     client.connect()
@@ -166,6 +181,7 @@ export const useStatusStore = defineStore('status', () => {
     socket.off('connect')
     socket.off('disconnect')
     socket.off('connect_error')
+    socket.off('subscribed')
     socket.off('status:update', handleRealtimeStatus)
     socket.off('log:new', handleRealtimeLog)
     socket.off('account-log:new', handleRealtimeAccountLog)

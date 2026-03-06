@@ -89,9 +89,10 @@ export function useSidebarData() {
   // Watch account changes
   watch(
     () => currentAccount.value?.uin || '',
-    () => {
-      const accountRef = currentAccount.value?.uin
-      statusStore.connectRealtime(String(accountRef || ''))
+    (newUin) => {
+      if (!newUin)
+        return
+      statusStore.connectRealtime(String(newUin))
       refreshStatusFallback()
     },
     { immediate: true }
