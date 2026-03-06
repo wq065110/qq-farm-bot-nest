@@ -1,5 +1,6 @@
 packages:
   - apps/*
+  - packages/*
 
 overrides:
   '@babel/traverse': '7.26.10'

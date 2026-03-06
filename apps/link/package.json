@@ -9,6 +9,7 @@
     "lint": "eslint . --fix"
   },
   "dependencies": {
+    "@qq-farm/constants": "workspace:*",
     "@nestjs/common": "^11.1.15",
     "@nestjs/core": "^11.1.15",
     "long": "^5.3.2",

@@ -1,7 +1,11 @@
-export const GAME_SERVER_URL = 'wss://gate-obt.nqf.qq.com/prod/ws'
-export const CLIENT_VERSION = '1.6.0.14_20251224'
-export const DEFAULT_OS = 'iOS'
-export const HEARTBEAT_INTERVAL_MS = 25_000
+export {
+  GAME_SERVER_URL,
+  CLIENT_VERSION,
+  DEFAULT_OS,
+  HEARTBEAT_INTERVAL_MS,
+  TCP_PORT,
+  TCP_HOST,
+} from '@qq-farm/constants'
 
 export const DEFAULT_FARM_INTERVAL_MS = 2_000
 export const DEFAULT_FRIEND_INTERVAL_MS = 10_000
@@ -31,28 +35,6 @@ export type PlantingStrategy = typeof ALLOWED_PLANTING_STRATEGIES[number]
 
 export const ALLOWED_FERTILIZER_MODES = ['both', 'normal', 'organic', 'none'] as const
 export type FertilizerMode = typeof ALLOWED_FERTILIZER_MODES[number]
-
-export const PUSHOO_CHANNELS = new Set([
-  'webhook',
-  'qmsg',
-  'serverchan',
-  'pushplus',
-  'pushplushxtrip',
-  'dingtalk',
-  'wecom',
-  'bark',
-  'gocqhttp',
-  'onebot',
-  'atri',
-  'pushdeer',
-  'igot',
-  'telegram',
-  'feishu',
-  'ifttt',
-  'wecombot',
-  'discord',
-  'wxpusher'
-])
 
 export interface AutomationConfig {
   farm: boolean
@@ -169,6 +151,28 @@ export const DEFAULT_ACCOUNT_CONFIG: AccountConfigSnapshot = {
   friendBlacklist: [],
   stealCropBlacklist: []
 }
+
+export const PUSHOO_CHANNELS = new Set([
+  'webhook',
+  'qmsg',
+  'serverchan',
+  'pushplus',
+  'pushplushxtrip',
+  'dingtalk',
+  'wecom',
+  'bark',
+  'gocqhttp',
+  'onebot',
+  'atri',
+  'pushdeer',
+  'igot',
+  'telegram',
+  'feishu',
+  'ifttt',
+  'wecombot',
+  'discord',
+  'wxpusher'
+])
 
 export const OP_TYPE_NAMES: Record<number, string> = {
   10001: '收获',

@@ -1,20 +1,28 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { settingsApi } from '@/api'
 import { DEFAULT_FRIEND_QUIET_HOURS, DEFAULT_OFFLINE_REMINDER } from '../constants'
+import { settingsApi } from '@/api'
 
 export interface AutomationConfig {
   farm?: boolean
   farm_push?: boolean
   land_upgrade?: boolean
   friend?: boolean
-  task?: boolean
-  sell?: boolean
-  fertilizer?: string
+  friend_help_exp_limit?: boolean
   friend_steal?: boolean
   friend_help?: boolean
   friend_bad?: boolean
+  task?: boolean
+  email?: boolean
+  fertilizer_gift?: boolean
+  fertilizer_buy?: boolean
+  free_gifts?: boolean
+  share_reward?: boolean
+  vip_gift?: boolean
+  month_card?: boolean
   open_server_gift?: boolean
+  sell?: boolean
+  fertilizer?: string
 }
 
 export interface IntervalsConfig {
@@ -32,7 +40,7 @@ export interface FriendQuietHoursConfig {
   end?: string
 }
 
-export interface OfflineConfig {
+export interface OfflineReminderConfig {
   channel: string
   reloginUrlMode: string
   endpoint: string
@@ -42,6 +50,9 @@ export interface OfflineConfig {
   offlineDeleteSec: number
 }
 
+/** @deprecated 使用 OfflineReminderConfig */
+export type OfflineConfig = OfflineReminderConfig
+
 export interface UIConfig {
   theme?: string
 }
@@ -49,12 +60,12 @@ export interface UIConfig {
 export interface SettingsState {
   plantingStrategy: string
   preferredSeedId: number
-  intervals: IntervalsConfig
-  friendQuietHours: FriendQuietHoursConfig
+  intervals: Partial<IntervalsConfig>
+  friendQuietHours: Partial<FriendQuietHoursConfig>
   stealCropBlacklist?: number[]
-  automation: AutomationConfig
+  automation: Partial<AutomationConfig>
   ui: UIConfig
-  offlineReminder: OfflineConfig
+  offlineReminder: OfflineReminderConfig
 }
 
 export const useSettingStore = defineStore('setting', () => {
@@ -102,7 +113,7 @@ export const useSettingStore = defineStore('setting', () => {
     }
   }
 
-  async function saveOfflineConfig(config: OfflineConfig) {
+  async function saveOfflineConfig(config: OfflineReminderConfig) {
     try {
       await settingsApi.saveOfflineReminder(config)
       settings.value.offlineReminder = config
