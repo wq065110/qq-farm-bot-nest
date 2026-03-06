@@ -97,17 +97,17 @@ function handleSaved() {
         >
           <!-- Status banner -->
           <div
-            class="px-4 py-1.5 flex items-center justify-between text-sm"
+            class="px-4 py-1.5 flex gap-2 items-center justify-between text-sm"
             :class="acc.running ? 'a-bg-primary-bg a-color-primary' : 'a-bg-layout a-color-text-secondary'"
           >
-            <div class="flex gap-1.5 items-center">
+            <div class="flex shrink-0 gap-1.5 items-center">
               <div
                 class="rounded-full h-1.5 w-1.5"
                 :class="acc.running ? 'a-bg-success animate-pulse' : 'a-bg-layout'"
               />
               {{ acc.running ? '运行中' : '已停止' }}
             </div>
-            <span class="opacity-60 text-xs">UIN: {{ acc.uin }}</span>
+            <span class="min-w-0 opacity-60 text-xs truncate">UIN: {{ acc.uin }}</span>
           </div>
 
           <!-- Body -->
