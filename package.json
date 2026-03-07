@@ -12,7 +12,7 @@
     "dev:web": "turbo run dev -F=web",
     "dev:core": "turbo run dev -F=core",
     "dev:link": "turbo run dev -F=link",
-    "start": "turbo run start -F=core",
+    "start": "turbo run start",
     "start:link": "turbo run start -F=link",
     "lint": "turbo run lint",
     "lint:web": "turbo run lint -F=web",

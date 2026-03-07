@@ -522,7 +522,7 @@ export class AccountRunner {
     const fullStats = this.stats.getStats(us, connected, limits)
     const levelProgress = this.gameConfig.getLevelExpProgress(us.level || 0, us.exp || 0)
     const data = {
-      uptime: fullStats.uptime,
+      bootAt: this.stats.getBootAt(),
       sessionExpGained: fullStats.sessionExpGained,
       sessionGoldGained: fullStats.sessionGoldGained,
       sessionCouponGained: fullStats.sessionCouponGained,
@@ -530,7 +530,7 @@ export class AccountRunner {
       lastGoldGain: fullStats.lastGoldGain,
       levelProgress
     }
-    if (!this.dedup.hasChanged('session', data, ['uptime']))
+    if (!this.dedup.hasChanged('session', data))
       return
     this.emitStatusEvent('session', data)
   }
@@ -577,14 +577,15 @@ export class AccountRunner {
     const limits = this.friend?.getOperationLimits?.() || {}
     const fullStats = this.stats.getStats(us, connected, limits)
     const levelProgress = this.gameConfig.getLevelExpProgress(us.level || 0, us.exp || 0)
-    const nowMs = Date.now()
+    const { uptime: _dropped, ...rest } = fullStats
     return {
-      ...fullStats,
+      ...rest,
+      bootAt: this.stats.getBootAt(),
       levelProgress,
       configRevision: this.appliedConfigRevision,
       nextChecks: {
-        farmRemainSec: Math.max(0, Math.ceil((this.nextFarmRunAt - nowMs) / 1000)),
-        friendRemainSec: Math.max(0, Math.ceil((this.nextFriendRunAt - nowMs) / 1000))
+        nextFarmRunAt: this.nextFarmRunAt,
+        nextFriendRunAt: this.nextFriendRunAt
       }
     }
   }

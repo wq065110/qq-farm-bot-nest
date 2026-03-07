@@ -94,8 +94,6 @@ const useStatusStoreDef = defineStore('status', {
       const s = this.status!
       if (data?.bootAt !== undefined)
         s.bootAt = data.bootAt
-      if (data?.uptime !== undefined)
-        s.uptime = data.uptime
       if (data?.sessionExpGained !== undefined)
         s.sessionExpGained = data.sessionExpGained
       if (data?.sessionGoldGained !== undefined)

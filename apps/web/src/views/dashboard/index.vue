@@ -72,9 +72,13 @@ const displayName = computed(() => {
   return '未命名'
 })
 
+const nextFarmCheck = ref('--')
+const nextFriendCheck = ref('--')
+const localUptime = ref(0)
+
 const expRate = computed(() => {
   const gain = status.value?.sessionExpGained || 0
-  const uptime = status.value?.uptime || 0
+  const uptime = localUptime.value || 0
   if (!uptime)
     return '0/时'
   const hours = uptime / 3600
@@ -84,7 +88,7 @@ const expRate = computed(() => {
 
 const timeToLevel = computed(() => {
   const gain = status.value?.sessionExpGained || 0
-  const uptime = status.value?.uptime || 0
+  const uptime = localUptime.value || 0
   const current = status.value?.levelProgress?.current || 0
   const needed = status.value?.levelProgress?.needed || 0
   if (!needed || !uptime || gain <= 0)
@@ -105,9 +109,6 @@ const fertilizerOrganic = computed(() => dashboardItems.value.find((i: any) => N
 const collectionNormal = computed(() => dashboardItems.value.find((i: any) => Number(i.id) === 3001))
 const collectionRare = computed(() => dashboardItems.value.find((i: any) => Number(i.id) === 3002))
 
-const nextFarmCheck = ref('--')
-const nextFriendCheck = ref('--')
-const localUptime = ref(0)
 let localNextFarmRemainSec = 0
 let localNextFriendRemainSec = 0
 
@@ -154,11 +155,12 @@ watch(
   { deep: true }
 )
 watch(
-  () => status.value?.uptime,
-  (uptime) => {
-    if (uptime !== undefined)
-      localUptime.value = uptime
-  }
+  () => status.value?.bootAt,
+  (bootAt) => {
+    if (typeof bootAt === 'number')
+      localUptime.value = Math.max(0, Math.floor((Date.now() - bootAt) / 1000))
+  },
+  { immediate: true }
 )
 
 useWsTopics(['logs', 'bag', 'status'])

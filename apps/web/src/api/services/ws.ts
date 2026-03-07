@@ -81,6 +81,9 @@ export class WSClient {
     return this.post('/subscribe', {
       accountId: this.currentAccountId.value,
       topics: this.currentTopics
+    }).then((data) => {
+      this.handleSubscribed(data)
+      return data
     })
   }
 
@@ -162,10 +165,7 @@ export class WSClient {
       this.reconnectAttempt = 0
 
       if (this.currentAccountId.value || this.currentTopics.length > 0) {
-        this.post('/subscribe', {
-          accountId: this.currentAccountId.value,
-          topics: this.currentTopics
-        }).catch(() => {})
+        this.subscribe(this.currentAccountId.value, this.currentTopics).catch(() => {})
       }
 
       this.flushQueue()
@@ -188,12 +188,8 @@ export class WSClient {
           return
         }
 
-        if (msg.event) {
-          if (msg.event === 'subscribed' || (msg.id && msg.data && typeof msg.data === 'object' && msg.data.uptime !== undefined)) {
-            this.handleSubscribed(msg.data)
-          }
+        if (msg.event)
           this.listeners.get(msg.event)?.forEach(fn => fn(msg.data))
-        }
       } catch {}
     }
 

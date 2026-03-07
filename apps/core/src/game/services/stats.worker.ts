@@ -28,6 +28,10 @@ export class StatsTracker {
     this.logger = new Logger(`Stats:${accountId}`)
   }
 
+  getBootAt(): number {
+    return this.bootAt
+  }
+
   recordOperation(type: string, count = 1) {
     if ((this.operations as any)[type] !== undefined)
       (this.operations as any)[type] += count

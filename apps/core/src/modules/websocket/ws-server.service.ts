@@ -402,7 +402,7 @@ export class WsServerService implements OnModuleInit {
         this.send(ws, {
           event: 'status:session',
           data: {
-            uptime: s.uptime,
+            bootAt: s.bootAt,
             sessionExpGained: s.sessionExpGained,
             sessionGoldGained: s.sessionGoldGained,
             sessionCouponGained: s.sessionCouponGained,
@@ -416,8 +416,8 @@ export class WsServerService implements OnModuleInit {
         this.send(ws, {
           event: 'status:schedule',
           data: {
-            farmRemainSec: s.nextChecks?.farmRemainSec ?? 0,
-            friendRemainSec: s.nextChecks?.friendRemainSec ?? 0,
+            nextFarmRunAt: s.nextChecks?.nextFarmRunAt,
+            nextFriendRunAt: s.nextChecks?.nextFriendRunAt,
             configRevision: s.configRevision
           }
         })
