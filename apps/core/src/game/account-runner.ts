@@ -179,10 +179,6 @@ export class AccountRunner {
     } catch (e: any) {
       this.warn(`连接失败: ${e?.message}`, 'connect')
     }
-
-    if (!this.isRunning)
-      return
-    this.scheduler.setIntervalTask('status_sync', 3000, () => this.syncStatus(), { preventOverlap: true })
   }
 
   async stop() {
@@ -242,6 +238,7 @@ export class AccountRunner {
     } finally {
       this.nextFarmRunAt = Date.now() + this.randomInterval(this.farmIntervalMin, this.farmIntervalMax)
       this.farmTaskRunning = false
+      this.syncStatus()
     }
   }
 
@@ -258,6 +255,7 @@ export class AccountRunner {
     } finally {
       this.nextFriendRunAt = Date.now() + this.randomInterval(this.friendIntervalMin, this.friendIntervalMax)
       this.friendTaskRunning = false
+      this.syncStatus()
     }
   }
 

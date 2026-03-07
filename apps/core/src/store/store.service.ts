@@ -4,19 +4,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common'
 import { and, eq } from 'drizzle-orm'
 import { DRIZZLE_TOKEN } from '../database/drizzle.provider'
 import * as schema from '../database/schema'
-import {
-
-  ALLOWED_AUTOMATION_KEYS,
-  ALLOWED_FERTILIZER_MODES,
-  ALLOWED_PLANTING_STRATEGIES,
-
-  DEFAULT_ACCOUNT_CONFIG,
-  DEFAULT_AUTOMATION,
-  DEFAULT_FRIEND_QUIET_HOURS,
-  DEFAULT_OFFLINE_REMINDER,
-
-  PUSHOO_CHANNELS
-} from '../game/constants'
+import { ALLOWED_AUTOMATION_KEYS, ALLOWED_FERTILIZER_MODES, ALLOWED_PLANTING_STRATEGIES, DEFAULT_ACCOUNT_CONFIG, DEFAULT_AUTOMATION, DEFAULT_FRIEND_QUIET_HOURS, DEFAULT_OFFLINE_REMINDER, PUSHOO_CHANNELS } from '../game/constants'
 import { normalizeTimeString } from '../game/utils'
 
 @Injectable()

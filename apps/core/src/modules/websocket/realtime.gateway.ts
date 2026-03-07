@@ -1,17 +1,8 @@
 import type { OnModuleInit } from '@nestjs/common'
-import type {
-  OnGatewayConnection,
-  OnGatewayDisconnect
-} from '@nestjs/websockets'
+import type { OnGatewayConnection, OnGatewayDisconnect } from '@nestjs/websockets'
 import type { Server, Socket } from 'socket.io'
 import { JwtService } from '@nestjs/jwt'
-import {
-  ConnectedSocket,
-  MessageBody,
-  SubscribeMessage,
-  WebSocketGateway,
-  WebSocketServer
-} from '@nestjs/websockets'
+import { ConnectedSocket, MessageBody, SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets'
 import { AccountManagerService } from '../../game/account-manager.service'
 
 @WebSocketGateway({
@@ -77,10 +68,7 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
   handleDisconnect(_socket: Socket) {}
 
   @SubscribeMessage('subscribe')
-  handleSubscribe(
-    @ConnectedSocket() socket: Socket,
-    @MessageBody() payload: any
-  ) {
+  handleSubscribe(@ConnectedSocket() socket: Socket, @MessageBody() payload: any) {
     const body = payload && typeof payload === 'object' ? payload : {}
     this.applySubscription(socket, body.accountId || '')
   }
