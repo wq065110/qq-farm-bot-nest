@@ -215,6 +215,7 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
       this.logger.error(`账号 ${acc.name} 启动失败: ${e?.message}`)
       this.runners.delete(id)
       this.store.setAccountRunning(id, false)
+      this.notifyAccountsUpdate()
     })
 
     this.gameLog.addAccountLog('start', `启动账号: ${acc.name}`, id, acc.name || '')

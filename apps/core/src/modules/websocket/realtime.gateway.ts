@@ -323,6 +323,43 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
     }
   }
 
+  @SubscribeMessage('warehouse:sell')
+  async handleWarehouseSell(@ConnectedSocket() socket: Socket, @MessageBody() payload: any) {
+    try {
+      const accountId = (socket.data as any).accountId as string
+      if (!accountId)
+        return { action: 'warehouse:sell', status: 'error', message: '未选择账号' }
+      const itemId = Number(payload?.itemId ?? payload?.id)
+      const count = Number(payload?.count ?? 1)
+      if (!itemId || count < 1)
+        return { action: 'warehouse:sell', status: 'error', message: '缺少 itemId 或 count' }
+      const runner = this.manager.getRunnerOrThrow(accountId)
+      const data = await runner.sellItem(itemId, count)
+      return { action: 'warehouse:sell', status: 'ok', accountId, data }
+    } catch (e: any) {
+      return { action: 'warehouse:sell', status: 'error', message: e?.message || '售卖失败' }
+    }
+  }
+
+  @SubscribeMessage('shop:buy')
+  async handleShopBuy(@ConnectedSocket() socket: Socket, @MessageBody() payload: any) {
+    try {
+      const accountId = (socket.data as any).accountId as string
+      if (!accountId)
+        return { action: 'shop:buy', status: 'error', message: '未选择账号' }
+      const goodsId = Number(payload?.goodsId)
+      const count = Number(payload?.count ?? 1)
+      const price = Number(payload?.price)
+      if (!goodsId || count < 1 || price == null || price < 0)
+        return { action: 'shop:buy', status: 'error', message: '缺少 goodsId、count 或 price' }
+      const runner = this.manager.getRunnerOrThrow(accountId)
+      const data = await runner.buySeed(goodsId, count, price)
+      return { action: 'shop:buy', status: 'ok', accountId, data }
+    } catch (e: any) {
+      return { action: 'shop:buy', status: 'error', message: e?.message || '购买失败' }
+    }
+  }
+
   @SubscribeMessage('account:remark')
   async handleAccountRemark(@ConnectedSocket() _socket: Socket, @MessageBody() payload: any) {
     try {

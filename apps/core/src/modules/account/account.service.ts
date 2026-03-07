@@ -35,16 +35,6 @@ export class AccountService {
       )
     }
 
-    let wasRunning = false
-    if (targetBefore)
-      wasRunning = this.manager.isAccountRunning(String(targetBefore.id))
-
-    let onlyRemarkChanged = false
-    if (targetBefore) {
-      const keys = Object.keys(body).filter(k => k !== 'id' && k !== 'uin' && k !== 'platform')
-      onlyRemarkChanged = keys.length === 1 && keys[0] === 'name'
-    }
-
     const data = this.store.addOrUpdateAccount(body)
     const afterAccounts = data.accounts || []
 
@@ -82,8 +72,6 @@ export class AccountService {
       const newAcc = afterAccounts.find((a: any) => String(a.id) === accountId) || afterAccounts[afterAccounts.length - 1]
       if (newAcc)
         this.manager.startAccount(String(newAcc.id))
-    } else if (wasRunning && !onlyRemarkChanged) {
-      await this.manager.restartAccount(accountId)
     }
 
     this.manager.notifyAccountsUpdate()

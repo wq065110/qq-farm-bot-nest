@@ -74,7 +74,7 @@ function handleOperate(opType: string) {
         <EmptyState v-if="!connected" icon="i-twemoji-satellite-antenna text-4xl" description="账号未连接" />
         <EmptyState v-else icon="i-twemoji-seedling text-4xl" description="暂无土地数据" />
       </div>
-      <div v-else class="gap-2.5 grid grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+      <div v-else class="gap-2.5 grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))]">
         <LandCard v-for="land in lands" :key="land.id" :land="land" />
       </div>
     </div>

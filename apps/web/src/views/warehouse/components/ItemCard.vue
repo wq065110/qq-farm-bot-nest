@@ -1,0 +1,63 @@
+<script setup lang="ts">
+defineProps<{
+  item: { id: number, name: string, count: number, category: string, image?: string, hoursText?: string, price?: number }
+  selling: boolean
+  imageError: boolean
+}>()
+
+const emit = defineEmits<{
+  sell: []
+  imageError: []
+}>()
+
+const CATEGORY_ICON: Record<string, string> = {
+  fruit: 'i-twemoji-red-apple',
+  seed: 'i-twemoji-seedling',
+  item: 'i-twemoji-wrench'
+}
+
+function categoryIcon(category: string): string {
+  return CATEGORY_ICON[category || 'item'] ?? 'i-twemoji-card-file-box'
+}
+
+function handleImageError(): void {
+  emit('imageError')
+}
+</script>
+
+<template>
+  <div class="px-2 py-2 flex gap-3 transition-colors duration-200 items-center a-bg-layout rounded-lg">
+    <div class="flex shrink-0 h-11 w-11 items-center justify-center overflow-hidden a-bg-primary-bg rounded-lg">
+      <img
+        v-if="item.image && !imageError"
+        :src="item.image"
+        class="h-8 w-8 object-contain"
+        loading="lazy"
+        :alt="item.name || '物品'"
+        @error="handleImageError"
+      >
+      <span v-else class="font-bold a-color-text-tertiary text-sm">{{ (item.name || '物').slice(0, 1) }}</span>
+    </div>
+
+    <div class="flex flex-1 flex-col gap-1 min-w-0 justify-between">
+      <div class="font-medium truncate a-color-text text-sm" :title="item.name">
+        {{ item.name || `物品${item.id}` }}
+      </div>
+      <div class="flex gap-1.5 items-center a-color-text-tertiary text-xs">
+        <span :class="categoryIcon(item.category || '')" class="shrink-0" aria-hidden="true" />
+        {{ item.hoursText || `x${item.count ?? 0}` }}
+      </div>
+    </div>
+
+    <a-button
+      v-if="(item.price ?? 0) > 0 && (item.count ?? 0) > 0"
+      class="flex shrink-0 p-1.5!"
+      type="text"
+      :disabled="selling"
+      aria-label="售卖"
+      @click="emit('sell')"
+    >
+      <span class="i-twemoji-coin text-lg" aria-hidden="true" />
+    </a-button>
+  </div>
+</template>

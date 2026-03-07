@@ -10,6 +10,8 @@ export const ROUTE_PATHS = {
   PERSONAL: '/personal',
   FRIENDS: '/friends',
   ANALYTICS: '/analytics',
+  WAREHOUSE: '/warehouse',
+  SHOP: '/shop',
   ACCOUNTS: '/accounts',
   SETTINGS: '/settings'
 } as const

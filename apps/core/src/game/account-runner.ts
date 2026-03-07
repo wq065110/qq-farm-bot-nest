@@ -624,6 +624,19 @@ export class AccountRunner {
   }
 
   async getBag() { return this.warehouse.getBagDetail() }
+
+  async sellItem(itemId: number, count: number) {
+    const result = await this.warehouse.sellItemByIdAndCount(itemId, count)
+    this.pushLandsAndBag().catch(() => {})
+    return result
+  }
+
+  async buySeed(goodsId: number, count: number, price: number) {
+    const result = await this.farm.buyGoods(goodsId, count, price)
+    this.pushLandsAndBag().catch(() => {})
+    return result
+  }
+
   getAnalytics(sortBy: string) { return this.analytics.getPlantRankings(sortBy) }
 
   async getDailyGiftOverview() {

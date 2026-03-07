@@ -501,14 +501,16 @@ export class FarmWorker {
             requiredLevel = toNum(cond.param)
         }
         const limitCount = toNum(goods.limit_count)
+        const seedId = toNum(goods.item_id)
         return {
-          seedId: toNum(goods.item_id),
+          seedId,
           goodsId: toNum(goods.id),
-          name: this.gameConfig.getPlantNameBySeedId(toNum(goods.item_id)),
+          name: this.gameConfig.getPlantNameBySeedId(seedId),
           price: toNum(goods.price),
           requiredLevel,
           locked: !goods.unlocked || state.level < requiredLevel,
-          soldOut: limitCount > 0 && toNum(goods.bought_num) >= limitCount
+          soldOut: limitCount > 0 && toNum(goods.bought_num) >= limitCount,
+          image: this.gameConfig.getSeedImageBySeedId(seedId)
         }
       }).sort((a: any, b: any) => (a.requiredLevel ?? 9999) - (b.requiredLevel ?? 9999))
     } catch { return this.gameConfig.getAllSeeds() }

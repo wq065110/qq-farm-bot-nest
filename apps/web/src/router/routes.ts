@@ -31,6 +31,18 @@ const routes: RouteRecordRaw[] = [
         meta: { label: '分析', icon: 'i-twemoji-bar-chart' }
       },
       {
+        path: 'warehouse',
+        name: 'warehouse',
+        component: () => import('@/views/warehouse/index.vue'),
+        meta: { label: '仓库', icon: 'i-twemoji-package' }
+      },
+      {
+        path: 'shop',
+        name: 'shop',
+        component: () => import('@/views/shop/index.vue'),
+        meta: { label: '商店', icon: 'i-twemoji-convenience-store' }
+      },
+      {
         path: 'accounts',
         name: 'accounts',
         component: () => import('@/views/accounts/index.vue'),

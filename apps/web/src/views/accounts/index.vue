@@ -81,7 +81,7 @@ async function toggleAccount(account: any) {
 
     <!-- Account Cards -->
     <div v-else class="flex-1 overflow-y-auto">
-      <div class="gap-3 grid grid-cols-1 lg:grid-cols-3 md:grid-cols-2 xl:grid-cols-4">
+      <div class="gap-3 grid grid-cols-[repeat(auto-fill,minmax(360px,1fr))]">
         <div
           v-for="acc in accounts"
           :key="acc.uin"

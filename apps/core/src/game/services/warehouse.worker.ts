@@ -73,6 +73,35 @@ export class WarehouseWorker {
     return this.t.SellReply.decode(rb)
   }
 
+  /** 按 itemId + count 售卖：从原始背包解析 uid，满足服务端请求参数要求 */
+  async sellItemByIdAndCount(itemId: number, count: number): Promise<any> {
+    if (count < 1)
+      throw new Error('售卖数量必须大于 0')
+    const bagReply = await this.getBag()
+    const rawItems = this.getBagItems(bagReply)
+    const idNum = toNum(itemId)
+    let remaining = count
+    const toSell: any[] = []
+    for (const it of rawItems) {
+      if (remaining <= 0)
+        break
+      if (toNum(it.id) !== idNum)
+        continue
+      const stackCount = toNum(it.count)
+      const uid = toNum(it.uid)
+      if (stackCount <= 0)
+        continue
+      const take = Math.min(stackCount, remaining)
+      toSell.push({ id: itemId, count: take, uid })
+      remaining -= take
+    }
+    if (toSell.length === 0)
+      throw new Error('背包中无该物品或数量不足')
+    if (remaining > 0)
+      throw new Error('背包中该物品数量不足')
+    return this.sellItems(toSell)
+  }
+
   async useItem(itemId: number, count = 1, landIds: number[] = []): Promise<any> {
     const body = Buffer.from(this.t.UseRequest.encode(this.t.UseRequest.create({
       item_id: toLong(itemId),
