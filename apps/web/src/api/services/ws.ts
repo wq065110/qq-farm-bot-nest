@@ -1,4 +1,5 @@
 import { ref } from 'vue'
+import { uuid } from '@/utils/uuid'
 
 interface Pending {
   resolve: (data: any) => void
@@ -133,7 +134,7 @@ export class WSClient {
       reject(new Error('WebSocket 未连接'))
       return
     }
-    const id = crypto.randomUUID()
+    const id = uuid()
     const payload = { id, method, url, data }
     const timer = setTimeout(() => {
       this.pending.delete(id)
