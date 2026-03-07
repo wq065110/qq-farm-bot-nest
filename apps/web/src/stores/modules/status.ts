@@ -1,5 +1,4 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
 import { logsApi, statusApi, ws } from '@/api'
 import { LOGS_MAX_LENGTH } from '../constants'
 
@@ -20,138 +19,133 @@ interface DailyGiftsResponse {
   gifts: DailyGift[]
 }
 
-export const useStatusStore = defineStore('status', () => {
-  const status = ref<any>(null)
-  const logs = ref<any[]>([])
-  const logFilterActive = ref(false)
-  const dailyGifts = ref<DailyGiftsResponse | null>(null)
+const CHINA_TZ = 'Asia/Shanghai'
 
-  function normalizeStatusPayload(input: any): Record<string, any> {
-    return (input && typeof input === 'object') ? { ...input } : {}
-  }
+function formatTimeChina(ts: number): string {
+  return new Date(ts).toLocaleString('sv-SE', { timeZone: CHINA_TZ })
+}
 
-  const CHINA_TZ = 'Asia/Shanghai'
-
-  function formatTimeChina(ts: number): string {
-    return new Date(ts).toLocaleString('sv-SE', { timeZone: CHINA_TZ })
-  }
-
-  function normalizeLogEntry(input: any): Record<string, any> {
-    const entry = (input && typeof input === 'object') ? { ...input } : {}
-    const createdAt = Number(entry.createdAt) || Number(entry.ts) || Date.parse(String(entry.time || '')) || Date.now()
-    return {
-      ...entry,
-      createdAt,
-      time: entry.time || formatTimeChina(createdAt)
-    }
-  }
-
-  function pushRealtimeLog(entry: any): void {
-    if (logFilterActive.value)
-      return
-    const next = normalizeLogEntry(entry)
-    logs.value.push(next)
-    if (logs.value.length > LOGS_MAX_LENGTH)
-      logs.value = logs.value.slice(-LOGS_MAX_LENGTH)
-  }
-
-  function setLogs(list: any[]): void {
-    logs.value = Array.isArray(list) ? list.map((item: any) => normalizeLogEntry(item)) : []
-  }
-
-  function setLogFilterActive(active: boolean): void {
-    logFilterActive.value = !!active
-  }
-
-  function ensureStatusObject(): void {
-    if (status.value == null || typeof status.value !== 'object')
-      status.value = {}
-  }
-
-  function resetState(): void {
-    status.value = null
-    logs.value = []
-    logFilterActive.value = false
-    dailyGifts.value = null
-  }
-
-  statusApi.onStatusUpdate((data: any) => {
-    if (data && typeof data === 'object' && data.status) {
-      status.value = normalizeStatusPayload(data.status)
-    } else {
-      status.value = null
-    }
-  })
-
-  statusApi.onStatusConnection((data: any) => {
-    ensureStatusObject()
-    status.value!.connection = { connected: !!data?.connected }
-    if (data?.wsError != null)
-      (status.value as any).wsError = data.wsError
-  })
-
-  statusApi.onStatusProfile((data: any) => {
-    ensureStatusObject()
-    status.value!.status = data
-  })
-
-  statusApi.onStatusSession((data: any) => {
-    ensureStatusObject()
-    const s = status.value!
-    if (data?.uptime !== undefined)
-      s.uptime = data.uptime
-    if (data?.sessionExpGained !== undefined)
-      s.sessionExpGained = data.sessionExpGained
-    if (data?.sessionGoldGained !== undefined)
-      s.sessionGoldGained = data.sessionGoldGained
-    if (data?.sessionCouponGained !== undefined)
-      s.sessionCouponGained = data.sessionCouponGained
-    if (data?.lastExpGain !== undefined)
-      s.lastExpGain = data.lastExpGain
-    if (data?.lastGoldGain !== undefined)
-      s.lastGoldGain = data.lastGoldGain
-    if (data?.levelProgress !== undefined)
-      s.levelProgress = data.levelProgress
-  })
-
-  statusApi.onStatusOperations((data: any) => {
-    ensureStatusObject()
-    status.value!.operations = data
-  })
-
-  statusApi.onStatusSchedule((data: any) => {
-    ensureStatusObject()
-    const s = status.value!
-    s.nextChecks = {
-      farmRemainSec: data?.farmRemainSec ?? 0,
-      friendRemainSec: data?.friendRemainSec ?? 0
-    }
-    if (data?.configRevision !== undefined)
-      s.configRevision = data.configRevision
-  })
-
-  logsApi.onLogNew((data: any) => {
-    pushRealtimeLog(data)
-  })
-
-  statusApi.onDailyGiftsUpdate((data: any) => {
-    if (data != null)
-      dailyGifts.value = data
-  })
-
+function normalizeLogEntry(input: any): Record<string, any> {
+  const entry = (input && typeof input === 'object') ? { ...input } : {}
+  const createdAt = Number(entry.createdAt) || Number(entry.ts) || Date.parse(String(entry.time || '')) || Date.now()
   return {
-    status,
-    logs,
-    logFilterActive,
-    setLogs,
-    setLogFilterActive,
-    dailyGifts,
-    realtimeConnected: ws.connected,
-    subscribedResolvedAccountId: ws.subscribedAccountId,
-    resetState
+    ...entry,
+    createdAt,
+    time: entry.time || formatTimeChina(createdAt)
   }
-}, {
+}
+
+function normalizeStatusPayload(input: any): Record<string, any> {
+  return (input && typeof input === 'object') ? { ...input } : {}
+}
+
+const useStatusStoreDef = defineStore('status', {
+  state: () => ({
+    status: null as any,
+    logs: [] as any[],
+    logFilterActive: false,
+    dailyGifts: null as DailyGiftsResponse | null
+  }),
+  getters: {
+    realtimeConnected() {
+      return ws.connected
+    },
+    subscribedResolvedAccountId() {
+      return ws.subscribedAccountId
+    }
+  },
+  actions: {
+    pushRealtimeLog(entry: any) {
+      if (this.logFilterActive)
+        return
+      const next = normalizeLogEntry(entry)
+      this.logs.push(next)
+      if (this.logs.length > LOGS_MAX_LENGTH)
+        this.logs = this.logs.slice(-LOGS_MAX_LENGTH)
+    },
+    setLogs(list: any[]) {
+      this.logs = Array.isArray(list) ? list.map((item: any) => normalizeLogEntry(item)) : []
+    },
+    setLogFilterActive(active: boolean) {
+      this.logFilterActive = !!active
+    },
+    ensureStatusObject() {
+      if (this.status == null || typeof this.status !== 'object')
+        this.status = {}
+    },
+    applyStatusUpdate(data: any) {
+      if (data && typeof data === 'object' && data.status)
+        this.status = normalizeStatusPayload(data.status)
+      else
+        this.status = null
+    },
+    applyStatusConnection(data: any) {
+      this.ensureStatusObject()
+      this.status!.connection = { connected: !!data?.connected }
+      if (data?.wsError != null)
+        (this.status as any).wsError = data.wsError
+    },
+    applyStatusProfile(data: any) {
+      this.ensureStatusObject()
+      this.status!.status = data
+    },
+    applyStatusSession(data: any) {
+      this.ensureStatusObject()
+      const s = this.status!
+      if (data?.bootAt !== undefined)
+        s.bootAt = data.bootAt
+      if (data?.uptime !== undefined)
+        s.uptime = data.uptime
+      if (data?.sessionExpGained !== undefined)
+        s.sessionExpGained = data.sessionExpGained
+      if (data?.sessionGoldGained !== undefined)
+        s.sessionGoldGained = data.sessionGoldGained
+      if (data?.sessionCouponGained !== undefined)
+        s.sessionCouponGained = data.sessionCouponGained
+      if (data?.lastExpGain !== undefined)
+        s.lastExpGain = data.lastExpGain
+      if (data?.lastGoldGain !== undefined)
+        s.lastGoldGain = data.lastGoldGain
+      if (data?.levelProgress !== undefined)
+        s.levelProgress = data.levelProgress
+    },
+    applyStatusOperations(data: any) {
+      this.ensureStatusObject()
+      this.status!.operations = data
+    },
+    applyStatusSchedule(data: any) {
+      this.ensureStatusObject()
+      const s = this.status!
+      s.nextChecks = {
+        farmRemainSec: data?.farmRemainSec ?? 0,
+        friendRemainSec: data?.friendRemainSec ?? 0
+      }
+      if (data?.configRevision !== undefined)
+        s.configRevision = data.configRevision
+    },
+    applyDailyGifts(data: any) {
+      if (data != null)
+        this.dailyGifts = data
+    }
+  },
   persist: {
     storage: sessionStorage
   }
 })
+
+let statusListenersRegistered = false
+export function useStatusStore() {
+  const store = useStatusStoreDef()
+  if (!statusListenersRegistered) {
+    statusListenersRegistered = true
+    statusApi.onStatusUpdate((data: any) => store.applyStatusUpdate(data))
+    statusApi.onStatusConnection((data: any) => store.applyStatusConnection(data))
+    statusApi.onStatusProfile((data: any) => store.applyStatusProfile(data))
+    statusApi.onStatusSession((data: any) => store.applyStatusSession(data))
+    statusApi.onStatusOperations((data: any) => store.applyStatusOperations(data))
+    statusApi.onStatusSchedule((data: any) => store.applyStatusSchedule(data))
+    logsApi.onLogNew((data: any) => store.pushRealtimeLog(data))
+    statusApi.onDailyGiftsUpdate((data: any) => store.applyDailyGifts(data))
+  }
+  return store
+}

@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { useMediaQuery } from '@vueuse/core'
+import { storeToRefs } from 'pinia'
 import { computed, ref, watch } from 'vue'
+import { useAnalyticsStore } from '@/stores'
 import { HIGHLIGHT_COLOR_MAP, METRIC_MAP, SORT_ICONS, SORT_OPTIONS, STRATEGY_CARD_COLORS } from '../constants'
 
 type StrategyKey = 'exp' | 'fert' | 'profit' | 'fert_profit'
@@ -11,11 +13,14 @@ const props = defineProps<{
 
 const levelFilter = defineModel<number | null>('levelFilter', { required: true })
 
-const isMobile = useMediaQuery('(max-width: 767px)')
-const collapsed = ref(false)
+const analyticsStore = useAnalyticsStore()
+const { strategyPanelCollapsed } = storeToRefs(analyticsStore)
 
+const isMobile = useMediaQuery('(max-width: 767px)')
 watch(isMobile, (mobile) => {
-  collapsed.value = mobile
+  if (!mobile)
+    return
+  analyticsStore.setStrategyPanelCollapsed(mobile)
 }, { immediate: true })
 
 const imageErrors = ref<Record<string | number, boolean>>({})
@@ -115,9 +120,9 @@ function clearLevelFilter() {
         <a-button
           type="text"
           class="px-2 py-1 a-color-text-secondary rounded-md hover:!a-color-primary"
-          @click="collapsed = !collapsed"
+          @click="analyticsStore.toggleStrategyPanelCollapsed()"
         >
-          <div :class="collapsed ? 'i-carbon-chevron-right' : 'i-carbon-chevron-down'" />
+          <div :class="strategyPanelCollapsed ? 'i-carbon-chevron-right' : 'i-carbon-chevron-down'" />
         </a-button>
         <div class="flex gap-2 items-center">
           <div class="i-carbon-calculation a-color-primary text-lg" />
@@ -148,7 +153,7 @@ function clearLevelFilter() {
     </div>
 
     <!-- Body -->
-    <div v-show="!collapsed" class="px-4 pb-4">
+    <div v-show="!strategyPanelCollapsed" class="px-4 pb-4">
       <div class="gap-3 grid grid-cols-1 lg:grid-cols-4 sm:grid-cols-2">
         <a-card
           v-for="s in strategies"

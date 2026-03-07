@@ -1,5 +1,4 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
 import { authApi, settingsApi } from '@/api'
 import { AUTOMATION_DEFAULTS, DEFAULT_FRIEND_QUIET_HOURS, DEFAULT_INTERVALS, DEFAULT_OFFLINE_REMINDER } from '../constants'
 
@@ -78,54 +77,64 @@ function initialSettings(): SettingsState {
   }
 }
 
-export const useSettingStore = defineStore('setting', () => {
-  const settings = ref<SettingsState>(initialSettings())
-
-  async function saveSettings(accountId: string): Promise<{ ok: boolean, error?: string }> {
-    if (!accountId)
-      return { ok: false, error: '未选择账号' }
-    const s = settings.value
-    try {
-      await settingsApi.save({
-        plantingStrategy: s.plantingStrategy,
-        preferredSeedId: s.preferredSeedId,
-        intervals: s.intervals,
-        friendQuietHours: s.friendQuietHours,
-        stealCropBlacklist: s.stealCropBlacklist,
-        automation: s.automation
-      })
-      return { ok: true }
-    } catch (e: any) {
-      return { ok: false, error: e.message || '保存失败' }
+const useSettingStoreDef = defineStore('setting', {
+  state: () => ({
+    settings: initialSettings()
+  }),
+  actions: {
+    applySettingsUpdate(data: any) {
+      if (data != null)
+        Object.assign(this.settings, data)
+    },
+    async saveSettings(accountId: string): Promise<{ ok: boolean, error?: string }> {
+      if (!accountId)
+        return { ok: false, error: '未选择账号' }
+      const s = this.settings
+      try {
+        await settingsApi.save({
+          plantingStrategy: s.plantingStrategy,
+          preferredSeedId: s.preferredSeedId,
+          intervals: s.intervals,
+          friendQuietHours: s.friendQuietHours,
+          stealCropBlacklist: s.stealCropBlacklist,
+          automation: s.automation
+        })
+        return { ok: true }
+      } catch (e: any) {
+        return { ok: false, error: e.message || '保存失败' }
+      }
+    },
+    async saveOfflineConfig(): Promise<{ ok: boolean, error?: string }> {
+      try {
+        await settingsApi.saveOfflineReminder(this.settings.offlineReminder)
+        return { ok: true }
+      } catch (e: any) {
+        return { ok: false, error: e.message || '保存失败' }
+      }
+    },
+    async changeAdminPassword(oldPassword: string, newPassword: string): Promise<{ ok: boolean, error?: string }> {
+      try {
+        await authApi.changePassword(oldPassword, newPassword)
+        return { ok: true }
+      } catch (e: any) {
+        return { ok: false, error: e.message || '修改失败' }
+      }
     }
-  }
-
-  async function saveOfflineConfig(): Promise<{ ok: boolean, error?: string }> {
-    try {
-      await settingsApi.saveOfflineReminder(settings.value.offlineReminder)
-      return { ok: true }
-    } catch (e: any) {
-      return { ok: false, error: e.message || '保存失败' }
-    }
-  }
-
-  async function changeAdminPassword(oldPassword: string, newPassword: string): Promise<{ ok: boolean, error?: string }> {
-    try {
-      await authApi.changePassword(oldPassword, newPassword)
-      return { ok: true }
-    } catch (e: any) {
-      return { ok: false, error: e.message || '修改失败' }
-    }
-  }
-
-  settingsApi.onSettingsUpdate((data: any) => {
-    if (data != null)
-      Object.assign(settings.value, data)
-  })
-
-  return { settings, saveSettings, saveOfflineConfig, changeAdminPassword }
-}, {
+  },
   persist: {
     storage: sessionStorage
   }
 })
+
+let settingListenersRegistered = false
+export function useSettingStore() {
+  const store = useSettingStoreDef()
+  if (!settingListenersRegistered) {
+    settingListenersRegistered = true
+    settingsApi.onSettingsUpdate((data: any) => {
+      if (data != null)
+        store.applySettingsUpdate(data)
+    })
+  }
+  return store
+}

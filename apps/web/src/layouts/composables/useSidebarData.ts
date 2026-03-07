@@ -45,7 +45,7 @@ export function useSidebarData() {
         return
       const toConnect = String(newUin || 'all')
       if (ws.currentAccountId.value && ws.currentAccountId.value !== toConnect)
-        statusStore.resetState()
+        statusStore.$reset()
       ws.connect(token, toConnect)
     },
     { immediate: true }

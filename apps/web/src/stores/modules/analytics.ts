@@ -1,13 +1,18 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
 
-export const useAnalyticsStore = defineStore('analytics', () => {
-  const list = ref<any[]>([])
-
-  return {
-    list
-  }
-}, {
+export const useAnalyticsStore = defineStore('analytics', {
+  state: () => ({
+    list: [] as any[],
+    strategyPanelCollapsed: false
+  }),
+  actions: {
+    setStrategyPanelCollapsed(value: boolean) {
+      this.strategyPanelCollapsed = value
+    },
+    toggleStrategyPanelCollapsed() {
+      this.strategyPanelCollapsed = !this.strategyPanelCollapsed
+    }
+  },
   persist: {
     storage: sessionStorage
   }

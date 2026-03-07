@@ -1,6 +1,5 @@
 import type { GlobalToken } from 'antdv-next'
 import { defineStore } from 'pinia'
-import { computed, ref, watch } from 'vue'
 
 const lightTokens: Partial<GlobalToken> = {
   colorPrimary: '#22c55e',
@@ -26,67 +25,45 @@ const darkTokens: Partial<GlobalToken> = {
   borderRadius: 8
 }
 
-export const useAppStore = defineStore('app', () => {
-  const sidebarOpen = ref(false)
-  const sidebarCollapsed = ref(false)
-  const isDark = ref(false)
-
-  const themeTokens = computed<Partial<GlobalToken>>(() => isDark.value ? darkTokens : lightTokens)
-
-  function toggleSidebar() {
-    sidebarOpen.value = !sidebarOpen.value
-  }
-
-  function closeSidebar() {
-    sidebarOpen.value = false
-  }
-
-  function openSidebar() {
-    sidebarOpen.value = true
-  }
-
-  function setSidebarCollapsed(val: boolean) {
-    sidebarCollapsed.value = val
-  }
-
-  function toggleSidebarCollapsed() {
-    setSidebarCollapsed(!sidebarCollapsed.value)
-  }
-
-  async function setTheme(t: 'light' | 'dark') {
-    try {
-      isDark.value = t === 'dark'
-    } catch (e) {
-      console.error('设置主题失败:', e)
+export const useAppStore = defineStore('app', {
+  state: () => ({
+    sidebarOpen: false,
+    sidebarCollapsed: false,
+    isDark: false
+  }),
+  getters: {
+    themeTokens(): Partial<GlobalToken> {
+      return this.isDark ? darkTokens : lightTokens
     }
-  }
-
-  function toggleDark() {
-    const newTheme = isDark.value ? 'light' : 'dark'
-    setTheme(newTheme)
-  }
-
-  watch(isDark, (val) => {
-    if (val)
-      document.documentElement.classList.add('dark')
-    else
-      document.documentElement.classList.remove('dark')
-  }, { immediate: true })
-
-  return {
-    sidebarOpen,
-    sidebarCollapsed,
-    isDark,
-    themeTokens,
-    toggleDark,
-    toggleSidebar,
-    closeSidebar,
-    openSidebar,
-    setSidebarCollapsed,
-    toggleSidebarCollapsed,
-    setTheme
-  }
-}, {
+  },
+  actions: {
+    toggleSidebar() {
+      this.sidebarOpen = !this.sidebarOpen
+    },
+    closeSidebar() {
+      this.sidebarOpen = false
+    },
+    openSidebar() {
+      this.sidebarOpen = true
+    },
+    setSidebarCollapsed(val: boolean) {
+      this.sidebarCollapsed = val
+    },
+    toggleSidebarCollapsed() {
+      this.setSidebarCollapsed(!this.sidebarCollapsed)
+    },
+    async setTheme(t: 'light' | 'dark') {
+      try {
+        this.isDark = t === 'dark'
+      } catch (e) {
+        console.error('设置主题失败:', e)
+      }
+    },
+    toggleDark() {
+      const newTheme = this.isDark ? 'light' : 'dark'
+      this.setTheme(newTheme)
+    }
+  },
   persist: {
     storage: localStorage
   }

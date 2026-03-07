@@ -1,19 +1,17 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
 
-export const useUserStore = defineStore('user', () => {
-  const adminToken = ref('')
-
-  function setToken(token: string) {
-    adminToken.value = token
-  }
-
-  function clearToken() {
-    adminToken.value = ''
-  }
-
-  return { adminToken, setToken, clearToken }
-}, {
+export const useUserStore = defineStore('user', {
+  state: () => ({
+    adminToken: ''
+  }),
+  actions: {
+    setToken(token: string) {
+      this.adminToken = token
+    },
+    clearToken() {
+      this.adminToken = ''
+    }
+  },
   persist: {
     storage: sessionStorage
   }

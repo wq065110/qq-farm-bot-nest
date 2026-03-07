@@ -1,5 +1,4 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
 import { farmApi } from '@/api'
 
 export interface Land {
@@ -15,51 +14,50 @@ export interface Land {
   [key: string]: any
 }
 
-export const useFarmStore = defineStore('farm', () => {
-  const lands = ref<Land[]>([])
-  const seeds = ref<any[]>([])
-  const summary = ref<any>({})
-
-  async function operate(accountId: string, opType: string): Promise<void> {
-    if (!accountId)
-      return
-    await farmApi.operate(opType)
-  }
-
-  function resetState(): void {
-    lands.value = []
-    summary.value = {}
-    seeds.value = []
-  }
-
-  function setLandsFromRealtime(res: any): void {
-    if (!res)
-      return
-    const nowSec = Math.floor(Date.now() / 1000)
-    lands.value = (res.lands || []).map((l: any) => ({
-      ...l,
-      matureAt: (l.matureInSec ?? 0) > 0 ? nowSec + l.matureInSec : 0
-    }))
-    summary.value = res.summary || {}
-  }
-
-  function setSeedsFromRealtime(list: any[]): void {
-    seeds.value = Array.isArray(list) ? list : []
-  }
-
-  farmApi.onLandsUpdate((data: any) => {
-    if (data != null)
-      setLandsFromRealtime(data)
-  })
-
-  farmApi.onSeedsUpdate((data: any) => {
-    if (data != null)
-      setSeedsFromRealtime(Array.isArray(data) ? data : [])
-  })
-
-  return { lands, summary, seeds, operate, resetState, setLandsFromRealtime, setSeedsFromRealtime }
-}, {
+const useFarmStoreDef = defineStore('farm', {
+  state: () => ({
+    lands: [] as Land[],
+    seeds: [] as any[],
+    summary: {} as any
+  }),
+  actions: {
+    async operate(accountId: string, opType: string) {
+      if (!accountId)
+        return
+      await farmApi.operate(opType)
+    },
+    setLandsFromRealtime(res: any) {
+      if (!res)
+        return
+      const nowSec = Math.floor(Date.now() / 1000)
+      this.lands = (res.lands || []).map((l: any) => ({
+        ...l,
+        matureAt: (l.matureInSec ?? 0) > 0 ? nowSec + l.matureInSec : 0
+      }))
+      this.summary = res.summary || {}
+    },
+    setSeedsFromRealtime(list: any[]) {
+      this.seeds = Array.isArray(list) ? list : []
+    }
+  },
   persist: {
     storage: sessionStorage
   }
 })
+
+let farmListenersRegistered = false
+export function useFarmStore() {
+  const store = useFarmStoreDef()
+  if (!farmListenersRegistered) {
+    farmListenersRegistered = true
+    farmApi.onLandsUpdate((data: any) => {
+      if (data != null)
+        store.setLandsFromRealtime(data)
+    })
+    farmApi.onSeedsUpdate((data: any) => {
+      if (data != null)
+        store.setSeedsFromRealtime(Array.isArray(data) ? data : [])
+    })
+  }
+  return store
+}
