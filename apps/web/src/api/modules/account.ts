@@ -1,4 +1,4 @@
-import api from '../request'
+import api from '../services/request'
 
 export function createQR() {
   return api.post('/api/qr/create')

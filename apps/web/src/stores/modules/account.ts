@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
+import { ws } from '@/api'
 import { useBagStore } from './bag'
 import { useFarmStore } from './farm'
 import { useStatusStore } from './status'
@@ -16,13 +17,6 @@ export interface Account {
   // Add other fields as discovered
 }
 
-export interface AccountLog {
-  time: string
-  action: string
-  msg: string
-  reason?: string
-}
-
 export function getPlatformIcon(p?: string) {
   if (p === 'qq')
     return 'i-icon-park-solid-tencent-qq'
@@ -34,16 +28,10 @@ export function getPlatformIcon(p?: string) {
 export const useAccountStore = defineStore('account', () => {
   const accounts = ref<Account[]>([])
   const currentAccountId = ref('')
-  const loading = ref(false)
-  const logs = ref<AccountLog[]>([])
 
   const currentAccount = computed(() =>
     accounts.value.find(a => String(a.uin) === currentAccountId.value)
   )
-
-  async function fetchAccounts() {
-    // 账号列表仅通过 WebSocket accounts:update 推送，无 HTTP 回退
-  }
 
   function selectAccount(id: string) {
     currentAccountId.value = id
@@ -56,22 +44,19 @@ export const useAccountStore = defineStore('account', () => {
   async function startAccount(uin: string) {
     if (!uin)
       throw new Error('账号标识为空，无法启动')
-    const statusStore = useStatusStore()
-    await statusStore.wsRequest('account:start', { id: uin })
+    await ws.request('account:start', { id: uin })
   }
 
   async function stopAccount(uin: string) {
     if (!uin)
       throw new Error('账号标识为空，无法停止')
-    const statusStore = useStatusStore()
-    await statusStore.wsRequest('account:stop', { id: uin })
+    await ws.request('account:stop', { id: uin })
   }
 
   async function deleteAccount(ref: string) {
     if (!ref)
       throw new Error('账号标识为空，无法删除')
-    const statusStore = useStatusStore()
-    await statusStore.wsRequest('account:delete', { id: ref })
+    await ws.request('account:delete', { id: ref })
     if (currentAccountId.value === ref) {
       currentAccountId.value = ''
       useStatusStore().resetState()
@@ -80,18 +65,16 @@ export const useAccountStore = defineStore('account', () => {
     }
   }
 
-  async function fetchLogs() {
-    // 账号日志仅通过 WebSocket account-logs:snapshot / account-log:new 推送
-  }
-
   async function addAccount(payload: any) {
-    const statusStore = useStatusStore()
-    await statusStore.wsRequest('account:create', payload)
+    const res = await ws.request<{ accounts?: any[] }>('account:create', payload)
+    if (res?.accounts && Array.isArray(res.accounts))
+      accounts.value = res.accounts as Account[]
   }
 
   async function updateAccount(uin: string, payload: any) {
-    const statusStore = useStatusStore()
-    await statusStore.wsRequest('account:create', { ...payload, uin })
+    const res = await ws.request<{ accounts?: any[] }>('account:create', { ...payload, uin })
+    if (res?.accounts && Array.isArray(res.accounts))
+      accounts.value = res.accounts as Account[]
   }
 
   function setAccountsFromRealtime(data: { accounts?: any[] }) {
@@ -103,14 +86,10 @@ export const useAccountStore = defineStore('account', () => {
     accounts,
     currentAccountId,
     currentAccount,
-    loading,
-    logs,
-    fetchAccounts,
     selectAccount,
     startAccount,
     stopAccount,
     deleteAccount,
-    fetchLogs,
     addAccount,
     updateAccount,
     setCurrentAccount,

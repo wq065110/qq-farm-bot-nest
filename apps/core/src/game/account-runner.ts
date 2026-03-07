@@ -5,6 +5,7 @@ import type { IGameTransport } from './interfaces/game-transport.interface'
 import type { LinkClient } from './link-client'
 import type { ProtoService } from './proto.service'
 import { Logger } from '@nestjs/common'
+import { EmitDeduplicator } from './emit-deduplicator'
 import { Scheduler } from './scheduler'
 import { AnalyticsWorker } from './services/analytics.worker'
 import { DailyRewardsWorker } from './services/daily-rewards.worker'
@@ -21,8 +22,10 @@ export interface AccountRunnerConfig {
   platform: string
 }
 
+export type StatusEventName = 'connection' | 'profile' | 'session' | 'operations' | 'schedule'
+
 export interface AccountRunnerCallbacks {
-  onStatusSync?: (accountId: string, status: any, name: string, callerRunner?: AccountRunner) => void
+  onStatusEvent?: (accountId: string, event: StatusEventName, data: any, name?: string, callerRunner?: AccountRunner) => void
   onLog?: (entry: any) => void
   onAccountLog?: (entry: any) => void
   onKicked?: (accountId: string, reason: string) => void
@@ -54,9 +57,9 @@ export class AccountRunner {
   private friendTaskRunning = false
   private nextFarmRunAt = 0
   private nextFriendRunAt = 0
-  private lastStatusHash = ''
-  private lastStatusSentAt = 0
+  private dedup = new EmitDeduplicator()
   private lastDailyRunDate = ''
+  private static readonly STATUS_FLUSH_DEBOUNCE_MS = 500
   private appliedConfigRevision = 0
 
   private farmIntervalMin = 2000
@@ -64,7 +67,7 @@ export class AccountRunner {
   private friendIntervalMin = 10_000
   private friendIntervalMax = 10_000
 
-  private userState = { gid: 0, name: '', level: 0, gold: 0, exp: 0, coupon: 0, avatarUrl: '', openId: '' }
+  private userState = { gid: 0, name: '', level: 0, gold: 0, exp: 0, coupon: 0, avatarUrl: '', openId: '', platform: 'qq' as string }
 
   name = ''
 
@@ -178,7 +181,7 @@ export class AccountRunner {
         this.startUnifiedScheduler()
         this.startDailyRoutineTimer()
 
-        this.syncStatus()
+        this.syncStatusAtomic()
         this.pushLandsAndBag().catch(() => {})
       }
     } catch (e: any) {
@@ -243,7 +246,7 @@ export class AccountRunner {
     } finally {
       this.nextFarmRunAt = Date.now() + this.randomInterval(this.farmIntervalMin, this.farmIntervalMax)
       this.farmTaskRunning = false
-      this.syncStatus()
+      this.syncStatusAfterTick()
       this.pushLandsAndBag().catch(() => {})
     }
   }
@@ -261,7 +264,7 @@ export class AccountRunner {
     } finally {
       this.nextFriendRunAt = Date.now() + this.randomInterval(this.friendIntervalMin, this.friendIntervalMax)
       this.friendTaskRunning = false
-      this.syncStatus()
+      this.syncStatusAfterTick()
       this.pushFriends().catch(() => {})
     }
   }
@@ -269,9 +272,9 @@ export class AccountRunner {
   private async pushLandsAndBag() {
     try {
       const [lands, bag] = await Promise.all([this.getLands(), this.getBag()])
-      if (lands)
+      if (lands != null && this.dedup.hasChanged('lands', lands))
         this.callbacks.onLandsUpdate?.(this.accountId, lands)
-      if (bag)
+      if (bag != null && this.dedup.hasChanged('bag', bag))
         this.callbacks.onBagUpdate?.(this.accountId, bag)
     } catch {}
   }
@@ -279,7 +282,7 @@ export class AccountRunner {
   private async pushFriends() {
     try {
       const friends = await this.getFriends()
-      if (friends != null)
+      if (friends != null && this.dedup.hasChanged('friends', friends))
         this.callbacks.onFriendsUpdate?.(this.accountId, friends)
     } catch {}
   }
@@ -341,7 +344,7 @@ export class AccountRunner {
       if (auto.vip_gift)
         await this.dailyRewards.performDailyVipGift(force)
       const overview = await this.getDailyGiftOverview().catch(() => null)
-      if (overview)
+      if (overview != null && this.dedup.hasChanged('daily-gifts', overview))
         this.callbacks.onDailyGiftsUpdate?.(this.accountId, overview)
     } catch (e: any) {
       this.warn(`每日任务调度失败: ${e?.message}`, 'schedule_error')
@@ -414,7 +417,7 @@ export class AccountRunner {
         }
       }
     }
-    this.syncStatus()
+    this.emitSchedule()
   }
 
   // ========== Events (from LinkClient) ==========
@@ -433,21 +436,21 @@ export class AccountRunner {
       case 'disconnected':
         if (this.loginReady) {
           this.loginReady = false
-          this.syncStatus()
+          this.emitConnection()
         }
         break
       case 'login_failed':
         this.warn(`登录失败: ${data?.error || '未知原因'}，code 可能已过期`, 'login_failed')
         if (this.loginReady) {
           this.loginReady = false
-          this.syncStatus()
+          this.emitConnection()
         }
         break
       case 'connected':
         if (data) {
           this.userState = { ...this.userState, ...data }
           this.loginReady = true
-          this.syncStatus()
+          this.syncStatusAtomic()
         }
         break
       case 'state_update':
@@ -458,7 +461,7 @@ export class AccountRunner {
             merged.coupon = this.userState.coupon
           this.userState = merged
           this.syncTransportUserState()
-          this.syncStatus()
+          this.deferStatusFlush()
         }
         break
     }
@@ -481,23 +484,102 @@ export class AccountRunner {
       this.scheduler.setTimeoutTask('ws_error_cleanup', 1000, () => this.stop())
   }
 
-  // ========== Status ==========
+  // ========== Status (atomic events) ==========
 
-  private syncStatus() {
-    if (!this.callbacks.onStatusSync)
+  private emitStatusEvent(event: StatusEventName, data: any) {
+    this.callbacks.onStatusEvent?.(this.accountId, event, data, this.name, this)
+  }
+
+  private emitConnection() {
+    const connected = this.isConnected()
+    const payload = { connected, accountName: this.name }
+    if (!this.dedup.hasChanged('connection', payload))
       return
+    this.emitStatusEvent('connection', payload)
+  }
+
+  private emitProfile() {
+    const us = this.userState
+    const data = {
+      name: us.name,
+      level: us.level || 0,
+      gold: us.gold || 0,
+      exp: us.exp || 0,
+      coupon: us.coupon || 0,
+      platform: us.platform || 'qq',
+      avatarUrl: us.avatarUrl || '',
+      openId: us.openId || ''
+    }
+    if (!this.dedup.hasChanged('profile', data))
+      return
+    this.emitStatusEvent('profile', data)
+  }
+
+  private emitSession() {
     const connected = this.isConnected()
     const us = this.userState
     const limits = this.friend?.getOperationLimits?.() || {}
     const fullStats = this.stats.getStats(us, connected, limits)
-
     const levelProgress = this.gameConfig.getLevelExpProgress(us.level || 0, us.exp || 0)
+    const data = {
+      uptime: fullStats.uptime,
+      sessionExpGained: fullStats.sessionExpGained,
+      sessionGoldGained: fullStats.sessionGoldGained,
+      sessionCouponGained: fullStats.sessionCouponGained,
+      lastExpGain: fullStats.lastExpGain,
+      lastGoldGain: fullStats.lastGoldGain,
+      levelProgress
+    }
+    if (!this.dedup.hasChanged('session', data))
+      return
+    this.emitStatusEvent('session', data)
+  }
 
+  private emitOperations() {
+    const connected = this.isConnected()
+    const us = this.userState
+    const limits = this.friend?.getOperationLimits?.() || {}
+    const fullStats = this.stats.getStats(us, connected, limits)
+    const ops = fullStats.operations
+    if (this.dedup.hasChanged('operations', ops))
+      this.emitStatusEvent('operations', { ...ops })
+  }
+
+  private deferStatusFlush() {
+    this.scheduler.setTimeoutTask(
+      'status_flush',
+      AccountRunner.STATUS_FLUSH_DEBOUNCE_MS,
+      () => this.flushDeferredStatus()
+    )
+  }
+
+  private flushDeferredStatus() {
+    this.emitProfile()
+    this.emitSession()
+  }
+
+  private emitSchedule() {
     const nowMs = Date.now()
     const data = {
+      farmRemainSec: Math.max(0, Math.ceil((this.nextFarmRunAt - nowMs) / 1000)),
+      friendRemainSec: Math.max(0, Math.ceil((this.nextFriendRunAt - nowMs) / 1000)),
+      configRevision: this.appliedConfigRevision
+    }
+    if (!this.dedup.hasChanged('schedule', data))
+      return
+    this.emitStatusEvent('schedule', data)
+  }
+
+  /** Full snapshot for initial push / getStatus (no automation, no preferredSeed) */
+  getStatusSnapshot() {
+    const connected = this.isConnected()
+    const us = this.userState
+    const limits = this.friend?.getOperationLimits?.() || {}
+    const fullStats = this.stats.getStats(us, connected, limits)
+    const levelProgress = this.gameConfig.getLevelExpProgress(us.level || 0, us.exp || 0)
+    const nowMs = Date.now()
+    return {
       ...fullStats,
-      automation: this.store.getAutomation(this.accountId),
-      preferredSeed: this.store.getPreferredSeed(this.accountId),
       levelProgress,
       configRevision: this.appliedConfigRevision,
       nextChecks: {
@@ -505,14 +587,22 @@ export class AccountRunner {
         friendRemainSec: Math.max(0, Math.ceil((this.nextFriendRunAt - nowMs) / 1000))
       }
     }
+  }
 
-    const hash = JSON.stringify(data)
-    const now = Date.now()
-    if (hash !== this.lastStatusHash || now - this.lastStatusSentAt > 8000) {
-      this.lastStatusHash = hash
-      this.lastStatusSentAt = now
-      this.callbacks.onStatusSync(this.accountId, data, this.name, this)
-    }
+  private syncStatusAtomic() {
+    this.emitConnection()
+    this.emitProfile()
+    this.emitSession()
+    this.emitOperations()
+    this.emitSchedule()
+  }
+
+  private syncStatusAfterTick() {
+    this.scheduler.clear('status_flush')
+    this.flushDeferredStatus()
+    this.emitSession()
+    this.emitOperations()
+    this.emitSchedule()
   }
 
   // ========== API Calls (from controllers) ==========

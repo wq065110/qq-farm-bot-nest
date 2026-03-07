@@ -53,10 +53,6 @@ export const useAppStore = defineStore('app', () => {
     setSidebarCollapsed(!sidebarCollapsed.value)
   }
 
-  async function fetchTheme() {
-    // 主题通过 WebSocket settings:update 或本地持久化获取
-  }
-
   async function setTheme(t: 'light' | 'dark') {
     try {
       isDark.value = t === 'dark'
@@ -88,7 +84,6 @@ export const useAppStore = defineStore('app', () => {
     openSidebar,
     setSidebarCollapsed,
     toggleSidebarCollapsed,
-    fetchTheme,
     setTheme
   }
 }, {

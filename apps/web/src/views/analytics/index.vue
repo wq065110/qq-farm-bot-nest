@@ -2,9 +2,10 @@
 import { useResizeObserver } from '@vueuse/core'
 import { storeToRefs } from 'pinia'
 import { computed, ref, watch } from 'vue'
+import { ws } from '@/api'
 import EmptyState from '@/components/EmptyState.vue'
 import { useAccountRefresh } from '@/composables/useAccountRefresh'
-import { useAccountStore, useStatusStore } from '@/stores'
+import { useAccountStore } from '@/stores'
 import CropTable from './components/CropTable.vue'
 import SortToolbar from './components/SortToolbar.vue'
 import StrategyPanel from './components/StrategyPanel.vue'
@@ -47,8 +48,7 @@ async function loadAnalytics() {
     return
   loading.value = true
   try {
-    const statusStore = useStatusStore()
-    const res = await statusStore.wsRequest<any[]>('analytics:get', { sortBy: sortKey.value })
+    const res = await ws.request<any[]>('analytics:get', { sortBy: sortKey.value })
     const data = Array.isArray(res) ? res : []
     if (data.length > 0) {
       list.value = data

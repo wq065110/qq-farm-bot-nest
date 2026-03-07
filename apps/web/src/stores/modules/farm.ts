@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { useStatusStore } from './status'
+import { ws } from '@/api'
 
 export interface Land {
   id: number
@@ -19,21 +19,11 @@ export const useFarmStore = defineStore('farm', () => {
   const lands = ref<Land[]>([])
   const seeds = ref<any[]>([])
   const summary = ref<any>({})
-  const loading = ref(false)
-
-  async function fetchLands(_accountId: string) {
-    // 土地数据仅通过 WebSocket lands:update 推送
-  }
-
-  async function fetchSeeds(_accountId: string) {
-    // 种子数据在订阅时随 lands 等一并推送，暂无单独接口
-  }
 
   async function operate(accountId: string, opType: string) {
     if (!accountId)
       return
-    const statusStore = useStatusStore()
-    await statusStore.wsRequest('farm:operate', { opType })
+    await ws.request('farm:operate', { opType })
   }
 
   function resetState() {
@@ -57,5 +47,5 @@ export const useFarmStore = defineStore('farm', () => {
     seeds.value = Array.isArray(list) ? list : []
   }
 
-  return { lands, summary, seeds, loading, fetchLands, fetchSeeds, operate, resetState, setLandsFromRealtime, setSeedsFromRealtime }
+  return { lands, summary, seeds, operate, resetState, setLandsFromRealtime, setSeedsFromRealtime }
 })

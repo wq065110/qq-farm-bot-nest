@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import { ws } from '@/api'
 import QqAvatar from '@/components/QqAvatar.vue'
-import { useStatusStore } from '@/stores'
 
 const props = defineProps<{
   show: boolean
@@ -34,8 +34,7 @@ async function save() {
   loading.value = true
   errorMessage.value = ''
   try {
-    const statusStore = useStatusStore()
-    await statusStore.wsRequest('account:remark', { uin: props.account.uin, name: name.value })
+    await ws.request('account:remark', { uin: props.account.uin, name: name.value })
     emit('saved')
     emit('close')
   } catch (e: any) {

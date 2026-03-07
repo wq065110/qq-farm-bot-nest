@@ -1,4 +1,4 @@
-import api from '../request'
+import api from '../services/request'
 
 export function login(password: string) {
   return api.post('/api/login', { password })
@@ -14,8 +14,4 @@ export function changePassword(oldPassword: string, newPassword: string) {
 
 export function logout() {
   return api.post('/api/logout')
-}
-
-export function ping() {
-  return api.get('/api/ping')
 }

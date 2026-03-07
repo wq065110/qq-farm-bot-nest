@@ -1,8 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { authApi } from '@/api'
+import { authApi, ws } from '@/api'
 import { DEFAULT_FRIEND_QUIET_HOURS, DEFAULT_OFFLINE_REMINDER } from '../constants'
-import { useStatusStore } from './status'
 
 export interface AutomationConfig {
   farm?: boolean
@@ -51,9 +50,6 @@ export interface OfflineReminderConfig {
   offlineDeleteSec: number
 }
 
-/** @deprecated 使用 OfflineReminderConfig */
-export type OfflineConfig = OfflineReminderConfig
-
 export interface UIConfig {
   theme?: string
 }
@@ -81,14 +77,9 @@ export const useSettingStore = defineStore('setting', () => {
     offlineReminder: { ...DEFAULT_OFFLINE_REMINDER }
   })
 
-  async function fetchSettings(_accountId: string) {
-    // 设置仅通过 WebSocket settings:update 推送
-  }
-
   async function saveSettings(accountId: string, newSettings: any) {
     if (!accountId)
       return { ok: false, error: '未选择账号' }
-    const statusStore = useStatusStore()
     try {
       const payload = {
         plantingStrategy: newSettings.plantingStrategy,
@@ -97,9 +88,9 @@ export const useSettingStore = defineStore('setting', () => {
         friendQuietHours: newSettings.friendQuietHours,
         stealCropBlacklist: newSettings.stealCropBlacklist
       }
-      await statusStore.wsRequest('settings:save', payload)
+      await ws.request('settings:save', payload)
       if (newSettings.automation)
-        await statusStore.wsRequest('settings:automation', newSettings.automation)
+        await ws.request('settings:automation', newSettings.automation)
       return { ok: true }
     } catch (e: any) {
       return { ok: false, error: e.message || '保存失败' }
@@ -107,9 +98,8 @@ export const useSettingStore = defineStore('setting', () => {
   }
 
   async function saveOfflineConfig(config: OfflineReminderConfig) {
-    const statusStore = useStatusStore()
     try {
-      await statusStore.wsRequest('settings:offline-reminder', config)
+      await ws.request('settings:offline-reminder', config)
       settings.value.offlineReminder = config
       return { ok: true }
     } catch (e: any) {
@@ -147,7 +137,7 @@ export const useSettingStore = defineStore('setting', () => {
       settings.value.offlineReminder = { ...settings.value.offlineReminder, ...d.offlineReminder }
   }
 
-  return { settings, fetchSettings, saveSettings, saveOfflineConfig, changeAdminPassword, setSettingsFromRealtime }
+  return { settings, saveSettings, saveOfflineConfig, changeAdminPassword, setSettingsFromRealtime }
 }, {
   persist: {
     pick: ['settings'],

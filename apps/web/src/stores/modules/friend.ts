@@ -1,10 +1,9 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { useStatusStore } from './status'
+import { ws } from '@/api'
 
 export const useFriendStore = defineStore('friend', () => {
   const friends = ref<any[]>([])
-  const loading = ref(false)
   const friendLands = ref<Record<string, any[]>>({})
   const friendLandsLoading = ref<Record<string, boolean>>({})
   const blacklist = ref<number[]>([])
@@ -61,19 +60,10 @@ export const useFriendStore = defineStore('friend', () => {
     }
   }
 
-  async function fetchFriends(_accountId: string) {
-    // 好友列表仅通过 WebSocket friends:update 推送
-  }
-
-  async function fetchBlacklist(_accountId: string) {
-    // 黑名单随 settings:update 推送
-  }
-
   async function toggleBlacklist(accountId: string, gid: number) {
     if (!accountId || !gid)
       return
-    const statusStore = useStatusStore()
-    const res = await statusStore.wsRequest<number[]>('friend:toggle-blacklist', { gid })
+    const res = await ws.request<number[]>('friend:toggle-blacklist', { gid })
     blacklist.value = res || []
   }
 
@@ -82,8 +72,7 @@ export const useFriendStore = defineStore('friend', () => {
       return
     friendLandsLoading.value[friendId] = true
     try {
-      const statusStore = useStatusStore()
-      const res = await statusStore.wsRequest<{ lands?: any[], summary?: any }>('friend:lands', { gid: Number(friendId) })
+      const res = await ws.request<{ lands?: any[], summary?: any }>('friend:lands', { gid: Number(friendId) })
       const rawLands = res?.lands || []
       const nowSec = Math.floor(Date.now() / 1000)
       const lands = rawLands.map((l: any) => ({
@@ -101,8 +90,7 @@ export const useFriendStore = defineStore('friend', () => {
   async function operate(accountId: string, friendId: string, opType: string) {
     if (!accountId || !friendId)
       return
-    const statusStore = useStatusStore()
-    await statusStore.wsRequest('friend:operate', { gid: Number(friendId), opType })
+    await ws.request('friend:operate', { gid: Number(friendId), opType })
   }
 
   function setFriendsFromRealtime(list: any[]) {
@@ -115,12 +103,9 @@ export const useFriendStore = defineStore('friend', () => {
 
   return {
     friends,
-    loading,
     friendLands,
     friendLandsLoading,
     blacklist,
-    fetchFriends,
-    fetchBlacklist,
     toggleBlacklist,
     fetchFriendLands,
     operate,
