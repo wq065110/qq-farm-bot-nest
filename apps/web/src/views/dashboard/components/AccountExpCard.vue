@@ -16,7 +16,7 @@ function getExpPercent(p: { current: number, needed: number } | null | undefined
 </script>
 
 <template>
-  <a-card variant="borderless" size="small" :classes="{ body: '!px-4 !py-3.5 !flex !flex-col !justify-between !h-full' }">
+  <a-card variant="borderless" size="small" :classes="{ body: '!px-4 !py-3.5 !flex !flex-col !justify-between !h-full !min-h-35' }">
     <div class="flex items-center justify-between">
       <div class="flex gap-4 items-center">
         <div class="i-twemoji-farmer text-3xl" />
