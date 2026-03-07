@@ -267,9 +267,8 @@ export class WsServerService implements OnModuleInit {
   private handleAnalyticsGet(meta: ClientMeta, data: any): any {
     if (!meta.accountId)
       throw new Error('未选择账号')
-    const runner = this.manager.getRunnerOrThrow(meta.accountId)
     const sortBy = String(data?.sortBy ?? data?.sort ?? '')
-    return runner.getAnalytics(sortBy)
+    return this.manager.getAnalytics(sortBy)
   }
 
   private async handleWarehouseSell(meta: ClientMeta, data: any): Promise<any> {

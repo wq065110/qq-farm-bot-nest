@@ -10,6 +10,7 @@ import { GameLogService } from './game-log.service'
 import { GamePushService } from './game-push.service'
 import { LinkClient } from './link-client'
 import { ProtoService } from './proto.service'
+import { AnalyticsWorker } from './services/analytics.worker'
 
 interface RunningAccount {
   runner: AccountRunner
@@ -405,6 +406,12 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
     if (!runner)
       throw new BadRequestException('账号未运行')
     return runner
+  }
+
+  /** 获取作物分析排行（仅依赖配置，不依赖账号是否运行） */
+  getAnalytics(sortBy: string): any[] {
+    const worker = new AnalyticsWorker(this.gameConfig)
+    return worker.getPlantRankings(sortBy)
   }
 
   getStatus(accountId: string) {
