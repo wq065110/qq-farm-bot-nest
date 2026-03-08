@@ -3,10 +3,9 @@ import type { GameConfigService } from '../game-config.service'
 import type { IGameTransport } from '../interfaces/game-transport.interface'
 import type { StatsTracker } from './stats.worker'
 import type { WarehouseWorker } from './warehouse.worker'
-import { Buffer } from 'node:buffer'
 import { Logger } from '@nestjs/common'
-import { Scheduler } from '../scheduler'
-import { getServerTimeSec, sleep, toLong, toNum } from '../utils'
+import { Scheduler } from '@qq-farm/shared'
+import { getRewardSummary, getServerDateKey, sleep, toNum } from '../utils'
 
 export class TaskWorker {
   private logger: Logger
@@ -25,7 +24,7 @@ export class TaskWorker {
     private warehouse: WarehouseWorker
   ) {
     this.logger = new Logger(`Task:${accountId}`)
-    this.scheduler = new Scheduler(`task-${accountId}`)
+    this.scheduler = new Scheduler(`task-${accountId}`, this.logger)
   }
 
   private log(msg: string, event?: string) {
@@ -38,61 +37,26 @@ export class TaskWorker {
     this.onLog?.({ msg, tag: '任务', meta: { module: 'task', ...(event && { event }) }, isWarn: true })
   }
 
-  private get t() { return this.client.protoTypes }
-
-  // ========== Helpers ==========
-
-  private getDateKey(): string {
-    const nowSec = getServerTimeSec()
-    const nowMs = nowSec > 0 ? nowSec * 1000 : Date.now()
-    const bjOffset = 8 * 3600 * 1000
-    const bjDate = new Date(nowMs + bjOffset)
-    return `${bjDate.getUTCFullYear()}-${String(bjDate.getUTCMonth() + 1).padStart(2, '0')}-${String(bjDate.getUTCDate()).padStart(2, '0')}`
-  }
-
-  private getRewardSummary(items: any[]): string {
-    return items.map((item: any) => {
-      const id = toNum(item.id)
-      const count = toNum(item.count)
-      if (id === 1 || id === 1001)
-        return `金币${count}`
-      if (id === 2 || id === 1101)
-        return `经验${count}`
-      if (id === 1002)
-        return `点券${count}`
-      const info = this.gameConfig.getItemById(id)
-      return `${info?.name || `物品#${id}`}x${count}`
-    }).join('/')
-  }
-
   // ========== API ==========
 
   async getTaskInfo(): Promise<any> {
-    const body = Buffer.from(this.t.TaskInfoRequest.encode(this.t.TaskInfoRequest.create({})).finish())
-    const { body: rb } = await this.client.sendMsgAsync('gamepb.taskpb.TaskService', 'TaskInfo', body)
-    return this.t.TaskInfoReply.decode(rb)
+    const { data } = await this.client.invoke('gamepb.taskpb.TaskService', 'TaskInfo', {})
+    return data ?? {}
   }
 
   async claimTaskReward(taskId: number, doShared = false): Promise<any> {
-    const body = Buffer.from(this.t.ClaimTaskRewardRequest.encode(this.t.ClaimTaskRewardRequest.create({ id: toLong(taskId), do_shared: doShared })).finish())
-    const { body: rb } = await this.client.sendMsgAsync('gamepb.taskpb.TaskService', 'ClaimTaskReward', body)
-    return this.t.ClaimTaskRewardReply.decode(rb)
+    const { data } = await this.client.invoke('gamepb.taskpb.TaskService', 'ClaimTaskReward', { id: taskId, do_shared: doShared })
+    return data ?? {}
   }
 
   async claimDailyReward(type: number, pointIds: number[]): Promise<any> {
-    if (!this.t.ClaimDailyRewardRequest || !this.t.ClaimDailyRewardReply)
-      return { items: [] }
-    const body = Buffer.from(this.t.ClaimDailyRewardRequest.encode(this.t.ClaimDailyRewardRequest.create({ type: Number(type) || 0, point_ids: pointIds.map(id => toLong(id)) })).finish())
-    const { body: rb } = await this.client.sendMsgAsync('gamepb.taskpb.TaskService', 'ClaimDailyReward', body)
-    return this.t.ClaimDailyRewardReply.decode(rb)
+    const { data } = await this.client.invoke('gamepb.taskpb.TaskService', 'ClaimDailyReward', { type: Number(type) || 0, point_ids: pointIds })
+    return data ?? { items: [] }
   }
 
   async claimAllIllustratedRewards(): Promise<any> {
-    if (!this.t.ClaimAllRewardsV2Request || !this.t.ClaimAllRewardsV2Reply)
-      return { items: [], bonus_items: [] }
-    const body = Buffer.from(this.t.ClaimAllRewardsV2Request.encode(this.t.ClaimAllRewardsV2Request.create({ only_claimable: true })).finish())
-    const { body: rb } = await this.client.sendMsgAsync('gamepb.illustratedpb.IllustratedService', 'ClaimAllRewardsV2', body)
-    return this.t.ClaimAllRewardsV2Reply.decode(rb)
+    const { data } = await this.client.invoke('gamepb.illustratedpb.IllustratedService', 'ClaimAllRewardsV2', { only_claimable: true })
+    return data ?? { items: [], bonus_items: [] }
   }
 
   // ========== Task Analysis ==========
@@ -132,8 +96,8 @@ export class TaskWorker {
       const reply = await this.claimTaskReward(task.id, useShare)
       const items = reply.items || []
       const categoryName = task.category === 'daily' ? '每日任务' : (task.category === 'growth' ? '成长任务' : '任务')
-      this.log(`领取(${categoryName}): ${task.desc}${useShare ? ` (${task.shareMultiple}倍)` : ''} → ${items.length > 0 ? this.getRewardSummary(items) : '无'}`, 'task_claim')
-      this.taskClaimDoneDateKey = this.getDateKey()
+      this.log(`领取(${categoryName}): ${task.desc}${useShare ? ` (${task.shareMultiple}倍)` : ''} → ${items.length > 0 ? getRewardSummary(items, id => this.gameConfig.getItemById(id)?.name ?? `物品#${id}`) : '无'}`, 'task_claim')
+      this.taskClaimDoneDateKey = getServerDateKey()
       this.taskClaimLastAt = Date.now()
       this.stats.recordOperation('taskClaim', 1)
       await sleep(300)
@@ -157,7 +121,7 @@ export class TaskWorker {
         const reply = await this.claimDailyReward(activeType, pointIds)
         const items = reply.items || []
         if (items.length > 0)
-          this.log(`${typeName} 领取: ${this.getRewardSummary(items)}`, 'task_claim')
+          this.log(`${typeName} 领取: ${getRewardSummary(items, id => this.gameConfig.getItemById(id)?.name ?? `物品#${id}`)}`, 'task_claim')
         claimed += pointIds.length
         await sleep(300)
       } catch (e: any) { this.warn(`${typeName} 领取失败: ${e?.message}`, 'task_claim') }
@@ -174,7 +138,7 @@ export class TaskWorker {
       if (gain < 200)
         return false
       this.log(`图鉴领取成功: 点券${gain}`, 'illustrated_rewards')
-      this.taskClaimDoneDateKey = this.getDateKey()
+      this.taskClaimDoneDateKey = getServerDateKey()
       this.taskClaimLastAt = Date.now()
       this.stats.recordOperation('taskClaim', 1)
       return true
@@ -266,7 +230,7 @@ export class TaskWorker {
   // ========== State for UI ==========
 
   getTaskClaimDailyState() {
-    return { key: 'task_claim', doneToday: this.taskClaimDoneDateKey === this.getDateKey(), lastClaimAt: this.taskClaimLastAt }
+    return { key: 'task_claim', doneToday: this.taskClaimDoneDateKey === getServerDateKey(), lastClaimAt: this.taskClaimLastAt }
   }
 
   async getTaskDailyStateLikeApp() {

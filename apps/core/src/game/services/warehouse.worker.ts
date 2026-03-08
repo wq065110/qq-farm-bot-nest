@@ -1,10 +1,8 @@
 import type { StoreService } from '../../store/store.service'
 import type { GameConfigService } from '../game-config.service'
 import type { IGameTransport } from '../interfaces/game-transport.interface'
-import { Buffer } from 'node:buffer'
 import { Logger } from '@nestjs/common'
-import * as protobuf from 'protobufjs'
-import { sleep, toLong, toNum } from '../utils'
+import { getDateKey, sleep, toNum } from '../utils'
 
 const SELL_BATCH_SIZE = 15
 const FERTILIZER_RELATED_IDS = new Set([100003, 100004, 80001, 80002, 80003, 80004, 80011, 80012, 80013, 80014])
@@ -39,19 +37,11 @@ export class WarehouseWorker {
     this.onLog?.({ msg, tag: '仓库', meta: { module: 'warehouse', ...(event && { event }) }, isWarn: true })
   }
 
-  private get t() { return this.client.protoTypes }
-
-  private getDateKey(): string {
-    const now = new Date()
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
-  }
-
   // ========== API ==========
 
   async getBag(): Promise<any> {
-    const body = Buffer.from(this.t.BagRequest.encode(this.t.BagRequest.create({})).finish())
-    const { body: rb } = await this.client.sendMsgAsync('gamepb.itempb.ItemService', 'Bag', body)
-    return this.t.BagReply.decode(rb)
+    const { data } = await this.client.invoke('gamepb.itempb.ItemService', 'Bag', {})
+    return data ?? {}
   }
 
   getBagItems(bagReply: any): any[] {
@@ -62,15 +52,14 @@ export class WarehouseWorker {
 
   async sellItems(items: any[]): Promise<any> {
     const payload = items.map((item: any) => {
-      const p: any = { id: toLong(toNum(item?.id)), count: toLong(toNum(item?.count)) }
+      const p: any = { id: toNum(item?.id), count: toNum(item?.count) }
       const uid = toNum(item?.uid)
       if (uid > 0)
-        p.uid = toLong(uid)
+        p.uid = uid
       return p
     })
-    const body = Buffer.from(this.t.SellRequest.encode(this.t.SellRequest.create({ items: payload })).finish())
-    const { body: rb } = await this.client.sendMsgAsync('gamepb.itempb.ItemService', 'Sell', body)
-    return this.t.SellReply.decode(rb)
+    const { data } = await this.client.invoke('gamepb.itempb.ItemService', 'Sell', { items: payload })
+    return data ?? {}
   }
 
   /** 按 itemId + count 售卖：从原始背包解析 uid，满足服务端请求参数要求 */
@@ -103,34 +92,26 @@ export class WarehouseWorker {
   }
 
   async useItem(itemId: number, count = 1, landIds: number[] = []): Promise<any> {
-    const body = Buffer.from(this.t.UseRequest.encode(this.t.UseRequest.create({
-      item_id: toLong(itemId),
-      count: toLong(count),
-      land_ids: landIds.map(id => toLong(id))
-    })).finish())
     try {
-      const { body: rb } = await this.client.sendMsgAsync('gamepb.itempb.ItemService', 'Use', body)
-      return this.t.UseReply.decode(rb)
+      const { data } = await this.client.invoke('gamepb.itempb.ItemService', 'Use', {
+        item_id: itemId,
+        count,
+        land_ids: landIds
+      })
+      return data ?? {}
     } catch (e: any) {
       const msg = String(e?.message || '')
       if (!msg.includes('code=1000020') && !msg.includes('请求参数错误'))
         throw e
-      const writer = protobuf.Writer.create()
-      const itemWriter = writer.uint32(10).fork()
-      itemWriter.uint32(8).int64(toLong(itemId))
-      itemWriter.uint32(16).int64(toLong(count))
-      itemWriter.ldelim()
-      const fallbackBody = Buffer.from(writer.finish())
-      const { body: rb } = await this.client.sendMsgAsync('gamepb.itempb.ItemService', 'Use', fallbackBody)
-      return this.t.UseReply.decode(rb)
+      const { data } = await this.client.invoke('gamepb.itempb.ItemService', 'Use', { item_id: itemId, count })
+      return data ?? {}
     }
   }
 
   async batchUseItems(items: { itemId: number, count: number, uid?: number }[]): Promise<any> {
-    const payload = items.map(it => ({ id: toLong(it.itemId), count: toLong(it.count || 1), uid: toLong(it.uid || 0) }))
-    const body = Buffer.from(this.t.BatchUseRequest.encode(this.t.BatchUseRequest.create({ items: payload })).finish())
-    const { body: rb } = await this.client.sendMsgAsync('gamepb.itempb.ItemService', 'BatchUse', body)
-    return this.t.BatchUseReply.decode(rb)
+    const payload = items.map(it => ({ id: it.itemId, count: it.count || 1, uid: it.uid || 0 }))
+    const { data } = await this.client.invoke('gamepb.itempb.ItemService', 'BatchUse', { items: payload })
+    return data ?? {}
   }
 
   // ========== Fertilizer Gift Packs ==========
@@ -216,7 +197,7 @@ export class WarehouseWorker {
       }
 
       if (opened > 0) {
-        this.fertilizerGiftDoneDateKey = this.getDateKey()
+        this.fertilizerGiftDoneDateKey = getDateKey()
         this.fertilizerGiftLastOpenAt = Date.now()
         this.log(`自动使用化肥类道具 x${opened}${details.length ? ` [${details.join('，')}]` : ''}`, 'fertilizer_gift_open')
       }
@@ -342,7 +323,7 @@ export class WarehouseWorker {
       merged.get(id)!.count += count
     }
 
-    const items = Array.from(merged.values()).map((row) => {
+    const items = Array.from(merged.values(), (row) => {
       if (row.interactionType === 'fertilizerbucket' && row.count > 0) {
         row.hoursText = `${(Math.floor((row.count / 3600) * 10) / 10).toFixed(1)}小时`
       }
@@ -371,6 +352,6 @@ export class WarehouseWorker {
   // ========== State for UI ==========
 
   getFertilizerGiftDailyState() {
-    return { key: 'fertilizer_gift_open', doneToday: this.fertilizerGiftDoneDateKey === this.getDateKey(), lastOpenAt: this.fertilizerGiftLastOpenAt }
+    return { key: 'fertilizer_gift_open', doneToday: this.fertilizerGiftDoneDateKey === getDateKey(), lastOpenAt: this.fertilizerGiftLastOpenAt }
   }
 }

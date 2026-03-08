@@ -1,6 +1,6 @@
-import { Buffer } from 'node:buffer'
 import { Injectable, Logger } from '@nestjs/common'
 import { GameClient, UserState } from './game-client'
+import { GameInvokeService } from './game-invoke.service'
 import { ProtoLoaderService } from './proto-loader.service'
 
 export interface ConnectionInfo {
@@ -16,7 +16,8 @@ export class ConnectionManagerService {
   private eventHandler: ((accountId: string, event: string, data: any) => void) | null = null
 
   constructor(
-    private readonly protoLoader: ProtoLoaderService
+    private readonly protoLoader: ProtoLoaderService,
+    private readonly gameInvoke: GameInvokeService
   ) {}
 
   onEvent(handler: (accountId: string, event: string, data: any) => void) {
@@ -99,16 +100,19 @@ export class ConnectionManagerService {
     }
   }
 
-  async send(accountId: string, service: string, method: string, bodyBase64: string): Promise<{ body: string, meta: any }> {
+  /** 语义调用：由 link 负责 proto 编解码，core 只传 service/method/params */
+  async invoke(accountId: string, service: string, method: string, params: Record<string, unknown>): Promise<{ data: unknown, meta: any }> {
+    if (!this.gameInvoke.isReady())
+      throw new Error('Invoke 服务未就绪（完整 proto 未加载）')
+    const bodyBuf = this.gameInvoke.encodeRequest(service, method, params)
+    if (!bodyBuf)
+      throw new Error(`不支持的 invoke: ${service}.${method}`)
     const client = this.clients.get(accountId)
     if (!client || !client.isConnected())
       throw new Error(`账号 ${accountId} 未连接`)
-    const bodyBuf = Buffer.from(bodyBase64, 'base64')
     const result = await client.sendMsgAsync(service, method, bodyBuf)
-    return {
-      body: result.body.toString('base64'),
-      meta: result.meta || null
-    }
+    const data = this.gameInvoke.decodeReply(service, method, result.body)
+    return { data: data ?? undefined, meta: result.meta || null }
   }
 
   getStatus(accountId: string): ConnectionInfo | null {

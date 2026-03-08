@@ -63,7 +63,7 @@ watchEffect(async () => {
     return
   }
   if (strategy === 'level') {
-    const best = [...available].sort((a: any, b: any) => b.requiredLevel - a.requiredLevel)[0]
+    const best = available.toSorted((a: any, b: any) => b.requiredLevel - a.requiredLevel)[0]
     strategyPreviewLabel.value = best ? `${best.requiredLevel}级 ${best.name}` : null
     return
   }

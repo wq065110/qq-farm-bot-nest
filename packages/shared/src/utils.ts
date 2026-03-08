@@ -4,7 +4,7 @@ export function toLong(val: number): Long {
   return Long.fromNumber(val)
 }
 
-export function toNum(val: any): number {
+export function toNum(val: unknown): number {
   if (Long.isLong(val))
     return val.toNumber()
   return Number(val) || 0

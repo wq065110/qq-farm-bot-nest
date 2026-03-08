@@ -2,7 +2,7 @@ import type { Request, ResponseMessage } from './protocol'
 import { Buffer } from 'node:buffer'
 import net from 'node:net'
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common'
-import { TCP_HOST, TCP_PORT } from '../common/constants'
+import { TCP_HOST, TCP_PORT } from '@qq-farm/shared'
 import { ConnectionManagerService } from './connection-manager.service'
 import { encodeFrame, FrameDecoder } from './protocol'
 
@@ -76,9 +76,10 @@ export class TcpServerService implements OnModuleInit, OnModuleDestroy {
           break
         }
 
-        case 'send': {
-          const result = await this.connMgr.send(req.accountId, req.service, req.method, req.body)
-          respond({ rid: req.rid, ok: true, body: result.body, meta: result.meta })
+        case 'invoke': {
+          const { accountId, service, method, params } = req
+          const result = await this.connMgr.invoke(accountId, service, method, params ?? {})
+          respond({ rid: req.rid, ok: true, data: result.data, meta: result.meta })
           break
         }
 

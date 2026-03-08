@@ -4,11 +4,10 @@ import type { IGameTransport } from '../interfaces/game-transport.interface'
 import type { FarmWorker } from './farm.worker'
 import type { StatsTracker } from './stats.worker'
 import type { WarehouseWorker } from './warehouse.worker'
-import { Buffer } from 'node:buffer'
 import { Logger } from '@nestjs/common'
-import { OP_TYPE_NAMES, PlantPhase } from '../constants'
-import { Scheduler } from '../scheduler'
-import { getServerTimeSec, sleep, toLong, toNum, toTimeSec } from '../utils'
+import { Scheduler } from '@qq-farm/shared'
+import { OP_TYPE_NAMES, PHASE_NAMES, PlantPhase } from '../constants'
+import { getServerTimeSec, RE_TIME_HH_MM, sleep, toNum, toTimeSec } from '../utils'
 
 export class FriendWorker {
   private logger: Logger
@@ -33,7 +32,7 @@ export class FriendWorker {
     private platform: string
   ) {
     this.logger = new Logger(`Friend:${accountId}`)
-    this.scheduler = new Scheduler(`friend-${accountId}`)
+    this.scheduler = new Scheduler(`friend-${accountId}`, this.logger)
     this.farm.onOperationLimitsUpdate = (limits: any) => this.updateOperationLimits(limits)
   }
 
@@ -46,8 +45,6 @@ export class FriendWorker {
     this.logger.warn(msg)
     this.onLog?.({ msg, tag: '好友', meta: { module: 'friend', ...(event && { event }) }, isWarn: true })
   }
-
-  private get t() { return this.client.protoTypes }
 
   // ========== Operation Limits ==========
 
@@ -131,83 +128,74 @@ export class FriendWorker {
 
   async getAllFriends(): Promise<any> {
     if (this.platform === 'qq') {
-      const body = Buffer.from(this.t.SyncAllRequest.encode(this.t.SyncAllRequest.create({ open_ids: [] })).finish())
-      const { body: rb } = await this.client.sendMsgAsync('gamepb.friendpb.FriendService', 'SyncAll', body)
-      return this.t.SyncAllReply.decode(rb)
+      const { data } = await this.client.invoke('gamepb.friendpb.FriendService', 'SyncAll', { open_ids: [] })
+      return data ?? {}
     }
-    const body = Buffer.from(this.t.GetAllFriendsRequest.encode(this.t.GetAllFriendsRequest.create({})).finish())
-    const { body: rb } = await this.client.sendMsgAsync('gamepb.friendpb.FriendService', 'GetAll', body)
-    return this.t.GetAllFriendsReply.decode(rb)
+    const { data } = await this.client.invoke('gamepb.friendpb.FriendService', 'GetAll', {})
+    return data ?? {}
   }
 
   async getApplications(): Promise<any> {
-    const body = Buffer.from(this.t.GetApplicationsRequest.encode(this.t.GetApplicationsRequest.create({})).finish())
-    const { body: rb } = await this.client.sendMsgAsync('gamepb.friendpb.FriendService', 'GetApplications', body)
-    return this.t.GetApplicationsReply.decode(rb)
+    const { data } = await this.client.invoke('gamepb.friendpb.FriendService', 'GetApplications', {})
+    return data ?? {}
   }
 
   async acceptFriends(gids: number[]): Promise<any> {
-    const body = Buffer.from(this.t.AcceptFriendsRequest.encode(this.t.AcceptFriendsRequest.create({ friend_gids: gids.map(g => toLong(g)) })).finish())
-    const { body: rb } = await this.client.sendMsgAsync('gamepb.friendpb.FriendService', 'AcceptFriends', body)
-    return this.t.AcceptFriendsReply.decode(rb)
+    const { data } = await this.client.invoke('gamepb.friendpb.FriendService', 'AcceptFriends', { friend_gids: gids })
+    return data ?? {}
   }
 
   async enterFriendFarm(friendGid: number): Promise<any> {
-    const body = Buffer.from(this.t.VisitEnterRequest.encode(this.t.VisitEnterRequest.create({ host_gid: toLong(friendGid), reason: 2 })).finish())
-    const { body: rb } = await this.client.sendMsgAsync('gamepb.visitpb.VisitService', 'Enter', body)
-    return this.t.VisitEnterReply.decode(rb)
+    const { data } = await this.client.invoke('gamepb.visitpb.VisitService', 'Enter', { host_gid: friendGid, reason: 2 })
+    return data ?? {}
   }
 
   async leaveFriendFarm(friendGid: number) {
-    const body = Buffer.from(this.t.VisitLeaveRequest.encode(this.t.VisitLeaveRequest.create({ host_gid: toLong(friendGid) })).finish())
     try {
-      await this.client.sendMsgAsync('gamepb.visitpb.VisitService', 'Leave', body)
+      await this.client.invoke('gamepb.visitpb.VisitService', 'Leave', { host_gid: friendGid })
     } catch {}
   }
 
-  private async helpAction(friendGid: number, landIds: any[], RequestType: any, ReplyType: any, method: string, stopWhenExpLimit = false) {
+  private async helpAction(gid: number, landIds: any[], method: string, stopWhenExpLimit = false) {
     const beforeExp = toNum(this.client.userState?.exp)
-    const body = Buffer.from(RequestType.encode(RequestType.create({ land_ids: landIds, host_gid: toLong(friendGid) })).finish())
-    const { body: rb } = await this.client.sendMsgAsync('gamepb.plantpb.PlantService', method, body)
-    const reply: any = ReplyType.decode(rb)
-    this.updateOperationLimits(reply.operation_limits)
+    const { data: reply } = await this.client.invoke<any>('gamepb.plantpb.PlantService', method, { land_ids: landIds, host_gid: gid })
+    if ((reply as any)?.operation_limits)
+      this.updateOperationLimits((reply as any).operation_limits)
     if (stopWhenExpLimit) {
       await sleep(200)
       const afterExp = toNum(this.client.userState?.exp)
       if (afterExp <= beforeExp)
         this.autoDisableHelpByExpLimit()
     }
-    return reply
+    return reply ?? {}
   }
 
   async helpWater(gid: number, landIds: any[], stopWhenExpLimit = false) {
-    return this.helpAction(gid, landIds, this.t.WaterLandRequest, this.t.WaterLandReply, 'WaterLand', stopWhenExpLimit)
+    return this.helpAction(gid, landIds, 'WaterLand', stopWhenExpLimit)
   }
 
   async helpWeed(gid: number, landIds: any[], stopWhenExpLimit = false) {
-    return this.helpAction(gid, landIds, this.t.WeedOutRequest, this.t.WeedOutReply, 'WeedOut', stopWhenExpLimit)
+    return this.helpAction(gid, landIds, 'WeedOut', stopWhenExpLimit)
   }
 
   async helpInsecticide(gid: number, landIds: any[], stopWhenExpLimit = false) {
-    return this.helpAction(gid, landIds, this.t.InsecticideRequest, this.t.InsecticideReply, 'Insecticide', stopWhenExpLimit)
+    return this.helpAction(gid, landIds, 'Insecticide', stopWhenExpLimit)
   }
 
   async stealHarvest(friendGid: number, landIds: any[]): Promise<any> {
-    const body = Buffer.from(this.t.HarvestRequest.encode(this.t.HarvestRequest.create({ land_ids: landIds, host_gid: toLong(friendGid), is_all: true })).finish())
-    const { body: rb } = await this.client.sendMsgAsync('gamepb.plantpb.PlantService', 'Harvest', body)
-    const reply: any = this.t.HarvestReply.decode(rb)
-    this.updateOperationLimits(reply.operation_limits)
-    return reply
+    const { data: reply } = await this.client.invoke<any>('gamepb.plantpb.PlantService', 'Harvest', { land_ids: landIds, host_gid: friendGid, is_all: true })
+    if ((reply as any)?.operation_limits)
+      this.updateOperationLimits((reply as any).operation_limits)
+    return reply ?? {}
   }
 
-  private async putPlantItems(friendGid: number, landIds: number[], RequestType: any, ReplyType: any, method: string): Promise<number> {
+  private async putPlantItems(friendGid: number, landIds: number[], method: string): Promise<number> {
     let ok = 0
     for (const landId of landIds) {
       try {
-        const body = Buffer.from(RequestType.encode(RequestType.create({ land_ids: [toLong(landId)], host_gid: toLong(friendGid) })).finish())
-        const { body: rb } = await this.client.sendMsgAsync('gamepb.plantpb.PlantService', method, body)
-        const reply: any = ReplyType.decode(rb)
-        this.updateOperationLimits(reply.operation_limits)
+        const { data: reply } = await this.client.invoke<any>('gamepb.plantpb.PlantService', method, { land_ids: [landId], host_gid: friendGid })
+        if ((reply as any)?.operation_limits)
+          this.updateOperationLimits((reply as any).operation_limits)
         ok++
       } catch {}
       await sleep(100)
@@ -215,15 +203,14 @@ export class FriendWorker {
     return ok
   }
 
-  private async putPlantItemsDetailed(friendGid: number, landIds: number[], RequestType: any, ReplyType: any, method: string) {
+  private async putPlantItemsDetailed(friendGid: number, landIds: number[], method: string) {
     let ok = 0
     const failed: { landId: number, reason: string }[] = []
     for (const landId of landIds) {
       try {
-        const body = Buffer.from(RequestType.encode(RequestType.create({ land_ids: [toLong(landId)], host_gid: toLong(friendGid) })).finish())
-        const { body: rb } = await this.client.sendMsgAsync('gamepb.plantpb.PlantService', method, body)
-        const reply: any = ReplyType.decode(rb)
-        this.updateOperationLimits(reply.operation_limits)
+        const { data: reply } = await this.client.invoke<any>('gamepb.plantpb.PlantService', method, { land_ids: [landId], host_gid: friendGid })
+        if ((reply as any)?.operation_limits)
+          this.updateOperationLimits((reply as any).operation_limits)
         ok++
       } catch (e: any) { failed.push({ landId, reason: e?.message || '未知错误' }) }
       await sleep(100)
@@ -231,19 +218,15 @@ export class FriendWorker {
     return { ok, failed }
   }
 
-  async putInsects(gid: number, landIds: number[]) { return this.putPlantItems(gid, landIds, this.t.PutInsectsRequest, this.t.PutInsectsReply, 'PutInsects') }
-  async putWeeds(gid: number, landIds: number[]) { return this.putPlantItems(gid, landIds, this.t.PutWeedsRequest, this.t.PutWeedsReply, 'PutWeeds') }
-  async putInsectsDetailed(gid: number, landIds: number[]) { return this.putPlantItemsDetailed(gid, landIds, this.t.PutInsectsRequest, this.t.PutInsectsReply, 'PutInsects') }
-  async putWeedsDetailed(gid: number, landIds: number[]) { return this.putPlantItemsDetailed(gid, landIds, this.t.PutWeedsRequest, this.t.PutWeedsReply, 'PutWeeds') }
+  async putInsects(gid: number, landIds: number[]) { return this.putPlantItems(gid, landIds, 'PutInsects') }
+  async putWeeds(gid: number, landIds: number[]) { return this.putPlantItems(gid, landIds, 'PutWeeds') }
+  async putInsectsDetailed(gid: number, landIds: number[]) { return this.putPlantItemsDetailed(gid, landIds, 'PutInsects') }
+  async putWeedsDetailed(gid: number, landIds: number[]) { return this.putPlantItemsDetailed(gid, landIds, 'PutWeeds') }
 
   async checkCanOperateRemote(friendGid: number, operationId: number) {
-    if (!this.t.CheckCanOperateRequest || !this.t.CheckCanOperateReply)
-      return { canOperate: true, canStealNum: 0 }
     try {
-      const body = Buffer.from(this.t.CheckCanOperateRequest.encode(this.t.CheckCanOperateRequest.create({ host_gid: toLong(friendGid), operation_id: toLong(operationId) })).finish())
-      const { body: rb } = await this.client.sendMsgAsync('gamepb.plantpb.PlantService', 'CheckCanOperate', body)
-      const reply: any = this.t.CheckCanOperateReply.decode(rb)
-      return { canOperate: !!reply.can_operate, canStealNum: toNum(reply.can_steal_num) }
+      const { data: reply } = await this.client.invoke<any>('gamepb.plantpb.PlantService', 'CheckCanOperate', { host_gid: friendGid, operation_id: operationId })
+      return { canOperate: !!(reply as any)?.can_operate, canStealNum: toNum((reply as any)?.can_steal_num) }
     } catch { return { canOperate: true, canStealNum: 0 } }
   }
 
@@ -308,7 +291,7 @@ export class FriendWorker {
     if (!cfg?.enabled)
       return false
     const parseTime = (s: string) => {
-      const m = String(s || '').match(/^(\d{1,2}):(\d{1,2})$/)
+      const m = String(s || '').match(RE_TIME_HH_MM)
       if (!m)
         return null
       const h = Number.parseInt(m[1], 10)
@@ -391,7 +374,7 @@ export class FriendWorker {
           plantName: this.gameConfig.getPlantName(plantId),
           seedId,
           seedImage: seedId > 0 ? this.gameConfig.getSeedImageBySeedId(seedId) : '',
-          phaseName: ['未知', '种子', '发芽', '小叶', '大叶', '开花', '成熟', '枯死'][phase.phase as number] || '',
+          phaseName: PHASE_NAMES[phase.phase as number] ?? '',
           level: toNum(land.level),
           matureInSec: matureBegin > nowSec ? matureBegin - nowSec : 0,
           needWater: toNum(plant.dry_num) > 0,

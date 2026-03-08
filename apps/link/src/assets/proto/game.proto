@@ -42,4 +42,3 @@ message KickoutNotify {
     int64 reason = 1;
     string reason_message = 2;
 }
-

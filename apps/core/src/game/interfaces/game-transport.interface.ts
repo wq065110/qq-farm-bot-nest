@@ -1,5 +1,3 @@
-import { Buffer } from 'node:buffer'
-
 export interface UserState {
   gid: number
   name: string
@@ -13,23 +11,20 @@ export interface UserState {
 
 /**
  * Workers 依赖的传输层抽象接口。
- * GameClient（直连）和 LinkClient（TCP 代理）都实现此接口，
- * 这样 Workers 代码无需关心连接方式。
+ * LinkClient 的 AccountTransport 实现此接口，通过 TCP 与 link 进程通信。
+ * 仅暴露语义 invoke，proto 编解码由 link 负责。
  */
 export interface IGameTransport {
-  /** Proto 类型定义映射，供 Workers 编解码协议使用 */
-  readonly protoTypes: Record<string, any>
-
   /** 当前用户状态（只读引用） */
   readonly userState: UserState
 
-  /** 发送异步协议消息，返回响应体和元数据 */
-  sendMsgAsync: (
+  /** 语义调用：由 link 负责 proto 编解码，仅传 service/method/params，返回解码后的 data */
+  invoke: <T = unknown>(
     serviceName: string,
     methodName: string,
-    bodyBytes: Buffer,
+    params: Record<string, unknown>,
     timeout?: number
-  ) => Promise<{ body: Buffer, meta: any }>
+  ) => Promise<{ data: T, meta?: any }>
 
   /** 当前是否已连接 */
   isConnected: () => boolean

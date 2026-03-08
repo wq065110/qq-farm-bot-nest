@@ -9,7 +9,6 @@ import { GameConfigService } from './game-config.service'
 import { GameLogService } from './game-log.service'
 import { GamePushService } from './game-push.service'
 import { LinkClient } from './link-client'
-import { ProtoService } from './proto.service'
 import { AnalyticsWorker } from './services/analytics.worker'
 
 interface RunningAccount {
@@ -35,7 +34,6 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
   private dedup = new EmitDeduplicator()
 
   constructor(
-    private proto: ProtoService,
     private gameConfig: GameConfigService,
     private store: StoreService,
     private gameLog: GameLogService,
@@ -95,7 +93,7 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleInit() {
-    this.linkClient = new LinkClient(this.proto, {
+    this.linkClient = new LinkClient({
       host: process.env.LINK_HOST || '127.0.0.1',
       port: Number(process.env.LINK_PORT) || 9800
     })
@@ -119,7 +117,7 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleDestroy() {
-    const ids = Array.from(this.runners.keys())
+    const ids = [...this.runners.keys()]
     for (const id of ids) {
       await this.stopAccount(id)
       await this.disconnectFromLink(id)
@@ -200,7 +198,7 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
       onFriendsUpdate: (aid, data) => this.onFriendsUpdateCallback?.(aid, data)
     }
 
-    const runner = new AccountRunner(id, this.linkClient, this.proto, this.gameConfig, this.store, callbacks)
+    const runner = new AccountRunner(id, this.linkClient, this.gameConfig, this.store, callbacks)
     runner.name = acc.name || ''
 
     const record: RunningAccount = {

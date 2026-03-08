@@ -4,6 +4,11 @@ import path from 'node:path'
 import { Injectable, Logger } from '@nestjs/common'
 import { ASSETS_DIR } from '../config/paths'
 
+const RE_SEED_BY_ID = /^(\d+)_.*\.(?:png|jpg|jpeg|webp|gif)$/i
+const RE_SEED_BY_ASSET = /(Crop_\d+)_Seed\.(?:png|jpg|jpeg|webp|gif)$/i
+const RE_GROW_PHASE_DURATION = /:(\d+)/
+const RE_ITEM_ID_PLACEHOLDER = /物品#(\d+)/g
+
 export interface PlantInfo {
   id: number
   name: string
@@ -138,14 +143,14 @@ export class GameConfigService implements OnModuleInit {
         const filename = String(file || '')
         const fileUrl = `/game-config/seed_images_named/${encodeURIComponent(file)}`
 
-        const byId = filename.match(/^(\d+)_.*\.(?:png|jpg|jpeg|webp|gif)$/i)
+        const byId = filename.match(RE_SEED_BY_ID)
         if (byId) {
           const seedId = Number(byId[1]) || 0
           if (seedId > 0 && !this.seedImageMap.has(seedId))
             this.seedImageMap.set(seedId, fileUrl)
         }
 
-        const byAsset = filename.match(/(Crop_\d+)_Seed\.(?:png|jpg|jpeg|webp|gif)$/i)
+        const byAsset = filename.match(RE_SEED_BY_ASSET)
         if (byAsset) {
           const assetName = byAsset[1]
           if (assetName && !this.seedAssetImageMap.has(assetName))
@@ -201,7 +206,7 @@ export class GameConfigService implements OnModuleInit {
       .split(';')
       .filter(Boolean)
       .reduce((total, phase) => {
-        const match = phase.match(/:(\d+)/)
+        const match = phase.match(RE_GROW_PHASE_DURATION)
         return total + (match ? Number.parseInt(match[1]) : 0)
       }, 0)
   }
@@ -221,7 +226,7 @@ export class GameConfigService implements OnModuleInit {
   }
 
   getAllPlants(): PlantInfo[] {
-    return Array.from(this.plantMap.values())
+    return [...this.plantMap.values()]
   }
 
   // ---- 果实 ----
@@ -249,7 +254,7 @@ export class GameConfigService implements OnModuleInit {
   }
 
   getAllSeeds(): Array<{ seedId: number, name: string, requiredLevel: number, price: number, image: string }> {
-    return Array.from(this.seedToPlant.values()).map(p => ({
+    return Array.from(this.seedToPlant.values(), p => ({
       seedId: p.seed_id,
       name: p.name,
       requiredLevel: Number(p.land_level_need) || 0,
@@ -308,7 +313,7 @@ export class GameConfigService implements OnModuleInit {
   }
 
   resolveItemNameInText(text: string): string {
-    return text.replace(/物品#(\d+)/g, (_, id) => {
+    return text.replace(RE_ITEM_ID_PLACEHOLDER, (_, id) => {
       const numId = Number(id)
       return this.getItemName(numId)
     })

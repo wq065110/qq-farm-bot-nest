@@ -1,10 +1,12 @@
 import type { GameConfigService } from '../game-config.service'
 
+const RE_PHASE_DURATION = /:(\d+)$/
+
 function parseGrowTime(growPhases: string): number {
   if (!growPhases)
     return 0
   return growPhases.split(';').filter(Boolean).reduce((total, phase) => {
-    const match = phase.match(/:(\d+)$/)
+    const match = phase.match(RE_PHASE_DURATION)
     return total + (match ? Number.parseInt(match[1]) : 0)
   }, 0)
 }
@@ -15,7 +17,7 @@ function parseNormalFertilizerReduceSec(growPhases: string): number {
   const phases = growPhases.split(';').filter(Boolean)
   if (!phases.length)
     return 0
-  const match = phases[0].match(/:(\d+)$/)
+  const match = phases[0].match(RE_PHASE_DURATION)
   return match ? Number.parseInt(match[1]) : 0
 }
 

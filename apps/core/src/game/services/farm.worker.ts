@@ -3,12 +3,10 @@ import type { GameConfigService } from '../game-config.service'
 import type { IGameTransport } from '../interfaces/game-transport.interface'
 import type { AnalyticsWorker } from './analytics.worker'
 import type { StatsTracker } from './stats.worker'
-import { Buffer } from 'node:buffer'
 import { Logger } from '@nestjs/common'
-import * as protobuf from 'protobufjs'
+import { Scheduler } from '@qq-farm/shared'
 import { PHASE_NAMES, PlantPhase } from '../constants'
-import { Scheduler } from '../scheduler'
-import { getServerTimeSec, sleep, toLong, toNum, toTimeSec } from '../utils'
+import { getServerTimeSec, sleep, toNum, toTimeSec } from '../utils'
 
 const NORMAL_FERTILIZER_ID = 1011
 const ORGANIC_FERTILIZER_ID = 1012
@@ -35,7 +33,7 @@ export class FarmWorker {
     private analytics: AnalyticsWorker
   ) {
     this.logger = new Logger(`Farm:${accountId}`)
-    this.scheduler = new Scheduler(`farm-${accountId}`)
+    this.scheduler = new Scheduler(`farm-${accountId}`, this.logger)
   }
 
   private log(msg: string, event?: string) {
@@ -48,45 +46,44 @@ export class FarmWorker {
     this.onLog?.({ msg, tag: '农场', meta: { module: 'farm', ...(event && { event }) }, isWarn: true })
   }
 
-  private get t() { return this.client.protoTypes }
-
-  // ========== API ==========
+  // ========== API（通过 link invoke，由 link 负责 proto 编解码）==========
 
   async getAllLands(): Promise<any> {
-    const body = Buffer.from(this.t.AllLandsRequest.encode(this.t.AllLandsRequest.create({})).finish())
-    const { body: rb } = await this.client.sendMsgAsync('gamepb.plantpb.PlantService', 'AllLands', body)
-    const reply: any = this.t.AllLandsReply.decode(rb)
-    if (reply.operation_limits && this.onOperationLimitsUpdate)
+    const { data: reply } = await this.client.invoke<any>('gamepb.plantpb.PlantService', 'AllLands', {})
+    if (reply?.operation_limits && this.onOperationLimitsUpdate)
       this.onOperationLimitsUpdate(reply.operation_limits)
     return reply
   }
 
   async harvest(landIds: any[]): Promise<any> {
-    const body = Buffer.from(this.t.HarvestRequest.encode(this.t.HarvestRequest.create({
+    const { data } = await this.client.invoke<any>('gamepb.plantpb.PlantService', 'Harvest', {
       land_ids: landIds,
-      host_gid: toLong(this.client.userState.gid),
+      host_gid: this.client.userState.gid,
       is_all: true
-    })).finish())
-    const { body: rb } = await this.client.sendMsgAsync('gamepb.plantpb.PlantService', 'Harvest', body)
-    return this.t.HarvestReply.decode(rb)
+    })
+    return data
   }
 
-  private async sendPlantRequest(RequestType: any, ReplyType: any, method: string, landIds: any[], hostGid: number): Promise<any> {
-    const body = Buffer.from(RequestType.encode(RequestType.create({ land_ids: landIds, host_gid: toLong(hostGid) })).finish())
-    const { body: rb } = await this.client.sendMsgAsync('gamepb.plantpb.PlantService', method, body)
-    return ReplyType.decode(rb)
+  private async sendPlantRequest(method: string, landIds: any[], hostGid: number): Promise<any> {
+    const { data } = await this.client.invoke<any>('gamepb.plantpb.PlantService', method, {
+      land_ids: landIds,
+      host_gid: hostGid
+    })
+    return data
   }
 
-  async waterLand(landIds: any[]) { return this.sendPlantRequest(this.t.WaterLandRequest, this.t.WaterLandReply, 'WaterLand', landIds, this.client.userState.gid) }
-  async weedOut(landIds: any[]) { return this.sendPlantRequest(this.t.WeedOutRequest, this.t.WeedOutReply, 'WeedOut', landIds, this.client.userState.gid) }
-  async insecticide(landIds: any[]) { return this.sendPlantRequest(this.t.InsecticideRequest, this.t.InsecticideReply, 'Insecticide', landIds, this.client.userState.gid) }
+  async waterLand(landIds: any[]) { return this.sendPlantRequest('WaterLand', landIds, this.client.userState.gid) }
+  async weedOut(landIds: any[]) { return this.sendPlantRequest('WeedOut', landIds, this.client.userState.gid) }
+  async insecticide(landIds: any[]) { return this.sendPlantRequest('Insecticide', landIds, this.client.userState.gid) }
 
   async fertilize(landIds: number[], fertilizerId = NORMAL_FERTILIZER_ID): Promise<number> {
     let success = 0
     for (const landId of landIds) {
       try {
-        const body = Buffer.from(this.t.FertilizeRequest.encode(this.t.FertilizeRequest.create({ land_ids: [toLong(landId)], fertilizer_id: toLong(fertilizerId) })).finish())
-        await this.client.sendMsgAsync('gamepb.plantpb.PlantService', 'Fertilize', body)
+        await this.client.invoke('gamepb.plantpb.PlantService', 'Fertilize', {
+          land_ids: [landId],
+          fertilizer_id: fertilizerId
+        })
         success++
       } catch { break }
       if (landIds.length > 1)
@@ -103,8 +100,10 @@ export class FarmWorker {
     let idx = 0
     while (true) {
       try {
-        const body = Buffer.from(this.t.FertilizeRequest.encode(this.t.FertilizeRequest.create({ land_ids: [toLong(ids[idx])], fertilizer_id: toLong(ORGANIC_FERTILIZER_ID) })).finish())
-        await this.client.sendMsgAsync('gamepb.plantpb.PlantService', 'Fertilize', body)
+        await this.client.invoke('gamepb.plantpb.PlantService', 'Fertilize', {
+          land_ids: [ids[idx]],
+          fertilizer_id: ORGANIC_FERTILIZER_ID
+        })
         success++
       } catch { break }
       idx = (idx + 1) % ids.length
@@ -114,49 +113,37 @@ export class FarmWorker {
   }
 
   async removePlant(landIds: number[]): Promise<any> {
-    const body = Buffer.from(this.t.RemovePlantRequest.encode(this.t.RemovePlantRequest.create({ land_ids: landIds.map(id => toLong(id)) })).finish())
-    const { body: rb } = await this.client.sendMsgAsync('gamepb.plantpb.PlantService', 'RemovePlant', body)
-    return this.t.RemovePlantReply.decode(rb)
+    const { data } = await this.client.invoke<any>('gamepb.plantpb.PlantService', 'RemovePlant', { land_ids: landIds })
+    return data
   }
 
   async upgradeLand(landId: number): Promise<any> {
-    const body = Buffer.from(this.t.UpgradeLandRequest.encode(this.t.UpgradeLandRequest.create({ land_id: toLong(landId) })).finish())
-    const { body: rb } = await this.client.sendMsgAsync('gamepb.plantpb.PlantService', 'UpgradeLand', body)
-    return this.t.UpgradeLandReply.decode(rb)
+    const { data } = await this.client.invoke<any>('gamepb.plantpb.PlantService', 'UpgradeLand', { land_id: landId })
+    return data
   }
 
   async unlockLand(landId: number, doShared = false): Promise<any> {
-    const body = Buffer.from(this.t.UnlockLandRequest.encode(this.t.UnlockLandRequest.create({ land_id: toLong(landId), do_shared: doShared })).finish())
-    const { body: rb } = await this.client.sendMsgAsync('gamepb.plantpb.PlantService', 'UnlockLand', body)
-    return this.t.UnlockLandReply.decode(rb)
+    const { data } = await this.client.invoke<any>('gamepb.plantpb.PlantService', 'UnlockLand', { land_id: landId, do_shared: doShared })
+    return data
   }
 
   async getShopInfo(shopId: number): Promise<any> {
-    const body = Buffer.from(this.t.ShopInfoRequest.encode(this.t.ShopInfoRequest.create({ shop_id: toLong(shopId) })).finish())
-    const { body: rb } = await this.client.sendMsgAsync('gamepb.shoppb.ShopService', 'ShopInfo', body)
-    return this.t.ShopInfoReply.decode(rb)
+    const { data } = await this.client.invoke<any>('gamepb.shoppb.ShopService', 'ShopInfo', { shop_id: shopId })
+    return data
   }
 
   async buyGoods(goodsId: number, num: number, price: number): Promise<any> {
-    const body = Buffer.from(this.t.BuyGoodsRequest.encode(this.t.BuyGoodsRequest.create({ goods_id: toLong(goodsId), num: toLong(num), price: toLong(price) })).finish())
-    const { body: rb } = await this.client.sendMsgAsync('gamepb.shoppb.ShopService', 'BuyGoods', body)
-    return this.t.BuyGoodsReply.decode(rb)
+    const { data } = await this.client.invoke<any>('gamepb.shoppb.ShopService', 'BuyGoods', { goods_id: goodsId, num, price })
+    return data
   }
 
   async plantSeeds(seedId: number, landIds: number[]): Promise<number> {
     let success = 0
     for (const landId of landIds) {
       try {
-        const writer = protobuf.Writer.create()
-        const itemWriter = writer.uint32(18).fork()
-        itemWriter.uint32(8).int64(seedId)
-        const idsWriter = itemWriter.uint32(18).fork()
-        idsWriter.int64(landId)
-        idsWriter.ldelim()
-        itemWriter.ldelim()
-        const body = Buffer.from(writer.finish())
-        const { body: rb } = await this.client.sendMsgAsync('gamepb.plantpb.PlantService', 'Plant', body)
-        this.t.PlantReply.decode(rb)
+        await this.client.invoke('gamepb.plantpb.PlantService', 'Plant', {
+          items: [{ seed_id: seedId, land_ids: [landId] }]
+        })
         success++
       } catch (e: any) { this.warn(`土地#${landId} 种植失败: ${e?.message}`, 'plant_seed') }
       if (landIds.length > 1)
@@ -277,7 +264,7 @@ export class FarmWorker {
       const phase = this.getCurrentPhase(plant.phases)
       if (!phase || phase.phase === PlantPhase.DEAD)
         return false
-      if (Object.prototype.hasOwnProperty.call(plant, 'left_inorc_fert_times') && toNum(plant.left_inorc_fert_times) <= 0)
+      if (Object.hasOwn(plant, 'left_inorc_fert_times') && toNum(plant.left_inorc_fert_times) <= 0)
         return false
       return true
     }).map((l: any) => toNum(l.id))

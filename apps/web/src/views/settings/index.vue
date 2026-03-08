@@ -27,7 +27,7 @@ const currentAccountName = computed(() => {
 
 const currentAccountUin = computed(() => {
   const uin = currentAccount.value?.uin
-  return uin != null ? uin : undefined
+  return uin ?? undefined
 })
 
 const currentAccountAvatar = computed(() => currentAccount.value?.avatar ?? undefined)

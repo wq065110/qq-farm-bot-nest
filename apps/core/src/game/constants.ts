@@ -5,7 +5,7 @@ export {
   HEARTBEAT_INTERVAL_MS,
   TCP_HOST,
   TCP_PORT
-} from '@qq-farm/constants'
+} from '@qq-farm/shared'
 
 export const DEFAULT_FARM_INTERVAL_MS = 2_000
 export const DEFAULT_FRIEND_INTERVAL_MS = 10_000

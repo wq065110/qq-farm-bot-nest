@@ -8,8 +8,9 @@ const props = defineProps<{
   show: boolean
   editData?: any
 }>()
-
 const emit = defineEmits(['close', 'saved'])
+const RE_MOBILE_UA = /Android|iPhone|iPad|iPod|Mobile/i
+const RE_CODE_PARAM = /[?&]code=([^&]+)/i
 
 const activeTab = ref('manual')
 const loading = ref(false)
@@ -82,7 +83,7 @@ async function loadQRCode() {
   }
 }
 
-const isMobile = computed(() => /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent))
+const isMobile = computed(() => RE_MOBILE_UA.test(navigator.userAgent))
 
 function openQRCodeLoginUrl() {
   if (!qrData.value?.url)
@@ -133,7 +134,7 @@ async function submitManual() {
   }
 
   let code = form.code.trim()
-  const match = code.match(/[?&]code=([^&]+)/i)
+  const match = code.match(RE_CODE_PARAM)
   if (match && match[1]) {
     code = decodeURIComponent(match[1])
     form.code = code

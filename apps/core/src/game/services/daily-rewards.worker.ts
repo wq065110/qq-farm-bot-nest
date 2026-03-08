@@ -1,27 +1,7 @@
 import type { GameConfigService } from '../game-config.service'
 import type { IGameTransport } from '../interfaces/game-transport.interface'
-import { Buffer } from 'node:buffer'
 import { Logger } from '@nestjs/common'
-import { toNum } from '../utils'
-
-function getDateKey(): string {
-  const now = new Date()
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
-}
-
-function getRewardSummary(items: any[], gameConfig: GameConfigService): string {
-  return (items || []).filter(it => toNum(it?.count) > 0).map((it) => {
-    const id = toNum(it.id)
-    const count = toNum(it.count)
-    if (id === 1 || id === 1001)
-      return `金币${count}`
-    if (id === 2 || id === 1101)
-      return `经验${count}`
-    if (id === 1002)
-      return `点券${count}`
-    return `${gameConfig.getItemName(id)}x${count}`
-  }).join('/')
-}
+import { getDateKey, getRewardSummary, sleep } from '../utils'
 
 export class DailyRewardsWorker {
   private logger: Logger
@@ -68,27 +48,6 @@ export class DailyRewardsWorker {
     this.onLog?.({ msg, tag: '任务', meta: { module: 'task', ...(event && { event }) }, isWarn: true })
   }
 
-  /** 检查 proto 类型是否可用，若不可用则记录友好提示并返回 false */
-  private ensureProtoTypes(typeKeys: string[], label: string, event: string): boolean {
-    const t = this.client.protoTypes
-    for (const key of typeKeys) {
-      const type = t?.[key]
-      if (!type?.encode) {
-        this.warn(`${label}：功能暂不可用（协议未加载）`, event)
-        return false
-      }
-    }
-    return true
-  }
-
-  /** 将协议/编码类错误转为友好提示，避免直接展示 undefined.encode 等 */
-  private friendlyErrorMessage(msg: string, fallback: string): string {
-    const s = String(msg ?? '')
-    if (/undefined|\.encode|\.decode|proto/i.test(s))
-      return fallback
-    return s
-  }
-
   // ========== Email ==========
 
   async checkAndClaimEmails(force = false): Promise<{ claimed: number, rewardItems: number }> {
@@ -100,11 +59,9 @@ export class DailyRewardsWorker {
     this.emailLastCheck = now
 
     try {
-      const t = this.client.protoTypes
       const getEmailList = async (boxType: number): Promise<any> => {
-        const body = Buffer.from(t.GetEmailListRequest.encode(t.GetEmailListRequest.create({ box_type: boxType })).finish())
-        const { body: rb } = await this.client.sendMsgAsync('gamepb.emailpb.EmailService', 'GetEmailList', body)
-        return t.GetEmailListReply.decode(rb)
+        const { data } = await this.client.invoke('gamepb.emailpb.EmailService', 'GetEmailList', { box_type: boxType })
+        return data ?? { emails: [] }
       }
 
       const [box1, box2] = await Promise.all([
@@ -148,11 +105,9 @@ export class DailyRewardsWorker {
           const firstId = String(list[0]?.id || '')
           if (!firstId)
             continue
-          const body = Buffer.from(t.BatchClaimEmailRequest.encode(t.BatchClaimEmailRequest.create({ box_type: bt, email_id: firstId })).finish())
-          const { body: rb } = await this.client.sendMsgAsync('gamepb.emailpb.EmailService', 'BatchClaimEmail', body)
-          const rep: any = t.BatchClaimEmailReply.decode(rb)
-          if (rep.items?.length)
-            rewards.push(...rep.items)
+          const { data: rep } = await this.client.invoke<any>('gamepb.emailpb.EmailService', 'BatchClaimEmail', { box_type: bt, email_id: firstId })
+          if ((rep as any)?.items?.length)
+            rewards.push(...(rep as any).items)
           claimed++
         } catch {}
       }
@@ -160,17 +115,15 @@ export class DailyRewardsWorker {
       for (const m of claimable) {
         const bt = m.__boxType === 2 ? 2 : 1
         try {
-          const body = Buffer.from(t.ClaimEmailRequest.encode(t.ClaimEmailRequest.create({ box_type: bt, email_id: String(m.id || '') })).finish())
-          const { body: rb } = await this.client.sendMsgAsync('gamepb.emailpb.EmailService', 'ClaimEmail', body)
-          const rep: any = t.ClaimEmailReply.decode(rb)
-          if (rep.items?.length)
-            rewards.push(...rep.items)
+          const { data: rep } = await this.client.invoke<any>('gamepb.emailpb.EmailService', 'ClaimEmail', { box_type: bt, email_id: String(m.id || '') })
+          if ((rep as any)?.items?.length)
+            rewards.push(...(rep as any).items)
           claimed++
         } catch {}
       }
 
       if (claimed > 0) {
-        const rewardStr = getRewardSummary(rewards, this.gameConfig)
+        const rewardStr = getRewardSummary(rewards, id => this.gameConfig.getItemName(id))
         this.log(rewardStr ? `邮箱领取成功 ${claimed} 封 → ${rewardStr}` : `邮箱领取成功 ${claimed} 封`, 'email_rewards')
         this.emailDone = getDateKey()
       }
@@ -192,13 +145,8 @@ export class DailyRewardsWorker {
     this.monthCardLastCheck = now
 
     try {
-      const t = this.client.protoTypes
-      if (!this.ensureProtoTypes(['GetMonthCardInfosRequest', 'ClaimMonthCardRewardRequest'], '月卡礼包', 'month_card_gift'))
-        return false
-      const body = Buffer.from(t.GetMonthCardInfosRequest.encode(t.GetMonthCardInfosRequest.create({})).finish())
-      const { body: rb } = await this.client.sendMsgAsync('gamepb.mallpb.MallService', 'GetMonthCardInfos', body)
-      const rep: any = t.GetMonthCardInfosReply.decode(rb)
-      const infos = rep.infos || []
+      const { data: rep } = await this.client.invoke<any>('gamepb.mallpb.MallService', 'GetMonthCardInfos', {})
+      const infos = (rep as any)?.infos || []
       const claimable = infos.filter((x: any) => x?.can_claim && Number(x.goods_id || 0) > 0)
 
       if (!claimable.length) {
@@ -210,10 +158,8 @@ export class DailyRewardsWorker {
       let claimed = 0
       for (const info of claimable) {
         try {
-          const claimBody = Buffer.from(t.ClaimMonthCardRewardRequest.encode(t.ClaimMonthCardRewardRequest.create({ goods_id: Number(info.goods_id) })).finish())
-          const { body: crb } = await this.client.sendMsgAsync('gamepb.mallpb.MallService', 'ClaimMonthCardReward', claimBody)
-          const ret: any = t.ClaimMonthCardRewardReply.decode(crb)
-          const reward = getRewardSummary(ret.items || [], this.gameConfig)
+          const { data: ret } = await this.client.invoke<any>('gamepb.mallpb.MallService', 'ClaimMonthCardReward', { goods_id: Number(info.goods_id) })
+          const reward = getRewardSummary((ret as any)?.items || [], id => this.gameConfig.getItemName(id))
           this.log(reward ? `月卡领取成功 → ${reward}` : '月卡领取成功', 'month_card_gift')
           claimed++
         } catch (e: any) {
@@ -227,7 +173,7 @@ export class DailyRewardsWorker {
       }
       return claimed > 0
     } catch (e: any) {
-      this.warn(`月卡礼包：${this.friendlyErrorMessage(e?.message, '功能暂不可用')}`, 'month_card_gift')
+      this.warn(`月卡礼包：${(e?.message || '功能暂不可用')}`, 'month_card_gift')
       return false
     }
   }
@@ -243,13 +189,8 @@ export class DailyRewardsWorker {
     this.openServerLastCheck = now
 
     try {
-      const t = this.client.protoTypes
-      if (!this.ensureProtoTypes(['GetTodayClaimStatusRequest', 'ClaimRedPacketRequest'], '开服红包', 'open_server_gift'))
-        return false
-      const body = Buffer.from(t.GetTodayClaimStatusRequest.encode(t.GetTodayClaimStatusRequest.create({})).finish())
-      const { body: rb } = await this.client.sendMsgAsync('gamepb.redpacketpb.RedPacketService', 'GetTodayClaimStatus', body)
-      const status: any = t.GetTodayClaimStatusReply.decode(rb)
-      const claimable = (status.infos || []).filter((x: any) => x?.can_claim && Number(x.id || 0) > 0)
+      const { data: status } = await this.client.invoke<any>('gamepb.redpacketpb.RedPacketService', 'GetTodayClaimStatus', {})
+      const claimable = ((status as any)?.infos || []).filter((x: any) => x?.can_claim && Number(x.id || 0) > 0)
 
       if (!claimable.length) {
         this.openServerDone = getDateKey()
@@ -260,11 +201,9 @@ export class DailyRewardsWorker {
       let claimed = 0
       for (const info of claimable) {
         try {
-          const claimBody = Buffer.from(t.ClaimRedPacketRequest.encode(t.ClaimRedPacketRequest.create({ id: Number(info.id) })).finish())
-          const { body: crb } = await this.client.sendMsgAsync('gamepb.redpacketpb.RedPacketService', 'ClaimRedPacket', claimBody)
-          const ret: any = t.ClaimRedPacketReply.decode(crb)
-          const items = ret.item ? [ret.item] : []
-          const reward = getRewardSummary(items, this.gameConfig)
+          const { data: ret } = await this.client.invoke<any>('gamepb.redpacketpb.RedPacketService', 'ClaimRedPacket', { id: Number(info.id) })
+          const items = (ret as any)?.item ? [(ret as any).item] : []
+          const reward = getRewardSummary(items, id => this.gameConfig.getItemName(id))
           this.log(reward ? `开服红包领取成功 → ${reward}` : '开服红包领取成功', 'open_server_gift')
           claimed++
         } catch (e: any) {
@@ -283,7 +222,7 @@ export class DailyRewardsWorker {
       }
       return claimed > 0
     } catch (e: any) {
-      this.warn(`开服红包：${this.friendlyErrorMessage(e?.message, '功能暂不可用')}`, 'open_server_gift')
+      this.warn(`开服红包：${(e?.message || '功能暂不可用')}`, 'open_server_gift')
       return false
     }
   }
@@ -299,23 +238,16 @@ export class DailyRewardsWorker {
     this.vipLastCheck = now
 
     try {
-      const t = this.client.protoTypes
-      if (!this.ensureProtoTypes(['GetDailyGiftStatusRequest', 'ClaimDailyGiftRequest'], '会员礼包', 'vip_daily_gift'))
-        return false
-      const statusBody = Buffer.from(t.GetDailyGiftStatusRequest.encode(t.GetDailyGiftStatusRequest.create({})).finish())
-      const { body: srb } = await this.client.sendMsgAsync('gamepb.qqvippb.QQVipService', 'GetDailyGiftStatus', statusBody)
-      const status: any = t.GetDailyGiftStatusReply.decode(srb)
+      const { data: status } = await this.client.invoke<any>('gamepb.qqvippb.QQVipService', 'GetDailyGiftStatus', {})
 
-      if (!status?.can_claim) {
+      if (!(status as any)?.can_claim) {
         this.vipDone = getDateKey()
         this.log('今日暂无可领取会员礼包', 'vip_daily_gift')
         return false
       }
 
-      const claimBody = Buffer.from(t.ClaimDailyGiftRequest.encode(t.ClaimDailyGiftRequest.create({})).finish())
-      const { body: crb } = await this.client.sendMsgAsync('gamepb.qqvippb.QQVipService', 'ClaimDailyGift', claimBody)
-      const rep: any = t.ClaimDailyGiftReply.decode(crb)
-      const reward = getRewardSummary(rep.items || [], this.gameConfig)
+      const { data: rep } = await this.client.invoke<any>('gamepb.qqvippb.QQVipService', 'ClaimDailyGift', {})
+      const reward = getRewardSummary((rep as any)?.items || [], id => this.gameConfig.getItemName(id))
       this.log(reward ? `会员礼包领取成功 → ${reward}` : '会员礼包领取成功', 'vip_daily_gift')
       this.vipLastClaim = Date.now()
       this.vipDone = getDateKey()
@@ -326,7 +258,7 @@ export class DailyRewardsWorker {
         this.vipDone = getDateKey()
         return false
       }
-      this.warn(`会员礼包：${this.friendlyErrorMessage(msg, '功能暂不可用')}`, 'vip_daily_gift')
+      this.warn(`会员礼包：${(msg || '功能暂不可用')}`, 'vip_daily_gift')
       return false
     }
   }
@@ -342,36 +274,26 @@ export class DailyRewardsWorker {
     this.shareLastCheck = now
 
     try {
-      const t = this.client.protoTypes
-      if (!this.ensureProtoTypes(['CheckCanShareRequest', 'ReportShareRequest', 'ClaimShareRewardRequest'], '分享奖励', 'daily_share'))
-        return false
-
-      const checkBody = Buffer.from(t.CheckCanShareRequest.encode(t.CheckCanShareRequest.create({})).finish())
-      const { body: crb } = await this.client.sendMsgAsync('gamepb.sharepb.ShareService', 'CheckCanShare', checkBody)
-      const can: any = t.CheckCanShareReply.decode(crb)
-      if (!can?.can_share) {
+      const { data: can } = await this.client.invoke<any>('gamepb.sharepb.ShareService', 'CheckCanShare', {})
+      if (!(can as any)?.can_share) {
         this.shareDone = getDateKey()
         this.log('今日暂无可领取分享礼包', 'daily_share')
         return false
       }
 
-      const reportBody = Buffer.from(t.ReportShareRequest.encode(t.ReportShareRequest.create({ shared: true })).finish())
-      const { body: rrb } = await this.client.sendMsgAsync('gamepb.sharepb.ShareService', 'ReportShare', reportBody)
-      const report: any = t.ReportShareReply.decode(rrb)
-      if (!report?.success) {
+      const { data: report } = await this.client.invoke<any>('gamepb.sharepb.ShareService', 'ReportShare', { shared: true })
+      if (!(report as any)?.success) {
         this.warn('上报分享状态失败', 'daily_share')
         return false
       }
 
-      const claimBody = Buffer.from(t.ClaimShareRewardRequest.encode(t.ClaimShareRewardRequest.create({ claimed: true })).finish())
-      const { body: clrb } = await this.client.sendMsgAsync('gamepb.sharepb.ShareService', 'ClaimShareReward', claimBody)
-      const rep: any = t.ClaimShareRewardReply.decode(clrb)
-      if (!rep?.success) {
+      const { data: rep } = await this.client.invoke<any>('gamepb.sharepb.ShareService', 'ClaimShareReward', { claimed: true })
+      if (!(rep as any)?.success) {
         this.warn('领取分享礼包失败', 'daily_share')
         return false
       }
 
-      const reward = getRewardSummary(rep.items || [], this.gameConfig)
+      const reward = getRewardSummary((rep as any)?.items || [], id => this.gameConfig.getItemName(id))
       this.log(reward ? `分享领取成功 → ${reward}` : '分享领取成功', 'daily_share')
       this.shareLastClaim = Date.now()
       this.shareDone = getDateKey()
@@ -382,7 +304,7 @@ export class DailyRewardsWorker {
         this.shareDone = getDateKey()
         this.log('分享奖励已经领取', 'daily_share')
       } else {
-        this.warn(`分享奖励：${this.friendlyErrorMessage(msg, '功能暂不可用')}`, 'daily_share')
+        this.warn(`分享奖励：${(msg || '功能暂不可用')}`, 'daily_share')
       }
       return false
     }
@@ -399,20 +321,9 @@ export class DailyRewardsWorker {
     this.freeGiftLastCheck = now
 
     try {
-      const t = this.client.protoTypes
-      if (!this.ensureProtoTypes(['GetMallListBySlotTypeRequest', 'PurchaseRequest'], '免费礼包', 'mall_free_gifts'))
-        return 0
-      const body = Buffer.from(t.GetMallListBySlotTypeRequest.encode(t.GetMallListBySlotTypeRequest.create({ slot_type: 1 })).finish())
-      const { body: rb } = await this.client.sendMsgAsync('gamepb.mallpb.MallService', 'GetMallListBySlotType', body)
-      const mall: any = t.GetMallListBySlotTypeResponse.decode(rb)
-      const raw = mall.goods_list || []
-      const goods: any[] = []
-      for (const b of raw) {
-        try {
-          goods.push(t.MallGoods.decode(b))
-        } catch {}
-      }
-      const free = goods.filter(g => g?.is_free === true && Number(g.goods_id || 0) > 0)
+      const { data: mall } = await this.client.invoke<any>('gamepb.mallpb.MallService', 'GetMallListBySlotType', { slot_type: 1 })
+      const goods = (mall as any)?.goods_list || []
+      const free = goods.filter((g: any) => g?.is_free === true && Number(g.goods_id || 0) > 0)
       if (!free.length) {
         this.freeGiftDone = getDateKey()
         this.log('今日暂无可领取免费礼包', 'mall_free_gifts')
@@ -422,8 +333,7 @@ export class DailyRewardsWorker {
       let bought = 0
       for (const g of free) {
         try {
-          const purchaseBody = Buffer.from(t.PurchaseRequest.encode(t.PurchaseRequest.create({ goods_id: Number(g.goods_id), count: 1 })).finish())
-          await this.client.sendMsgAsync('gamepb.mallpb.MallService', 'Purchase', purchaseBody)
+          await this.client.invoke('gamepb.mallpb.MallService', 'Purchase', { goods_id: Number(g.goods_id), count: 1 })
           bought++
         } catch {}
       }
@@ -433,7 +343,7 @@ export class DailyRewardsWorker {
       }
       return bought
     } catch (e: any) {
-      this.warn(`免费礼包：${this.friendlyErrorMessage(e?.message, '功能暂不可用')}`, 'mall_free_gifts')
+      this.warn(`免费礼包：${(e?.message || '功能暂不可用')}`, 'mall_free_gifts')
       return 0
     }
   }
@@ -452,29 +362,19 @@ export class DailyRewardsWorker {
       return 0
     this.lastBuyAt = now
     try {
-      const t = this.client.protoTypes
-      const body = Buffer.from(t.GetMallListBySlotTypeRequest.encode(t.GetMallListBySlotTypeRequest.create({ slot_type: 1 })).finish())
-      const { body: rb } = await this.client.sendMsgAsync('gamepb.mallpb.MallService', 'GetMallListBySlotType', body)
-      const mall: any = t.GetMallListBySlotTypeResponse.decode(rb)
-      const raw = mall.goods_list || []
-      const goods: any[] = []
-      for (const b of raw) {
-        try {
-          goods.push(t.MallGoods.decode(b))
-        } catch {}
-      }
-      const target = goods.find(g => Number(g?.goods_id || 0) === DailyRewardsWorker.ORGANIC_FERTILIZER_MALL_GOODS_ID)
+      const { data: mall } = await this.client.invoke<any>('gamepb.mallpb.MallService', 'GetMallListBySlotType', { slot_type: 1 })
+      const goods = (mall as any)?.goods_list || []
+      const target = goods.find((g: any) => Number(g?.goods_id || 0) === DailyRewardsWorker.ORGANIC_FERTILIZER_MALL_GOODS_ID)
       if (!target)
         return 0
 
       let totalBought = 0
       for (let i = 0; i < DailyRewardsWorker.MAX_ROUNDS; i++) {
         try {
-          const purchaseBody = Buffer.from(t.PurchaseRequest.encode(t.PurchaseRequest.create({ goods_id: DailyRewardsWorker.ORGANIC_FERTILIZER_MALL_GOODS_ID, count: DailyRewardsWorker.BUY_PER_ROUND })).finish())
-          await this.client.sendMsgAsync('gamepb.mallpb.MallService', 'Purchase', purchaseBody)
+          await this.client.invoke('gamepb.mallpb.MallService', 'Purchase', { goods_id: DailyRewardsWorker.ORGANIC_FERTILIZER_MALL_GOODS_ID, count: DailyRewardsWorker.BUY_PER_ROUND })
           totalBought += DailyRewardsWorker.BUY_PER_ROUND
         } catch { break }
-        await new Promise(r => setTimeout(r, 120))
+        await sleep(120)
       }
 
       if (totalBought > 0) {

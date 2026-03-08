@@ -3,10 +3,9 @@ import type { IntervalsConfig } from './constants'
 import type { GameConfigService } from './game-config.service'
 import type { IGameTransport } from './interfaces/game-transport.interface'
 import type { LinkClient } from './link-client'
-import type { ProtoService } from './proto.service'
 import { Logger } from '@nestjs/common'
+import { Scheduler } from '@qq-farm/shared'
 import { EmitDeduplicator } from './emit-deduplicator'
-import { Scheduler } from './scheduler'
 import { AnalyticsWorker } from './services/analytics.worker'
 import { DailyRewardsWorker } from './services/daily-rewards.worker'
 import { FarmWorker } from './services/farm.worker'
@@ -15,7 +14,7 @@ import { InviteWorker } from './services/invite.worker'
 import { StatsTracker } from './services/stats.worker'
 import { TaskWorker } from './services/task.worker'
 import { WarehouseWorker } from './services/warehouse.worker'
-import { toNum } from './utils'
+import { getDateKey, toNum } from './utils'
 
 export interface AccountRunnerConfig {
   code: string
@@ -74,13 +73,12 @@ export class AccountRunner {
   constructor(
     readonly accountId: string,
     private linkClient: LinkClient,
-    private proto: ProtoService,
     private gameConfig: GameConfigService,
     private store: StoreService,
     private callbacks: AccountRunnerCallbacks
   ) {
     this.logger = new Logger(`Runner:${accountId}`)
-    this.scheduler = new Scheduler(`runner-${accountId}`)
+    this.scheduler = new Scheduler(`runner-${accountId}`, this.logger)
     this.stats = new StatsTracker(accountId)
     this.analytics = new AnalyticsWorker(gameConfig)
   }
@@ -353,12 +351,12 @@ export class AccountRunner {
 
   private startDailyRoutineTimer() {
     this.stopDailyRoutineTimer()
-    this.lastDailyRunDate = this.getLocalDateKey()
+    this.lastDailyRunDate = getDateKey()
     this.runDailyRoutines(true).catch(() => {})
     this.scheduler.setIntervalTask('daily_routine_interval', 30_000, () => {
       if (!this.loginReady)
         return
-      const today = this.getLocalDateKey()
+      const today = getDateKey()
       if (today === this.lastDailyRunDate)
         return
       this.lastDailyRunDate = today
@@ -368,11 +366,6 @@ export class AccountRunner {
 
   private stopDailyRoutineTimer() {
     this.scheduler.clear('daily_routine_interval')
-  }
-
-  private getLocalDateKey(): string {
-    const now = new Date()
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
   }
 
   // ========== Config ==========

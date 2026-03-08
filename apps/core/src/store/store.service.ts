@@ -374,7 +374,6 @@ export class StoreService {
 
   addOrUpdateAccount(acc: Record<string, any>): { accounts: any[], nextId: number } {
     // QQ 平台：如果未显式指定 id，但携带 uin，则先按 (uin + platform) 查重，命中则转为更新
-    // 这里只用于定位账号，不自动修改备注，避免重复扫码覆盖用户手动设置的备注
     let dedupByUin = false
     if (!acc.id && acc.uin) {
       const uin = String(acc.uin).trim()

@@ -31,7 +31,7 @@ export interface LinkClientOptions {
 
 /**
  * TCP 客户端：与 apps/link 进程通信。
- * 实现 IGameTransport 接口，可透明替代直连 GameClient。
+ * 实现 IGameTransport 接口，与 link 进程通信完成游戏协议交互。
  */
 export class LinkClient extends EventEmitter {
   private readonly logger = new Logger('LinkClient')
@@ -44,12 +44,8 @@ export class LinkClient extends EventEmitter {
   private readonly host: string
   private readonly port: number
   private readonly reconnectInterval: number
-  private protoTypesCache: Record<string, any> | null = null
 
-  constructor(
-    private readonly protoService: { types: Record<string, any> },
-    options: LinkClientOptions = {}
-  ) {
+  constructor(options: LinkClientOptions = {}) {
     super()
     this.host = options.host || '127.0.0.1'
     this.port = options.port || 9800
@@ -200,7 +196,7 @@ export class LinkClient extends EventEmitter {
   // ========== IGameTransport per-account adapter ==========
 
   createTransport(accountId: string): IGameTransport {
-    return new AccountTransport(accountId, this, this.protoService.types)
+    return new AccountTransport(accountId, this)
   }
 }
 
@@ -209,30 +205,24 @@ export class LinkClient extends EventEmitter {
  * 继承 EventEmitter 以支持 Workers 的事件订阅。
  */
 class AccountTransport extends EventEmitter implements IGameTransport {
-  readonly protoTypes: Record<string, any>
   readonly userState: UserState = { gid: 0, name: '', level: 0, gold: 0, exp: 0, coupon: 0, avatarUrl: '', openId: '' }
 
   constructor(
     private readonly accountId: string,
-    private readonly linkClient: LinkClient,
-    protoTypes: Record<string, any>
+    private readonly linkClient: LinkClient
   ) {
     super()
-    this.protoTypes = protoTypes
   }
 
-  async sendMsgAsync(serviceName: string, methodName: string, bodyBytes: Buffer, timeout = 10000): Promise<{ body: Buffer, meta: any }> {
+  async invoke<T = unknown>(serviceName: string, methodName: string, params: Record<string, unknown>, timeout = 10000): Promise<{ data: T, meta?: any }> {
     const res = await (this.linkClient as any).sendRequest({
-      type: 'send',
+      type: 'invoke',
       accountId: this.accountId,
       service: serviceName,
       method: methodName,
-      body: bodyBytes.toString('base64')
+      params: params ?? {}
     }, timeout)
-    return {
-      body: Buffer.from(res.body || '', 'base64'),
-      meta: res.meta || null
-    }
+    return { data: (res.data ?? null) as T, meta: res.meta }
   }
 
   isConnected(): boolean {

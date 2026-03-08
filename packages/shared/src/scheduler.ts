@@ -1,4 +1,18 @@
-import { Logger } from '@nestjs/common'
+export interface TaskSnapshot {
+  name: string
+  kind: string
+  delayMs: number
+  createdAt: number
+  nextRunAt: number
+  lastRunAt: number
+  runCount: number
+  running: boolean
+  preventOverlap: boolean
+}
+
+export interface SchedulerLogger {
+  warn(message: string): void
+}
 
 interface TaskMeta {
   kind: 'timeout' | 'interval'
@@ -12,24 +26,15 @@ interface TaskMeta {
   handle: ReturnType<typeof setTimeout> | ReturnType<typeof setInterval> | null
 }
 
-export interface TaskSnapshot {
-  name: string
-  kind: string
-  delayMs: number
-  createdAt: number
-  nextRunAt: number
-  lastRunAt: number
-  runCount: number
-  running: boolean
-  preventOverlap: boolean
-}
-
 export class Scheduler {
   private timers = new Map<string, TaskMeta>()
-  private logger: Logger
+  private logger: SchedulerLogger
 
-  constructor(private namespace: string) {
-    this.logger = new Logger(`Scheduler:${namespace}`)
+  constructor(
+    private namespace: string,
+    logger?: SchedulerLogger
+  ) {
+    this.logger = logger ?? { warn: msg => console.warn(msg) }
   }
 
   clear(taskName: string): boolean {
@@ -44,12 +49,12 @@ export class Scheduler {
     return true
   }
 
-  clearAll() {
+  clearAll(): void {
     for (const key of Array.from(this.timers.keys()))
       this.clear(key)
   }
 
-  setTimeoutTask(taskName: string, delayMs: number, taskFn: () => any): ReturnType<typeof setTimeout> {
+  setTimeoutTask(taskName: string, delayMs: number, taskFn: () => unknown): ReturnType<typeof setTimeout> {
     if (!taskName)
       throw new Error('taskName 不能为空')
     this.clear(taskName)
@@ -74,8 +79,8 @@ export class Scheduler {
       current.runCount++
       try {
         await taskFn()
-      } catch (e: any) {
-        this.logger.warn(`timeout 任务执行失败: ${taskName} - ${e?.message}`)
+      } catch (e: unknown) {
+        this.logger.warn(`timeout 任务执行失败: ${taskName} - ${(e as Error)?.message}`)
       } finally {
         const after = this.timers.get(taskName)
         if (after && after.handle === handle)
@@ -90,7 +95,7 @@ export class Scheduler {
   setIntervalTask(
     taskName: string,
     intervalMs: number,
-    taskFn: () => any,
+    taskFn: () => unknown,
     options: { preventOverlap?: boolean, runImmediately?: boolean } = {}
   ): ReturnType<typeof setInterval> {
     if (!taskName)
@@ -121,8 +126,8 @@ export class Scheduler {
       current.runCount++
       try {
         await taskFn()
-      } catch (e: any) {
-        this.logger.warn(`interval 任务执行失败: ${taskName} - ${e?.message}`)
+      } catch (e: unknown) {
+        this.logger.warn(`interval 任务执行失败: ${taskName} - ${(e as Error)?.message}`)
       } finally {
         const updated = this.timers.get(taskName)
         if (updated) {
@@ -171,22 +176,22 @@ export class Scheduler {
 
 const registryMap = new Map<string, Scheduler>()
 
-export function createScheduler(namespace = 'default'): Scheduler {
+export function createScheduler(namespace = 'default', logger?: SchedulerLogger): Scheduler {
   const existing = registryMap.get(namespace)
   if (existing)
     return existing
-  const s = new Scheduler(namespace)
+  const s = new Scheduler(namespace, logger)
   registryMap.set(namespace, s)
   return s
 }
 
-export function getSchedulerRegistrySnapshot(namespace?: string) {
-  const list: any[] = []
+export function getSchedulerRegistrySnapshot(namespace?: string): { generatedAt: number, schedulerCount: number, schedulers: ReturnType<Scheduler['getSnapshot']>[] } {
+  const list: ReturnType<Scheduler['getSnapshot']>[] = []
   for (const [name, scheduler] of registryMap.entries()) {
     if (namespace && name !== namespace)
       continue
     list.push(scheduler.getSnapshot())
   }
-  list.sort((a: any, b: any) => a.namespace.localeCompare(b.namespace))
+  list.sort((a, b) => a.namespace.localeCompare(b.namespace))
   return { generatedAt: Date.now(), schedulerCount: list.length, schedulers: list }
 }

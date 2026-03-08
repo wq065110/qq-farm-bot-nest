@@ -5,7 +5,7 @@ import { eq, sql } from 'drizzle-orm'
 import { DRIZZLE_TOKEN } from '../database/drizzle.provider'
 import * as schema from '../database/schema'
 
-const RETENTION_MS = 30 * 24 * 60 * 60 * 1000
+const RETENTION_MS = 7 * 24 * 60 * 60 * 1000
 
 @Injectable()
 export class GameLogService {

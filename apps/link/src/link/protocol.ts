@@ -15,15 +15,6 @@ export interface DisconnectRequest {
   accountId: string
 }
 
-export interface SendRequest {
-  type: 'send'
-  rid: string
-  accountId: string
-  service: string
-  method: string
-  body: string // base64
-}
-
 export interface StatusRequest {
   type: 'status'
   rid: string
@@ -35,7 +26,18 @@ export interface ListRequest {
   rid: string
 }
 
-export type Request = ConnectRequest | DisconnectRequest | SendRequest | StatusRequest | ListRequest
+/** 语义调用：core 传 service/method/params，link 负责编解码 */
+export interface InvokeRequest {
+  type: 'invoke'
+  rid: string
+  accountId: string
+  service: string
+  method: string
+  /** 请求体（可序列化对象，link 侧用 proto 编码） */
+  params: Record<string, unknown>
+}
+
+export type Request = ConnectRequest | DisconnectRequest | StatusRequest | ListRequest | InvokeRequest
 
 /** Link -> Core responses */
 export interface ResponseMessage {
@@ -43,7 +45,8 @@ export interface ResponseMessage {
   rid: string
   ok: boolean
   error?: string
-  body?: string // base64
+  /** 语义调用解码后的结果（for type 'invoke'） */
+  data?: unknown
   meta?: any
   userState?: any
 }

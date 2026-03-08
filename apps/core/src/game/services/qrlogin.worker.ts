@@ -6,6 +6,10 @@ import { CookieUtils, HashUtils } from '../utils'
 const ChromeUA
   = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
 
+const RE_PTUI_CB = /ptuiCB\((.+)\)/
+const RE_PTUI_ARGS = /'([^']*)'/g
+const RE_NUMERIC_CODE = /^-?\d+$/
+
 interface QRPreset {
   name: string
   description: string
@@ -95,12 +99,10 @@ export class QRLoginService {
       }
     })
     const text = response.data
-    const match = text.match(/ptuiCB\((.+)\)/)
+    const match = text.match(RE_PTUI_CB)
     if (!match)
       throw new Error('Invalid response format')
-    const args: string[] = []
-    const argMatcher = /'([^']*)'/g
-    for (let m = argMatcher.exec(match[1]); m !== null; m = argMatcher.exec(match[1])) args.push(m[1])
+    const args = Array.from(match[1].matchAll(RE_PTUI_ARGS), m => m[1])
     const [ret, , jumpUrl, , msg, nickname] = args
     return { ret, msg, nickname, jumpUrl, cookie: response.headers['set-cookie'] }
   }
@@ -168,7 +170,7 @@ export class QRLoginService {
     }
     const response = await axios.post('https://q.qq.com/ide/login', { appid, ticket }, { headers })
     const code = response.data?.code
-    if (!code || typeof code === 'number' || /^-?\d+$/.test(String(code))) {
+    if (!code || typeof code === 'number' || RE_NUMERIC_CODE.test(String(code))) {
       this.logger.warn(`ide/login 返回错误: code=${code}, data=${JSON.stringify(response.data)}`)
       throw new Error(`获取农场登录 code 失败 (code=${code})`)
     }

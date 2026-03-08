@@ -55,7 +55,7 @@ export class AccountService {
       ? String(targetAfter.id)
       : (isUpdateById
           ? String(body.id)
-          : String((afterAccounts[afterAccounts.length - 1] || {}).id || ''))
+          : String((afterAccounts.at(-1) || {}).id || ''))
 
     const effectiveIsUpdate = !!targetBefore
 
@@ -69,7 +69,7 @@ export class AccountService {
     )
 
     if (!effectiveIsUpdate) {
-      const newAcc = afterAccounts.find((a: any) => String(a.id) === accountId) || afterAccounts[afterAccounts.length - 1]
+      const newAcc = afterAccounts.find((a: any) => String(a.id) === accountId) || afterAccounts.at(-1)
       if (newAcc)
         this.manager.startAccount(String(newAcc.id))
     }

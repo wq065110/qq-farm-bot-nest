@@ -1,39 +1,14 @@
-import Long from 'long'
+import { getServerTimeSec, toNum } from '@qq-farm/shared'
 
-export function toLong(val: number): Long {
-  return Long.fromNumber(val)
-}
+export { getServerTimeSec, sleep, toNum } from '@qq-farm/shared'
 
-export function toNum(val: any): number {
-  if (Long.isLong(val))
-    return val.toNumber()
-  return Number(val) || 0
-}
+export const RE_TIME_HH_MM = /^(\d{1,2}):(\d{1,2})$/
 
-let serverTimeMs = 0
-let localTimeAtSync = 0
-
-export function getServerTimeSec(): number {
-  if (!serverTimeMs)
-    return Math.floor(Date.now() / 1000)
-  const elapsed = Date.now() - localTimeAtSync
-  return Math.floor((serverTimeMs + elapsed) / 1000)
-}
-
-export function syncServerTime(ms: number): void {
-  serverTimeMs = ms
-  localTimeAtSync = Date.now()
-}
-
-export function toTimeSec(val: any): number {
+export function toTimeSec(val: unknown): number {
   const n = toNum(val)
   if (n <= 0)
     return 0
   return n > 1e12 ? Math.floor(n / 1000) : n
-}
-
-export function sleep(ms: number): Promise<void> {
-  return new Promise(r => setTimeout(r, ms))
 }
 
 export function pad2(n: number): string {
@@ -63,9 +38,24 @@ export function getServerDateKey(): string {
   return `${bjDate.getUTCFullYear()}-${pad2(bjDate.getUTCMonth() + 1)}-${pad2(bjDate.getUTCDate())}`
 }
 
+/** 将奖励物品列表格式化为可读字符串，getItemName 由调用方提供（如 gameConfig.getItemName） */
+export function getRewardSummary(items: any[], getItemName: (id: number) => string): string {
+  return (items || []).filter(it => toNum(it?.count) > 0).map((it) => {
+    const id = toNum(it.id)
+    const count = toNum(it.count)
+    if (id === 1 || id === 1001)
+      return `金币${count}`
+    if (id === 2 || id === 1101)
+      return `经验${count}`
+    if (id === 1002)
+      return `点券${count}`
+    return `${getItemName(id)}x${count}`
+  }).join('/')
+}
+
 export function normalizeTimeString(v: string | undefined | null, fallback: string): string {
   const s = String(v || '').trim()
-  const m = s.match(/^(\d{1,2}):(\d{1,2})$/)
+  const m = s.match(RE_TIME_HH_MM)
   if (!m)
     return fallback
   const hh = Math.max(0, Math.min(23, Number.parseInt(m[1], 10)))
@@ -73,16 +63,8 @@ export function normalizeTimeString(v: string | undefined | null, fallback: stri
   return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`
 }
 
-export function randomIntervalMs(minMs: number, maxMs: number): number {
-  const minSec = Math.max(1, Math.floor(Math.max(1000, Number(minMs) || 1000) / 1000))
-  const maxSec = Math.max(minSec, Math.floor(Math.max(1000, Number(maxMs) || minSec * 1000) / 1000))
-  if (maxSec === minSec)
-    return minSec * 1000
-  const sec = minSec + Math.floor(Math.random() * (maxSec - minSec + 1))
-  return sec * 1000
-}
+const RE_UIN_PREFIX = /^o0*/
 
-// Cookie/Hash utilities (from qrutils.js)
 export class CookieUtils {
   static parse(cookieStr: string): Record<string, string> {
     if (!cookieStr)
@@ -107,7 +89,7 @@ export class CookieUtils {
     const uin = this.getValue(cookies, 'wxuin') || this.getValue(cookies, 'uin') || this.getValue(cookies, 'ptui_loginuin')
     if (!uin)
       return null
-    return uin.replace(/^o0*/, '')
+    return uin.replace(RE_UIN_PREFIX, '')
   }
 }
 
@@ -128,11 +110,13 @@ export class HashUtils {
 }
 
 const SENSITIVE_KEY_RE = /code|token|password|passwd|auth|ticket|cookie|session/i
+const RE_QUERY_SENSITIVE = /([?&](?:code|token|ticket|password)=)[^&\s]+/gi
+const RE_BEARER_TOKEN = /(Bearer\s+)[\w.-]+/gi
 
 export function redactString(input: string): string {
   let text = String(input || '')
-  text = text.replace(/([?&](?:code|token|ticket|password)=)[^&\s]+/gi, '$1[REDACTED]')
-  text = text.replace(/(Bearer\s+)[\w.-]+/gi, '$1[REDACTED]')
+  text = text.replace(RE_QUERY_SENSITIVE, '$1[REDACTED]')
+  text = text.replace(RE_BEARER_TOKEN, '$1[REDACTED]')
   return text
 }
 

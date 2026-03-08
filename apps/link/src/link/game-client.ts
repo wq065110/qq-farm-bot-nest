@@ -1,10 +1,10 @@
 import { Buffer } from 'node:buffer'
 import { EventEmitter } from 'node:events'
+import { CLIENT_VERSION, GAME_SERVER_URL, HEARTBEAT_INTERVAL_MS, Scheduler, syncServerTime, toLong, toNum } from '@qq-farm/shared'
 import WebSocket from 'ws'
-import { CLIENT_VERSION, GAME_SERVER_URL, HEARTBEAT_INTERVAL_MS } from '../common/constants'
-import { Scheduler } from '../common/scheduler'
-import { syncServerTime, toLong, toNum } from '../common/utils'
 import * as cryptoWasm from './crypto-wasm'
+
+const RE_UNEXPECTED_RESPONSE = /Unexpected server response:\s*(\d+)/i
 
 export interface UserState {
   gid: number
@@ -229,17 +229,17 @@ export class GameClient extends EventEmitter {
       try {
         const notify: any = t.BasicNotify.decode(eventBody)
         if (notify.basic) {
-          if (Object.prototype.hasOwnProperty.call(notify.basic, 'level')) {
+          if (Object.hasOwn(notify.basic, 'level')) {
             const next = toNum(notify.basic.level)
             if (Number.isFinite(next) && next > 0)
               this.userState.level = next
           }
-          if (Object.prototype.hasOwnProperty.call(notify.basic, 'gold')) {
+          if (Object.hasOwn(notify.basic, 'gold')) {
             const next = toNum(notify.basic.gold)
             if (Number.isFinite(next) && next >= 0)
               this.userState.gold = next
           }
-          if (Object.prototype.hasOwnProperty.call(notify.basic, 'exp')) {
+          if (Object.hasOwn(notify.basic, 'exp')) {
             const exp = toNum(notify.basic.exp)
             if (Number.isFinite(exp) && exp >= 0)
               this.userState.exp = exp
@@ -422,7 +422,7 @@ export class GameClient extends EventEmitter {
 
       this.ws.on('error', (err: any) => {
         const message = err?.message || ''
-        const match = message.match(/Unexpected server response:\s*(\d+)/i)
+        const match = message.match(RE_UNEXPECTED_RESPONSE)
         if (match) {
           const errCode = Number.parseInt(match[1], 10) || 0
           if (errCode)

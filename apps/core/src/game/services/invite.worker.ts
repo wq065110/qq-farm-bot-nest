@@ -1,10 +1,9 @@
 import type { IGameTransport } from '../interfaces/game-transport.interface'
-import { Buffer } from 'node:buffer'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { Logger } from '@nestjs/common'
 import { ASSETS_DIR } from '../../config/paths'
-import { sleep, toLong } from '../utils'
+import { sleep } from '../utils'
 
 const INVITE_REQUEST_DELAY = 2000
 
@@ -37,8 +36,6 @@ export class InviteWorker {
     this.onLog?.({ msg, tag: '系统', meta: { module: 'system', ...(event && { event }) }, isWarn: true })
   }
 
-  private get t() { return this.client.protoTypes }
-
   private getShareFilePath(): string {
     return path.join(ASSETS_DIR, 'share.txt')
   }
@@ -66,14 +63,13 @@ export class InviteWorker {
   }
 
   async sendReportArkClick(sharerId: string, sharerOpenId: string, shareSource: string | null) {
-    const body = Buffer.from(this.t.ReportArkClickRequest.encode(this.t.ReportArkClickRequest.create({
-      sharer_id: toLong(Number(sharerId)),
+    const { data } = await this.client.invoke('gamepb.userpb.UserService', 'ReportArkClick', {
+      sharer_id: Number(sharerId),
       sharer_open_id: sharerOpenId,
-      share_cfg_id: toLong(Number(shareSource) || 0),
+      share_cfg_id: Number(shareSource) || 0,
       scene_id: '1256'
-    })).finish())
-    const { body: rb } = await this.client.sendMsgAsync('gamepb.userpb.UserService', 'ReportArkClick', body)
-    return this.t.ReportArkClickReply.decode(rb)
+    })
+    return data
   }
 
   async processInviteCodes() {
