@@ -66,14 +66,10 @@ const useAccountStoreDef = defineStore('account', {
       }
     },
     async addAccount(payload: any) {
-      const res = await accountApi.create(payload)
-      if (res?.accounts && Array.isArray(res.accounts))
-        this.accounts = res.accounts as Account[]
+      await accountApi.create(payload)
     },
     async updateAccount(uin: string, payload: any) {
-      const res = await accountApi.create({ ...payload, uin })
-      if (res?.accounts && Array.isArray(res.accounts))
-        this.accounts = res.accounts as Account[]
+      await accountApi.create({ ...payload, uin })
     },
     setAccountsFromRealtime(data: any) {
       if (data?.accounts && Array.isArray(data.accounts))

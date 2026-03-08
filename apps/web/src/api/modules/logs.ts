@@ -1,4 +1,4 @@
-import { ws } from '../services/ws'
+import { socket } from '../services/socket'
 
 export interface LogQueryOptions {
   module?: string
@@ -9,9 +9,9 @@ export interface LogQueryOptions {
 }
 
 export function query(opts?: LogQueryOptions): Promise<any[]> {
-  return ws.get('/logs', opts)
+  return socket.get('/logs', opts)
 }
 
 export function onLogNew(handler: (data: any) => void): void {
-  ws.on('log:new', handler)
+  socket.on('log:new', handler)
 }

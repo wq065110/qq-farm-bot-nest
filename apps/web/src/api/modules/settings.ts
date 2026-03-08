@@ -1,17 +1,17 @@
-import { ws } from '../services/ws'
+import { socket } from '../services/socket'
 
 export function save(data: any): Promise<any> {
-  return ws.post('/settings', data)
+  return socket.post('/settings', data)
 }
 
 export function saveTheme(theme: string): Promise<any> {
-  return ws.post('/settings/theme', { theme })
+  return socket.post('/settings/theme', { theme })
 }
 
 export function saveOfflineReminder(data: any): Promise<any> {
-  return ws.post('/settings/offline-reminder', data)
+  return socket.post('/settings/offline-reminder', data)
 }
 
 export function onSettingsUpdate(handler: (data: any) => void): void {
-  ws.on('settings:update', handler)
+  socket.on('settings:update', handler)
 }

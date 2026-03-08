@@ -1,6 +1,6 @@
 import { storeToRefs } from 'pinia'
 import { onBeforeUnmount, onMounted, watch } from 'vue'
-import { ws } from '@/api'
+import { socket } from '@/api'
 import { useAccountStore } from '@/stores'
 
 export function useWsTopics(topics: string[]): void {
@@ -8,7 +8,7 @@ export function useWsTopics(topics: string[]): void {
   const { currentAccountId } = storeToRefs(accountStore)
 
   function doSubscribe(tops: string[]) {
-    ws.subscribe(currentAccountId.value, tops)
+    socket.subscribe(currentAccountId.value, tops)
   }
 
   onMounted(() => doSubscribe(topics))

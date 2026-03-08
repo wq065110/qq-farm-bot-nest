@@ -113,6 +113,9 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
       this.logger.warn(`连接 Link 失败，将后台重试: ${e?.message}`)
     }
 
+    const allAccounts = this.store.getAllAccounts()
+    for (const acc of allAccounts)
+      this.store.setAccountRunning(String(acc.id), false)
     await this.autoStartAccounts()
   }
 
@@ -189,8 +192,11 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
       onWsError: (aid, code, message) => this.handleWsError(aid, code, message),
       onStopped: (aid) => {
         const r = this.runners.get(aid)
-        if (r && !r.runner.isActive())
+        if (r && !r.runner.isActive()) {
           this.runners.delete(aid)
+          this.store.setAccountRunning(aid, false)
+          this.notifyAccountsUpdate()
+        }
       },
       onLandsUpdate: (aid, data) => this.onLandsUpdateCallback?.(aid, data),
       onBagUpdate: (aid, data) => this.onBagUpdateCallback?.(aid, data),

@@ -75,7 +75,7 @@ export class AccountService {
     }
 
     this.manager.notifyAccountsUpdate()
-    return data
+    return this.manager.getAccounts()
   }
 
   async deleteAccount(id: string) {
@@ -137,12 +137,12 @@ export class AccountService {
     if (!remark)
       throw new NotFoundException('缺少备注')
 
-    const data = this.store.addOrUpdateAccount({ id: String(target.id), name: remark })
+    this.store.addOrUpdateAccount({ id: String(target.id), name: remark })
     this.manager.setRuntimeAccountName(String(target.id), remark)
     this.manager.addAccountLog('update', `更新账号备注: ${remark}`, String(target.id), remark)
     this.manager.notifyAccountsUpdate()
 
-    return data
+    return this.manager.getAccounts()
   }
 
   getAccountLogs(limit: number) {

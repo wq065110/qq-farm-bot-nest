@@ -1,13 +1,13 @@
-import { ws } from '../services/ws'
+import { socket } from '../services/socket'
 
 export function operate(opType: string): Promise<any> {
-  return ws.post('/farm/operate', { opType })
+  return socket.post('/farm/operate', { opType })
 }
 
 export function onLandsUpdate(handler: (data: any) => void): void {
-  ws.on('lands:update', handler)
+  socket.on('lands:update', handler)
 }
 
 export function onSeedsUpdate(handler: (data: any) => void): void {
-  ws.on('seeds:update', handler)
+  socket.on('seeds:update', handler)
 }

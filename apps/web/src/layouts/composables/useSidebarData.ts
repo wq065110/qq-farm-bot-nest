@@ -2,7 +2,7 @@ import { useDateFormat, useNow } from '@vueuse/core'
 import { storeToRefs } from 'pinia'
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ws } from '@/api'
+import { socket } from '@/api'
 import routes from '@/router/routes'
 import { useAccountStore, useAppStore, useStatusStore, useUserStore } from '@/stores'
 
@@ -33,7 +33,7 @@ export function useSidebarData() {
 
   // Lifecycle
   onBeforeUnmount(() => {
-    ws.disconnect()
+    socket.disconnect()
   })
 
   // Watch account changes（F5 时 currentAccount 可能尚未就绪，用持久化的 currentAccountId 发起连接）
@@ -44,9 +44,9 @@ export function useSidebarData() {
       if (!token)
         return
       const toConnect = String(newUin || 'all')
-      if (ws.currentAccountId.value && ws.currentAccountId.value !== toConnect)
+      if (socket.currentAccountId.value && socket.currentAccountId.value !== toConnect)
         statusStore.$reset()
-      ws.connect(token, toConnect)
+      socket.connect(token, toConnect)
     },
     { immediate: true }
   )
@@ -82,8 +82,8 @@ export function useSidebarData() {
 
   // Computed（uptime / serverVersion 来自 ws subscribed 事件，连接断开即视为 ping 失败）
   const uptime = computed(() => {
-    const base = ws.serverUptime.value
-    const receivedAt = ws.uptimeReceivedAt.value
+    const base = socket.serverUptime.value
+    const receivedAt = socket.uptimeReceivedAt.value
     const diff = receivedAt
       ? Math.floor(base + (now.value.getTime() - receivedAt) / 1000)
       : 0
@@ -124,7 +124,7 @@ export function useSidebarData() {
   })
 
   const connectionStatus = computed<{ text: string, badge: 'error' | 'default' | 'processing' }>(() => {
-    if (!ws.connected.value)
+    if (!socket.connected.value)
       return { text: '系统离线', badge: 'error' }
     if (!currentAccount.value?.uin)
       return { text: '请添加账号', badge: 'default' }
@@ -179,8 +179,8 @@ export function useSidebarData() {
     handleAccountSaved,
     openRemarkForCurrent,
 
-    // Connection（serverVersion 来自 ws.subscribed）
-    serverVersion: ws.serverVersion,
+    // Connection
+    serverVersion: socket.serverVersion,
     uptime,
     formattedTime,
     connectionStatus,

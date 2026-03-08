@@ -1,5 +1,5 @@
-import { ws } from '../services/ws'
+import { socket } from '../services/socket'
 
 export function get(sortBy?: string): Promise<any[]> {
-  return ws.get('/analytics', { sortBy })
+  return socket.get('/analytics', { sortBy })
 }

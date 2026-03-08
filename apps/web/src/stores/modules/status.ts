@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { logsApi, statusApi, ws } from '@/api'
+import { logsApi, socket, statusApi } from '@/api'
 import { LOGS_MAX_LENGTH } from '../constants'
 
 interface DailyGift {
@@ -48,10 +48,10 @@ const useStatusStoreDef = defineStore('status', {
   }),
   getters: {
     realtimeConnected() {
-      return ws.connected
+      return socket.connected
     },
     subscribedResolvedAccountId() {
-      return ws.subscribedAccountId
+      return socket.subscribedAccountId
     }
   },
   actions: {

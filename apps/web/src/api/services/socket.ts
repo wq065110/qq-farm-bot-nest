@@ -12,7 +12,7 @@ interface QueuedRequest {
 
 type EventHandler = (data: unknown) => void
 
-export class WSClient {
+export class SocketClient {
   readonly connected = ref(false)
   readonly subscribedAccountId = ref('')
   readonly currentAccountId = ref('')
@@ -230,4 +230,4 @@ export class WSClient {
   }
 }
 
-export const ws = new WSClient()
+export const socket = new SocketClient()
