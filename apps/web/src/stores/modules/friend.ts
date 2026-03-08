@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { friendApi, settingsApi } from '@/api'
+import { friendApi, strategyApi } from '@/api'
 
 function buildPlantSummaryFromDetail(lands: any[], summary: any): Record<string, number> {
   const stealNumFromSummary = Array.isArray(summary?.stealable) ? summary.stealable.length : null
@@ -93,6 +93,17 @@ const useFriendStoreDef = defineStore('friend', {
     },
     setBlacklistFromRealtime(list: number[] | any[]) {
       this.blacklist = Array.isArray(list) ? list.map((x: any) => Number(x)).filter(n => !Number.isNaN(n)) : []
+    },
+    applyFriendsUpdate(data: any) {
+      this.setFriendsFromRealtime(Array.isArray(data) ? data : [])
+    },
+    applySettingsUpdateForBlacklist(data: any) {
+      if (data != null) {
+        if (Array.isArray(data.friendBlacklist))
+          this.setBlacklistFromRealtime(data.friendBlacklist)
+        else if (Array.isArray(data.stealCropBlacklist))
+          this.setBlacklistFromRealtime(data.stealCropBlacklist)
+      }
     }
   },
   persist: {
@@ -100,23 +111,9 @@ const useFriendStoreDef = defineStore('friend', {
   }
 })
 
-let friendListenersRegistered = false
 export function useFriendStore() {
   const store = useFriendStoreDef()
-  if (!friendListenersRegistered) {
-    friendListenersRegistered = true
-    friendApi.onFriendsUpdate((data: any) => {
-      if (data != null)
-        store.setFriendsFromRealtime(Array.isArray(data) ? data : [])
-    })
-    settingsApi.onSettingsUpdate((data: any) => {
-      if (data != null) {
-        if (Array.isArray(data.friendBlacklist))
-          store.setBlacklistFromRealtime(data.friendBlacklist)
-        else if (Array.isArray(data.stealCropBlacklist))
-          store.setBlacklistFromRealtime(data.stealCropBlacklist)
-      }
-    })
-  }
+  friendApi.onFriendsUpdate(store.applyFriendsUpdate)
+  strategyApi.onStrategyUpdate(store.applySettingsUpdateForBlacklist)
   return store
 }

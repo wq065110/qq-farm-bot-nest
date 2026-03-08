@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
-import { authApi, settingsApi } from '@/api'
-import { AUTOMATION_DEFAULTS, DEFAULT_FRIEND_QUIET_HOURS, DEFAULT_INTERVALS, DEFAULT_OFFLINE_REMINDER } from '../constants'
+import { strategyApi } from '@/api'
+import { AUTOMATION_DEFAULTS, DEFAULT_FRIEND_QUIET_HOURS, DEFAULT_INTERVALS } from '../constants'
 
 export interface AutomationConfig {
   farm: boolean
@@ -39,59 +39,46 @@ export interface FriendQuietHoursConfig {
   end: string
 }
 
-export interface OfflineReminderConfig {
-  channel: string
-  reloginUrlMode: string
-  endpoint: string
-  token: string
-  title: string
-  msg: string
-  offlineDeleteSec: number
-}
-
-export interface UIConfig {
-  theme?: string
-}
-
-export interface SettingsState {
+export interface StrategyState {
   plantingStrategy: string
   preferredSeedId: number
   intervals: IntervalsConfig
   friendQuietHours: FriendQuietHoursConfig
   stealCropBlacklist: number[]
   automation: AutomationConfig
-  ui: UIConfig
-  offlineReminder: OfflineReminderConfig
 }
 
-function initialSettings(): SettingsState {
+function initialStrategy(): StrategyState {
   return {
     plantingStrategy: 'preferred',
     preferredSeedId: 0,
     intervals: { ...DEFAULT_INTERVALS },
     friendQuietHours: { ...DEFAULT_FRIEND_QUIET_HOURS },
     stealCropBlacklist: [],
-    automation: { ...AUTOMATION_DEFAULTS },
-    ui: {},
-    offlineReminder: { ...DEFAULT_OFFLINE_REMINDER }
+    automation: { ...AUTOMATION_DEFAULTS }
   }
 }
 
-const useSettingStoreDef = defineStore('setting', {
+const useStrategyStoreDef = defineStore('strategy', {
   state: () => ({
-    settings: initialSettings()
+    settings: initialStrategy()
   }),
   actions: {
-    applySettingsUpdate(data: any) {
-      if (data != null)
-        Object.assign(this.settings, data)
+    applyStrategyUpdate(data: any) {
+      if (data != null) {
+        const keys = ['intervals', 'plantingStrategy', 'preferredSeedId', 'friendQuietHours', 'stealCropBlacklist', 'automation'] as const
+        for (const k of keys) {
+          if ((data as any)[k] !== undefined)
+            (this.settings as any)[k] = (data as any)[k]
+        }
+      }
     },
     async saveSettings(accountId: string): Promise<{ ok: boolean, error?: string }> {
       if (!accountId)
         return { ok: false, error: '未选择账号' }
       const s = this.settings
       try {
-        await settingsApi.save({
+        await strategyApi.save({
           plantingStrategy: s.plantingStrategy,
           preferredSeedId: s.preferredSeedId,
           intervals: s.intervals,
@@ -103,22 +90,6 @@ const useSettingStoreDef = defineStore('setting', {
       } catch (e: any) {
         return { ok: false, error: e.message || '保存失败' }
       }
-    },
-    async saveOfflineConfig(): Promise<{ ok: boolean, error?: string }> {
-      try {
-        await settingsApi.saveOfflineReminder(this.settings.offlineReminder)
-        return { ok: true }
-      } catch (e: any) {
-        return { ok: false, error: e.message || '保存失败' }
-      }
-    },
-    async changeAdminPassword(oldPassword: string, newPassword: string): Promise<{ ok: boolean, error?: string }> {
-      try {
-        await authApi.changePassword(oldPassword, newPassword)
-        return { ok: true }
-      } catch (e: any) {
-        return { ok: false, error: e.message || '修改失败' }
-      }
     }
   },
   persist: {
@@ -126,15 +97,8 @@ const useSettingStoreDef = defineStore('setting', {
   }
 })
 
-let settingListenersRegistered = false
-export function useSettingStore() {
-  const store = useSettingStoreDef()
-  if (!settingListenersRegistered) {
-    settingListenersRegistered = true
-    settingsApi.onSettingsUpdate((data: any) => {
-      if (data != null)
-        store.applySettingsUpdate(data)
-    })
-  }
+export function useStrategyStore() {
+  const store = useStrategyStoreDef()
+  strategyApi.onStrategyUpdate(store.applyStrategyUpdate)
   return store
 }

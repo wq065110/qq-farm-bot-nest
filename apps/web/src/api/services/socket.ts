@@ -117,6 +117,8 @@ export class SocketClient {
       set = new Set()
       this.listeners.set(route, set)
     }
+    if (set.has(handler))
+      return
     set.add(handler)
   }
 

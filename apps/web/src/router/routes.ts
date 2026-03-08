@@ -16,43 +16,49 @@ const routes: RouteRecordRaw[] = [
         path: 'personal',
         name: 'personal',
         component: () => import('@/views/personal/index.vue'),
-        meta: { label: '个人', icon: 'i-twemoji-farmer' }
+        meta: { label: '我的农场', icon: 'i-twemoji-farmer' }
       },
       {
         path: 'friends',
         name: 'friends',
         component: () => import('@/views/friends/index.vue'),
-        meta: { label: '好友', icon: 'i-twemoji-people-hugging' }
+        meta: { label: '好友列表', icon: 'i-twemoji-people-hugging' }
       },
       {
         path: 'analytics',
         name: 'analytics',
         component: () => import('@/views/analytics/index.vue'),
-        meta: { label: '分析', icon: 'i-twemoji-bar-chart' }
+        meta: { label: '数据分析', icon: 'i-twemoji-bar-chart' }
       },
       {
         path: 'warehouse',
         name: 'warehouse',
         component: () => import('@/views/warehouse/index.vue'),
-        meta: { label: '仓库', icon: 'i-twemoji-package' }
+        meta: { label: '我的仓库', icon: 'i-twemoji-package' }
       },
       {
         path: 'shop',
         name: 'shop',
         component: () => import('@/views/shop/index.vue'),
-        meta: { label: '商店', icon: 'i-twemoji-convenience-store' }
+        meta: { label: '种子商店', icon: 'i-twemoji-herb' }
       },
       {
         path: 'accounts',
         name: 'accounts',
         component: () => import('@/views/accounts/index.vue'),
-        meta: { label: '账号', icon: 'i-twemoji-bust-in-silhouette' }
+        meta: { label: '账号管理', icon: 'i-twemoji-bust-in-silhouette' }
       },
       {
-        path: 'settings',
-        name: 'settings',
-        component: () => import('@/views/settings/index.vue'),
-        meta: { label: '设置', icon: 'i-twemoji-gear' }
+        path: 'strategy',
+        name: 'strategy',
+        component: () => import('@/views/strategy/index.vue'),
+        meta: { label: '策略设置', icon: 'i-twemoji-memo' }
+      },
+      {
+        path: 'panel',
+        name: 'panel',
+        component: () => import('@/views/panel/index.vue'),
+        meta: { label: '面板设置', icon: 'i-twemoji-gear' }
       }
     ]
   },

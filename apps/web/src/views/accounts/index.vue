@@ -20,7 +20,7 @@ const accountToDelete = ref<any>(null)
 
 function openSettings(account: any) {
   accountStore.selectAccount(String(account.uin))
-  router.push('/settings')
+  router.push('/strategy')
 }
 
 function openAddModal() {

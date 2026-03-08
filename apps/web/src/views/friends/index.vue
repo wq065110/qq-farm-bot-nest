@@ -121,7 +121,7 @@ function handleAvatarError(key: string) {
   avatarErrorKeys.value.add(key)
 }
 
-useWsTopics(['friends', 'settings'])
+useWsTopics(['friends', 'strategy'])
 </script>
 
 <template>

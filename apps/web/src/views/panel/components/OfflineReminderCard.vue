@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import { computed } from 'vue'
-import { useSettingStore } from '@/stores'
+import { usePanelStore } from '@/stores'
 import { CHANNEL_DOCS, CHANNEL_OPTIONS, RELOGIN_URL_MODE_OPTIONS } from '../constants'
 
 defineProps<{
@@ -16,8 +16,8 @@ function handleSave() {
   emit('save')
 }
 
-const settingStore = useSettingStore()
-const { settings } = storeToRefs(settingStore)
+const panelStore = usePanelStore()
+const { settings } = storeToRefs(panelStore)
 
 const currentChannelDocUrl = computed(() => {
   const key = String(settings.value.offlineReminder.channel || '')

@@ -1,0 +1,22 @@
+export const FERTILIZER_OPTIONS = [
+  { label: '普通 + 有机', value: 'both' },
+  { label: '仅普通化肥', value: 'normal' },
+  { label: '仅有机化肥', value: 'organic' },
+  { label: '不施肥', value: 'none' }
+]
+
+export const PLANTING_STRATEGY_OPTIONS = [
+  { label: '优先种植种子', value: 'preferred' },
+  { label: '最高等级作物', value: 'level' },
+  { label: '最大经验/时', value: 'max_exp' },
+  { label: '最大普通肥经验/时', value: 'max_fert_exp' },
+  { label: '最大净利润/时', value: 'max_profit' },
+  { label: '最大普通肥净利润/时', value: 'max_fert_profit' }
+]
+
+export const ANALYTICS_SORT_BY_MAP: Record<string, string> = {
+  max_exp: 'exp',
+  max_fert_exp: 'fert',
+  max_profit: 'profit',
+  max_fert_profit: 'fert_profit'
+}

@@ -84,19 +84,22 @@ export class WsTopicsService {
     const accountId = client.data.accountId ?? ''
     const topics = client.data.topics ?? new Set<string>()
 
-    if (accountId && topics.has('settings')) {
-      const settingsData = {
+    if (accountId && topics.has('strategy')) {
+      this.emitToClient(client, 'strategy.update', {
         intervals: this.store.getIntervals(accountId),
         plantingStrategy: this.store.getPlantingStrategy(accountId),
         preferredSeedId: this.store.getPreferredSeed(accountId),
         friendQuietHours: this.store.getFriendQuietHours(accountId),
         stealCropBlacklist: this.store.getStealCropBlacklist(accountId),
         friendBlacklist: this.store.getFriendBlacklist(accountId),
-        automation: this.store.getAutomation(accountId),
+        automation: this.store.getAutomation(accountId)
+      })
+    }
+    if (topics.has('panel')) {
+      this.emitToClient(client, 'panel.update', {
         ui: this.store.getUI(),
         offlineReminder: this.store.getOfflineReminder()
-      }
-      this.emitToClient(client, 'settings.update', settingsData)
+      })
     }
 
     const runner = this.manager.getRunner(accountId)

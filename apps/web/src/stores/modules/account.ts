@@ -4,7 +4,8 @@ import { useAnalyticsStore } from './analytics'
 import { useBagStore } from './bag'
 import { useFarmStore } from './farm'
 import { useFriendStore } from './friend'
-import { useSettingStore } from './setting'
+import { usePanelStore } from './panel'
+import { useStrategyStore } from './strategy'
 import { useStatusStore } from './status'
 
 export interface Account {
@@ -34,7 +35,8 @@ const useAccountStoreDef = defineStore('account', {
       useBagStore().$reset()
       useFarmStore().$reset()
       useFriendStore().$reset()
-      useSettingStore().$reset()
+      useStrategyStore().$reset()
+      usePanelStore().$reset()
       useAnalyticsStore().$reset()
     },
     selectAccount(id: string) {
@@ -83,15 +85,8 @@ const useAccountStoreDef = defineStore('account', {
   }
 })
 
-let accountListenersRegistered = false
 export function useAccountStore() {
   const store = useAccountStoreDef()
-  if (!accountListenersRegistered) {
-    accountListenersRegistered = true
-    accountApi.onAccountsUpdate((data: any) => {
-      const payload = data && typeof data === 'object' ? data : {}
-      store.setAccountsFromRealtime(payload)
-    })
-  }
+  accountApi.onAccountsUpdate(store.setAccountsFromRealtime)
   return store
 }

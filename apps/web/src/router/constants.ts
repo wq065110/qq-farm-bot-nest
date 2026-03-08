@@ -13,5 +13,6 @@ export const ROUTE_PATHS = {
   WAREHOUSE: '/warehouse',
   SHOP: '/shop',
   ACCOUNTS: '/accounts',
-  SETTINGS: '/settings'
+  STRATEGY: '/strategy',
+  PANEL: '/panel'
 } as const

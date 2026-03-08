@@ -22,7 +22,8 @@ import { registerAnalyticsRoutes } from './handlers/analytics.handler'
 import { registerFarmRoutes } from './handlers/farm.handler'
 import { registerFriendRoutes } from './handlers/friend.handler'
 import { registerLogsRoutes } from './handlers/logs.handler'
-import { registerSettingsRoutes } from './handlers/settings.handler'
+import { registerPanelRoutes } from './handlers/panel.handler'
+import { registerStrategyRoutes } from './handlers/strategy.handler'
 import { registerShopRoutes } from './handlers/shop.handler'
 import { registerTopicsRoutes } from './handlers/topics.handler'
 import { registerWarehouseRoutes } from './handlers/warehouse.handler'
@@ -49,7 +50,8 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayConnection, OnGa
     registerAccountRoutes(this.router, { accountService: this.accountService, manager: this.manager })
     registerFarmRoutes(this.router, { manager: this.manager })
     registerFriendRoutes(this.router, { manager: this.manager, store: this.store })
-    registerSettingsRoutes(this.router, { store: this.store, manager: this.manager })
+    registerStrategyRoutes(this.router, { store: this.store, manager: this.manager })
+    registerPanelRoutes(this.router, { store: this.store, manager: this.manager })
     registerLogsRoutes(this.router, { manager: this.manager })
     registerAnalyticsRoutes(this.router, { manager: this.manager })
     registerWarehouseRoutes(this.router, { manager: this.manager })
@@ -90,7 +92,8 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayConnection, OnGa
       onBagUpdate: (accountId, data) => this.pushService.emitToTopic(accountId, 'bag', 'bag.update', data),
       onDailyGiftsUpdate: (accountId, data) => this.pushService.emitToTopic(accountId, 'daily-gifts', 'dailyGifts.update', data),
       onFriendsUpdate: (accountId, data) => this.pushService.emitToTopic(accountId, 'friends', 'friends.update', data),
-      onSettingsUpdate: (accountId, data) => this.pushService.emitToTopic(accountId, 'settings', 'settings.update', data)
+      onStrategyUpdate: (accountId, data) => this.pushService.emitToTopic(accountId, 'strategy', 'strategy.update', data),
+      onPanelUpdate: (data) => this.pushService.broadcast('panel.update', data)
     })
     this.logger.log('WebSocket server (Socket.IO) started')
   }

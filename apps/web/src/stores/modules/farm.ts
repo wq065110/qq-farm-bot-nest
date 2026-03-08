@@ -38,6 +38,9 @@ const useFarmStoreDef = defineStore('farm', {
     },
     setSeedsFromRealtime(list: any[]) {
       this.seeds = Array.isArray(list) ? list : []
+    },
+    applySeedsUpdate(data: any) {
+      this.setSeedsFromRealtime(Array.isArray(data) ? data : [])
     }
   },
   persist: {
@@ -45,19 +48,9 @@ const useFarmStoreDef = defineStore('farm', {
   }
 })
 
-let farmListenersRegistered = false
 export function useFarmStore() {
   const store = useFarmStoreDef()
-  if (!farmListenersRegistered) {
-    farmListenersRegistered = true
-    farmApi.onLandsUpdate((data: any) => {
-      if (data != null)
-        store.setLandsFromRealtime(data)
-    })
-    farmApi.onSeedsUpdate((data: any) => {
-      if (data != null)
-        store.setSeedsFromRealtime(Array.isArray(data) ? data : [])
-    })
-  }
+  farmApi.onLandsUpdate(store.setLandsFromRealtime)
+  farmApi.onSeedsUpdate(store.applySeedsUpdate)
   return store
 }

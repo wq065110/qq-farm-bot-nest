@@ -25,15 +25,8 @@ const useBagStoreDef = defineStore('bag', {
   }
 })
 
-let bagListenersRegistered = false
 export function useBagStore() {
   const store = useBagStoreDef()
-  if (!bagListenersRegistered) {
-    bagListenersRegistered = true
-    bagApi.onBagUpdate((data: any) => {
-      if (data != null)
-        store.setBagFromRealtime(data)
-    })
-  }
+  bagApi.onBagUpdate(store.setBagFromRealtime)
   return store
 }

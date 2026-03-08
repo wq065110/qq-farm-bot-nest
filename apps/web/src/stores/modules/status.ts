@@ -131,19 +131,15 @@ const useStatusStoreDef = defineStore('status', {
   }
 })
 
-let statusListenersRegistered = false
 export function useStatusStore() {
   const store = useStatusStoreDef()
-  if (!statusListenersRegistered) {
-    statusListenersRegistered = true
-    statusApi.onStatusUpdate((data: any) => store.applyStatusUpdate(data))
-    statusApi.onStatusConnection((data: any) => store.applyStatusConnection(data))
-    statusApi.onStatusProfile((data: any) => store.applyStatusProfile(data))
-    statusApi.onStatusSession((data: any) => store.applyStatusSession(data))
-    statusApi.onStatusOperations((data: any) => store.applyStatusOperations(data))
-    statusApi.onStatusSchedule((data: any) => store.applyStatusSchedule(data))
-    logsApi.onLogNew((data: any) => store.pushRealtimeLog(data))
-    statusApi.onDailyGiftsUpdate((data: any) => store.applyDailyGifts(data))
-  }
+  statusApi.onStatusUpdate(store.applyStatusUpdate)
+  statusApi.onStatusConnection(store.applyStatusConnection)
+  statusApi.onStatusProfile(store.applyStatusProfile)
+  statusApi.onStatusSession(store.applyStatusSession)
+  statusApi.onStatusOperations(store.applyStatusOperations)
+  statusApi.onStatusSchedule(store.applyStatusSchedule)
+  statusApi.onDailyGiftsUpdate(store.applyDailyGifts)
+  logsApi.onLogNew(store.pushRealtimeLog)
   return store
 }

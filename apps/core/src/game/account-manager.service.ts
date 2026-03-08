@@ -29,7 +29,8 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
   private onBagUpdateCallback: ((accountId: string, data: any) => void) | null = null
   private onDailyGiftsUpdateCallback: ((accountId: string, data: any) => void) | null = null
   private onFriendsUpdateCallback: ((accountId: string, data: any) => void) | null = null
-  private onSettingsUpdateCallback: ((accountId: string, data: any) => void) | null = null
+  private onStrategyUpdateCallback: ((accountId: string, data: any) => void) | null = null
+  private onPanelUpdateCallback: ((data: any) => void) | null = null
   private linkClient!: LinkClient
   private dedup = new EmitDeduplicator()
 
@@ -49,7 +50,8 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
     onBagUpdate?: (accountId: string, data: any) => void
     onDailyGiftsUpdate?: (accountId: string, data: any) => void
     onFriendsUpdate?: (accountId: string, data: any) => void
-    onSettingsUpdate?: (accountId: string, data: any) => void
+    onStrategyUpdate?: (accountId: string, data: any) => void
+    onPanelUpdate?: (data: any) => void
   }) {
     if (callbacks.onStatusEvent)
       this.onStatusEventCallback = callbacks.onStatusEvent
@@ -58,7 +60,8 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
     this.onBagUpdateCallback = callbacks.onBagUpdate ?? null
     this.onDailyGiftsUpdateCallback = callbacks.onDailyGiftsUpdate ?? null
     this.onFriendsUpdateCallback = callbacks.onFriendsUpdate ?? null
-    this.onSettingsUpdateCallback = callbacks.onSettingsUpdate ?? null
+    this.onStrategyUpdateCallback = callbacks.onStrategyUpdate ?? null
+    this.onPanelUpdateCallback = callbacks.onPanelUpdate ?? null
     this.gameLog.setCallbacks({
       onLog: callbacks.onLog ?? undefined,
       onAccountLog: callbacks.onAccountLog ?? undefined
@@ -72,7 +75,7 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
     this.onAccountsUpdateCallback?.(data)
   }
 
-  notifySettingsUpdate(accountId: string) {
+  notifyStrategyUpdate(accountId: string) {
     const id = String(accountId || '').trim()
     if (!id)
       return
@@ -83,13 +86,21 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
       friendQuietHours: this.store.getFriendQuietHours(id),
       stealCropBlacklist: this.store.getStealCropBlacklist(id),
       friendBlacklist: this.store.getFriendBlacklist(id),
-      automation: this.store.getAutomation(id),
+      automation: this.store.getAutomation(id)
+    }
+    if (!this.dedup.hasChanged(`strategy:${id}`, data))
+      return
+    this.onStrategyUpdateCallback?.(id, data)
+  }
+
+  notifyPanelUpdate() {
+    const data = {
       ui: this.store.getUI(),
       offlineReminder: this.store.getOfflineReminder()
     }
-    if (!this.dedup.hasChanged(`settings:${id}`, data))
+    if (!this.dedup.hasChanged('panel', data))
       return
-    this.onSettingsUpdateCallback?.(id, data)
+    this.onPanelUpdateCallback?.(data)
   }
 
   async onModuleInit() {

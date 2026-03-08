@@ -44,7 +44,7 @@ export function registerFriendRoutes(router: WsRouter, deps: FriendHandlerDeps):
     const next = current.includes(gid) ? current.filter(g => g !== gid) : [...current, gid]
     const saved = store.setFriendBlacklist(accountId, next)
     manager.broadcastConfig(accountId)
-    manager.notifySettingsUpdate(accountId)
+    manager.notifyStrategyUpdate(accountId)
     return saved
   })
 }
