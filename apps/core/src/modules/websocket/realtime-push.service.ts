@@ -1,5 +1,6 @@
 import type { Server } from 'socket.io'
 import { Injectable } from '@nestjs/common'
+import { createEvent } from '@qq-farm/shared'
 
 const ROOM_ALL = 'all'
 
@@ -19,34 +20,32 @@ export class RealtimePushService {
     this.server = server
   }
 
-  broadcast(event: string, data: unknown): void {
+  broadcast(route: string, data: unknown): void {
     if (!this.server)
       return
-    this.server.to(ROOM_ALL).emit(event, data)
+    this.server.to(ROOM_ALL).emit('message', createEvent(route, data))
   }
 
-  emitToAccount(accountId: string, event: string, data: unknown): void {
+  emitToAccount(accountId: string, route: string, data: unknown): void {
     const id = String(accountId || '').trim()
     if (!id || !this.server)
       return
     const room = roomAccount(id)
-    this.server.to(room).emit(event, data)
+    this.server.to(room).emit('message', createEvent(route, data))
   }
 
-  emitToTopic(accountId: string, topic: string, event: string, data: unknown): void {
+  emitToTopic(accountId: string, topic: string, route: string, data: unknown): void {
     const id = String(accountId || '').trim()
     if (!id || !topic || !this.server)
       return
     const room = roomTopic(id, topic)
-    this.server.to(room).emit(event, data)
+    this.server.to(room).emit('message', createEvent(route, data))
   }
 
-  /** Room name for a client subscribed to an account (for join/leave). */
   static roomForAccount(accountId: string): string {
     return `account:${accountId}`
   }
 
-  /** Room name for a client subscribed to an account + topic. */
   static roomForTopic(accountId: string, topic: string): string {
     return `account:${accountId}:${topic}`
   }

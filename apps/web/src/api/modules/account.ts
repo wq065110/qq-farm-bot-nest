@@ -10,25 +10,25 @@ export function checkQR(code: string): Promise<any> {
 }
 
 export function start(id: string): Promise<any> {
-  return socket.post('/account/start', { id })
+  return socket.request('account.start', { id })
 }
 
 export function stop(id: string): Promise<any> {
-  return socket.post('/account/stop', { id })
+  return socket.request('account.stop', { id })
 }
 
 export function create(data: any): Promise<any> {
-  return socket.post('/account', data)
+  return socket.request('account.create', data)
 }
 
 export function remove(id: string): Promise<any> {
-  return socket.delete('/account', { id })
+  return socket.request('account.delete', { id })
 }
 
 export function remark(uin: string | number, name: string): Promise<any> {
-  return socket.post('/account/remark', { uin, name })
+  return socket.request('account.remark', { uin, name })
 }
 
 export function onAccountsUpdate(handler: (data: any) => void): void {
-  socket.on('accounts:update', handler)
+  socket.on('accounts.update', handler)
 }

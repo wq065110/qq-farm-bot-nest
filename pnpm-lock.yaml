@@ -202,6 +202,9 @@ importers:
       '@iconify-json/twemoji':
         specifier: ^1.2.5
         version: 1.2.5
+      '@qq-farm/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       '@vueuse/core':
         specifier: ^14.2.1
         version: 14.2.1(vue@3.5.29(typescript@5.9.3))

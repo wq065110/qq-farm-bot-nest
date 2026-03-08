@@ -9,9 +9,9 @@ export interface LogQueryOptions {
 }
 
 export function query(opts?: LogQueryOptions): Promise<any[]> {
-  return socket.get('/logs', opts)
+  return socket.request('logs.query', opts)
 }
 
 export function onLogNew(handler: (data: any) => void): void {
-  socket.on('log:new', handler)
+  socket.on('log.new', handler)
 }
