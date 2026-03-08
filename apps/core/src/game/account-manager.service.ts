@@ -4,7 +4,6 @@ import process from 'node:process'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { StoreService } from '../store/store.service'
 import { AccountRunner } from './account-runner'
-import { EmitDeduplicator } from './emit-deduplicator'
 import { GameConfigService } from './game-config.service'
 import { GameLogService } from './game-log.service'
 import { GamePushService } from './game-push.service'
@@ -32,7 +31,6 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
   private onStrategyUpdateCallback: ((accountId: string, data: any) => void) | null = null
   private onPanelUpdateCallback: ((data: any) => void) | null = null
   private linkClient!: LinkClient
-  private dedup = new EmitDeduplicator()
 
   constructor(
     private gameConfig: GameConfigService,
@@ -70,8 +68,6 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
 
   notifyAccountsUpdate() {
     const data = this.getAccounts()
-    if (!this.dedup.hasChanged('accounts', data))
-      return
     this.onAccountsUpdateCallback?.(data)
   }
 
@@ -88,8 +84,6 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
       friendBlacklist: this.store.getFriendBlacklist(id),
       automation: this.store.getAutomation(id)
     }
-    if (!this.dedup.hasChanged(`strategy:${id}`, data))
-      return
     this.onStrategyUpdateCallback?.(id, data)
   }
 
@@ -98,8 +92,6 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
       ui: this.store.getUI(),
       offlineReminder: this.store.getOfflineReminder()
     }
-    if (!this.dedup.hasChanged('panel', data))
-      return
     this.onPanelUpdateCallback?.(data)
   }
 

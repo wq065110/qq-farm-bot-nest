@@ -15,17 +15,19 @@ const passwordForm = defineModel<{ old: string, new: string, confirm: string }>(
 </script>
 
 <template>
-  <a-card variant="borderless" :classes="{ body: '!p-4' }">
-    <div class="mb-3 flex items-center justify-between">
-      <div class="font-bold flex gap-2 items-center a-color-text">
-        <div class="i-twemoji-locked" />
-        管理密码
-        <span class="font-normal ml-1 a-color-text-tertiary text-sm">建议修改默认密码</span>
+  <a-card variant="borderless" class="shrink-0" :classes="{ body: '!p-4', header: '!min-h-11 !px-4' }">
+    <template #title>
+      <div class="flex gap-2 items-center justify-between">
+        <div class="font-bold flex gap-2 items-center">
+          <div class="i-twemoji-locked" aria-hidden="true" />
+          管理密码
+          <span class="font-normal ml-1 a-color-text-tertiary text-sm">建议修改默认密码</span>
+        </div>
+        <a-button type="primary" size="small" :loading="saving" @click="handleSubmit">
+          修改密码
+        </a-button>
       </div>
-      <a-button type="primary" size="small" :loading="saving" @click="handleSubmit">
-        修改密码
-      </a-button>
-    </div>
+    </template>
     <a-form layout="vertical">
       <a-form-item label="当前密码">
         <a-input-password v-model:value="passwordForm.old" placeholder="当前管理密码" />

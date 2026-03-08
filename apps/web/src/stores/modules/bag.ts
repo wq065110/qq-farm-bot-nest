@@ -1,8 +1,7 @@
 import { defineStore } from 'pinia'
-import { bagApi } from '@/api'
 import { BAG_DASHBOARD_ITEM_IDS, BAG_HIDDEN_ITEM_IDS } from '../constants'
 
-const useBagStoreDef = defineStore('bag', {
+export const useBagStore = defineStore('bag', {
   state: () => ({
     allItems: [] as any[]
   }),
@@ -24,9 +23,3 @@ const useBagStoreDef = defineStore('bag', {
     storage: sessionStorage
   }
 })
-
-export function useBagStore() {
-  const store = useBagStoreDef()
-  bagApi.onBagUpdate(store.setBagFromRealtime)
-  return store
-}

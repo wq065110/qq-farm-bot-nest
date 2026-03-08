@@ -35,16 +35,18 @@ function openChannelDocs() {
 </script>
 
 <template>
-  <a-card variant="borderless" :classes="{ body: '!p-4' }">
-    <div class="flex items-center justify-between">
-      <div class="font-bold flex gap-2 items-center a-color-text">
-        <div class="i-twemoji-bell" />
-        下线提醒
+  <a-card variant="borderless" class="shrink-0" :classes="{ body: '!p-4', header: '!min-h-11 !px-4' }">
+    <template #title>
+      <div class="flex gap-2 items-center justify-between">
+        <div class="font-bold flex gap-2 items-center">
+          <div class="i-twemoji-bell" aria-hidden="true" />
+          下线提醒
+        </div>
+        <a-button type="primary" size="small" :loading="saving" @click="handleSave">
+          保存提醒设置
+        </a-button>
       </div>
-      <a-button type="primary" size="small" :loading="saving" @click="handleSave">
-        保存提醒设置
-      </a-button>
-    </div>
+    </template>
     <a-form layout="vertical">
       <div class="gap-x-3 grid grid-cols-2">
         <a-form-item label="推送渠道">

@@ -5,7 +5,6 @@ import type { IGameTransport } from './interfaces/game-transport.interface'
 import type { LinkClient } from './link-client'
 import { Logger } from '@nestjs/common'
 import { Scheduler } from '@qq-farm/shared'
-import { EmitDeduplicator } from './emit-deduplicator'
 import { AnalyticsWorker } from './services/analytics.worker'
 import { DailyRewardsWorker } from './services/daily-rewards.worker'
 import { FarmWorker } from './services/farm.worker'
@@ -56,7 +55,6 @@ export class AccountRunner {
   private friendTaskRunning = false
   private nextFarmRunAt = 0
   private nextFriendRunAt = 0
-  private dedup = new EmitDeduplicator()
   private lastDailyRunDate = ''
   private static readonly STATUS_FLUSH_DEBOUNCE_MS = 500
   private appliedConfigRevision = 0
@@ -270,9 +268,9 @@ export class AccountRunner {
   private async pushLandsAndBag() {
     try {
       const [lands, bag] = await Promise.all([this.getLands(), this.getBag()])
-      if (lands != null && this.dedup.hasChanged('lands', lands))
+      if (lands != null)
         this.callbacks.onLandsUpdate?.(this.accountId, lands)
-      if (bag != null && this.dedup.hasChanged('bag', bag))
+      if (bag != null)
         this.callbacks.onBagUpdate?.(this.accountId, bag)
     } catch {}
   }
@@ -280,7 +278,7 @@ export class AccountRunner {
   private async pushFriends() {
     try {
       const friends = await this.getFriends()
-      if (friends != null && this.dedup.hasChanged('friends', friends))
+      if (friends != null)
         this.callbacks.onFriendsUpdate?.(this.accountId, friends)
     } catch {}
   }
@@ -342,7 +340,7 @@ export class AccountRunner {
       if (auto.vip_gift)
         await this.dailyRewards.performDailyVipGift(force)
       const overview = await this.getDailyGiftOverview().catch(() => null)
-      if (overview != null && this.dedup.hasChanged('daily-gifts', overview))
+      if (overview != null)
         this.callbacks.onDailyGiftsUpdate?.(this.accountId, overview)
     } catch (e: any) {
       this.warn(`每日任务调度失败: ${e?.message}`, 'schedule_error')
@@ -449,7 +447,6 @@ export class AccountRunner {
       case 'state_update':
         if (data && typeof data === 'object') {
           const merged = { ...this.userState, ...data }
-          // Link 登录响应不含 coupon，只有 ItemNotify(id=1002) 会更新；避免用 Link 的 0 覆盖 Core 已从 getBag 得到的点券
           if (Number(data.coupon) === 0 && Number(this.userState.coupon) > 0)
             merged.coupon = this.userState.coupon
           this.userState = merged
@@ -486,8 +483,6 @@ export class AccountRunner {
   private emitConnection() {
     const connected = this.isConnected()
     const payload = { connected, accountName: this.name }
-    if (!this.dedup.hasChanged('connection', payload))
-      return
     this.emitStatusEvent('connection', payload)
   }
 
@@ -503,8 +498,6 @@ export class AccountRunner {
       avatarUrl: us.avatarUrl || '',
       openId: us.openId || ''
     }
-    if (!this.dedup.hasChanged('profile', data))
-      return
     this.emitStatusEvent('profile', data)
   }
 
@@ -523,8 +516,6 @@ export class AccountRunner {
       lastGoldGain: fullStats.lastGoldGain,
       levelProgress
     }
-    if (!this.dedup.hasChanged('session', data))
-      return
     this.emitStatusEvent('session', data)
   }
 
@@ -534,8 +525,7 @@ export class AccountRunner {
     const limits = this.friend?.getOperationLimits?.() || {}
     const fullStats = this.stats.getStats(us, connected, limits)
     const ops = fullStats.operations
-    if (this.dedup.hasChanged('operations', ops))
-      this.emitStatusEvent('operations', { ...ops })
+    this.emitStatusEvent('operations', { ...ops })
   }
 
   private deferStatusFlush() {
@@ -558,8 +548,6 @@ export class AccountRunner {
       friendRemainSec: Math.max(0, Math.ceil((this.nextFriendRunAt - nowMs) / 1000)),
       configRevision: this.appliedConfigRevision
     }
-    if (!this.dedup.hasChanged('schedule', data))
-      return
     this.emitStatusEvent('schedule', data)
   }
 

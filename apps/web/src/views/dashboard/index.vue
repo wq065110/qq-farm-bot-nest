@@ -4,7 +4,7 @@ import { storeToRefs } from 'pinia'
 import { computed, reactive, ref, watch } from 'vue'
 import { logsApi } from '@/api'
 import { useAccountRefresh } from '@/composables/useAccountRefresh'
-import { useWsTopics } from '@/composables/useWsTopics'
+import { useWs } from '@/composables/useWs'
 import { useAccountStore, useBagStore, useStatusStore } from '@/stores'
 import AccountExpCard from './components/AccountExpCard.vue'
 import AssetsCard from './components/AssetsCard.vue'
@@ -163,11 +163,22 @@ watch(
   { immediate: true }
 )
 
-useWsTopics(['logs', 'bag', 'status'])
+useIntervalFn(updateCountdowns, 1000)
+
+useWs()
+  .topic('logs')
+  .topic('bag')
+  .topic('status')
+  .on('status.update', statusStore.applyStatusUpdate)
+  .on('status.connection', statusStore.applyStatusConnection)
+  .on('status.profile', statusStore.applyStatusProfile)
+  .on('status.session', statusStore.applyStatusSession)
+  .on('status.operations', statusStore.applyStatusOperations)
+  .on('status.schedule', statusStore.applyStatusSchedule)
+  .on('bag.update', bagStore.setBagFromRealtime)
+  .on('logs.new', statusStore.pushRealtimeLog)
 
 useAccountRefresh(queryLogs)
-
-useIntervalFn(updateCountdowns, 1000)
 </script>
 
 <template>

@@ -14,7 +14,7 @@ export interface Land {
   [key: string]: any
 }
 
-const useFarmStoreDef = defineStore('farm', {
+export const useFarmStore = defineStore('farm', {
   state: () => ({
     lands: [] as Land[],
     seeds: [] as any[],
@@ -47,10 +47,3 @@ const useFarmStoreDef = defineStore('farm', {
     storage: sessionStorage
   }
 })
-
-export function useFarmStore() {
-  const store = useFarmStoreDef()
-  farmApi.onLandsUpdate(store.setLandsFromRealtime)
-  farmApi.onSeedsUpdate(store.applySeedsUpdate)
-  return store
-}

@@ -29,7 +29,7 @@ function formatDuration(seconds: number): string {
     :classes="{ body: '!px-4 !py-3 !h-full !flex !flex-col !min-h-0' }"
   >
     <div class="flex-1 gap-3 grid grid-cols-2 min-h-0">
-      <div class="p-2 flex flex-col items-center justify-center a-bg-layout rounded-lg">
+      <div class="p-2 flex flex-col gap-0.5 items-center justify-center a-bg-layout rounded-lg">
         <div class="flex gap-1.5 items-center a-color-text-secondary">
           <div class="i-twemoji-coin" />
           金币
@@ -46,7 +46,7 @@ function formatDuration(seconds: number): string {
           <span>{{ Math.abs(sessionGoldGained) }}</span>
         </div>
       </div>
-      <div class="p-2 flex flex-col items-center justify-center a-bg-layout rounded-lg">
+      <div class="p-2 flex flex-col gap-0.5 items-center justify-center a-bg-layout rounded-lg">
         <div class="flex gap-1.5 items-center a-color-text-secondary">
           <div class="i-twemoji-ticket" />
           点券

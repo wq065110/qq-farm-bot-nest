@@ -64,8 +64,8 @@ async function toggleAccount(account: any) {
     <!-- Header -->
     <div class="flex items-center justify-between">
       <div class="font-bold flex gap-2 items-center a-color-text">
-        <div class="i-twemoji-bust-in-silhouette text-lg" />
-        账号管理
+        <div class="i-twemoji-bust-in-silhouette text-lg" aria-hidden="true" />
+        <span class="text-lg">账号管理</span>
         <span v-if="accounts.length" class="font-normal ml-1 a-color-text-tertiary text-sm">{{ accounts.length }} 个账号</span>
       </div>
       <a-button type="primary" @click="openAddModal">

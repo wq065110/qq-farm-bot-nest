@@ -1,5 +1,6 @@
 import type { AccountManagerService } from '../../../game/account-manager.service'
 import type { WsRouter } from '../ws-router'
+import { requireAccountId } from '../ws-guards'
 
 export interface WarehouseHandlerDeps {
   manager: AccountManagerService
@@ -9,9 +10,7 @@ export function registerWarehouseRoutes(router: WsRouter, deps: WarehouseHandler
   const { manager } = deps
 
   router.register('warehouse.sell', async (client, data) => {
-    const accountId = client.data.accountId ?? ''
-    if (!accountId)
-      throw new Error('未选择账号')
+    const accountId = requireAccountId(client)
     const itemId = Number(data?.itemId ?? data?.id)
     const count = Number(data?.count ?? 1)
     if (!itemId || count < 1)

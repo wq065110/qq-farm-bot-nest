@@ -28,7 +28,3 @@ export function remove(id: string): Promise<any> {
 export function remark(uin: string | number, name: string): Promise<any> {
   return socket.request('account.remark', { uin, name })
 }
-
-export function onAccountsUpdate(handler: (data: any) => void): void {
-  socket.on('accounts.update', handler)
-}

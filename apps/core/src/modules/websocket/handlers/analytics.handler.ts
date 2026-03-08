@@ -1,5 +1,6 @@
 import type { AccountManagerService } from '../../../game/account-manager.service'
 import type { WsRouter } from '../ws-router'
+import { requireAccountId } from '../ws-guards'
 
 export interface AnalyticsHandlerDeps {
   manager: AccountManagerService
@@ -9,9 +10,7 @@ export function registerAnalyticsRoutes(router: WsRouter, deps: AnalyticsHandler
   const { manager } = deps
 
   router.register('analytics.query', (client, data) => {
-    const accountId = client.data.accountId ?? ''
-    if (!accountId)
-      throw new Error('未选择账号')
+    const accountId = requireAccountId(client)
     const sortBy = String(data?.sortBy ?? data?.sort ?? '')
     return manager.getAnalytics(sortBy)
   })

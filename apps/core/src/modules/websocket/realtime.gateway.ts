@@ -1,5 +1,6 @@
 import type { WsMessage } from '@qq-farm/shared'
 import type { SocketWithMeta } from './ws-router'
+import process from 'node:process'
 import { Logger } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
 import {
@@ -23,8 +24,8 @@ import { registerFarmRoutes } from './handlers/farm.handler'
 import { registerFriendRoutes } from './handlers/friend.handler'
 import { registerLogsRoutes } from './handlers/logs.handler'
 import { registerPanelRoutes } from './handlers/panel.handler'
-import { registerStrategyRoutes } from './handlers/strategy.handler'
 import { registerShopRoutes } from './handlers/shop.handler'
+import { registerStrategyRoutes } from './handlers/strategy.handler'
 import { registerTopicsRoutes } from './handlers/topics.handler'
 import { registerWarehouseRoutes } from './handlers/warehouse.handler'
 import { RealtimePushService } from './realtime-push.service'
@@ -77,23 +78,20 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayConnection, OnGa
     this.manager.setRealtimeCallbacks({
       onStatusEvent: (accountId, event, data) => {
         const route = `status.${event}`
-        if (event === 'connection')
-          this.pushService.emitToAccount(accountId, route, data)
-        else
-          this.pushService.emitToTopic(accountId, 'status', route, data)
+        this.pushService.emitToEvent(accountId, route, data)
       },
       onLog: (entry) => {
         const id = String(entry?.accountId ?? '').trim()
         if (id)
-          this.pushService.emitToTopic(id, 'logs', 'log.new', entry)
+          this.pushService.emitToEvent(id, 'logs.new', entry)
       },
       onAccountsUpdate: data => this.pushService.broadcast('accounts.update', data),
-      onLandsUpdate: (accountId, data) => this.pushService.emitToTopic(accountId, 'lands', 'lands.update', data),
-      onBagUpdate: (accountId, data) => this.pushService.emitToTopic(accountId, 'bag', 'bag.update', data),
-      onDailyGiftsUpdate: (accountId, data) => this.pushService.emitToTopic(accountId, 'daily-gifts', 'dailyGifts.update', data),
-      onFriendsUpdate: (accountId, data) => this.pushService.emitToTopic(accountId, 'friends', 'friends.update', data),
-      onStrategyUpdate: (accountId, data) => this.pushService.emitToTopic(accountId, 'strategy', 'strategy.update', data),
-      onPanelUpdate: (data) => this.pushService.broadcast('panel.update', data)
+      onLandsUpdate: (accountId, data) => this.pushService.emitToEvent(accountId, 'lands.update', data),
+      onBagUpdate: (accountId, data) => this.pushService.emitToEvent(accountId, 'bag.update', data),
+      onDailyGiftsUpdate: (accountId, data) => this.pushService.emitToEvent(accountId, 'daily-gifts.update', data),
+      onFriendsUpdate: (accountId, data) => this.pushService.emitToEvent(accountId, 'friends.update', data),
+      onStrategyUpdate: (accountId, data) => this.pushService.emitToEvent(accountId, 'strategy.update', data),
+      onPanelUpdate: data => this.pushService.broadcast('panel.update', data)
     })
     this.logger.log('WebSocket server (Socket.IO) started')
   }
@@ -101,7 +99,13 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayConnection, OnGa
   handleConnection(client: SocketWithMeta): void {
     client.data.accountId = ''
     client.data.topics = new Set<string>()
-    client.emit('message', createEvent('system.ready', { ok: true, ts: Date.now() }))
+    client.data.events = new Set<string>()
+    const pkg = require('../../../package.json')
+    client.emit('message', createEvent('system.ready', {
+      uptime: process.uptime(),
+      version: pkg.version,
+      ts: Date.now()
+    }))
   }
 
   handleDisconnect(): void {}
@@ -118,6 +122,7 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayConnection, OnGa
     const route = payload.route
     const data = (payload.data ?? {}) as Record<string, unknown>
     const response = await this.router.dispatch(id, route, client, data)
-    client.emit('message', response)
+    if (id)
+      client.emit('message', response)
   }
 }

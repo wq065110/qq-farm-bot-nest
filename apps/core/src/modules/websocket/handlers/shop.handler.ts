@@ -1,5 +1,6 @@
 import type { AccountManagerService } from '../../../game/account-manager.service'
 import type { WsRouter } from '../ws-router'
+import { requireAccountId } from '../ws-guards'
 
 export interface ShopHandlerDeps {
   manager: AccountManagerService
@@ -9,9 +10,7 @@ export function registerShopRoutes(router: WsRouter, deps: ShopHandlerDeps): voi
   const { manager } = deps
 
   router.register('shop.buy', async (client, data) => {
-    const accountId = client.data.accountId ?? ''
-    if (!accountId)
-      throw new Error('未选择账号')
+    const accountId = requireAccountId(client)
     const goodsId = Number(data?.goodsId)
     const count = Number(data?.count ?? 1)
     const price = Number(data?.price)

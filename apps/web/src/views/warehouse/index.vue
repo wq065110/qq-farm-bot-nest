@@ -5,7 +5,7 @@ import { warehouseApi } from '@/api'
 import EmptyState from '@/components/EmptyState.vue'
 import { useAccountRefresh } from '@/composables/useAccountRefresh'
 import { useImageFallback } from '@/composables/useImageFallback'
-import { useWsTopics } from '@/composables/useWsTopics'
+import { useWs } from '@/composables/useWs'
 import { useAccountStore, useBagStore } from '@/stores'
 import message from '@/utils/message'
 import ItemCard from './components/ItemCard.vue'
@@ -75,15 +75,15 @@ function refresh(): void {
     accountStore.selectAccount(String(firstAcc.uin))
 }
 
-useWsTopics(['bag'])
+useWs('bag').on('bag.update', bagStore.setBagFromRealtime)
 useAccountRefresh(refresh)
 </script>
 
 <template>
   <div class="flex flex-col gap-3 h-full">
     <div class="font-bold flex gap-2 items-center a-color-text">
-      <div class="i-twemoji-sheaf-of-rice text-lg" aria-hidden="true" />
-      我的仓库
+      <div class="i-twemoji-package text-lg" aria-hidden="true" />
+      <span class="text-lg">我的仓库</span>
     </div>
 
     <a-card

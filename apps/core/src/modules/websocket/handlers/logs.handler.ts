@@ -1,5 +1,6 @@
 import type { AccountManagerService } from '../../../game/account-manager.service'
 import type { WsRouter } from '../ws-router'
+import { requireAccountId } from '../ws-guards'
 
 export interface LogsHandlerDeps {
   manager: AccountManagerService
@@ -9,9 +10,7 @@ export function registerLogsRoutes(router: WsRouter, deps: LogsHandlerDeps): voi
   const { manager } = deps
 
   router.register('logs.query', (client, data) => {
-    const accountId = client.data.accountId ?? ''
-    if (!accountId)
-      throw new Error('未选择账号')
+    const accountId = requireAccountId(client)
     return manager.getLogs(accountId, {
       module: data?.module as string | undefined,
       event: data?.event as string | undefined,

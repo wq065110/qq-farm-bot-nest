@@ -5,8 +5,8 @@ import { useBagStore } from './bag'
 import { useFarmStore } from './farm'
 import { useFriendStore } from './friend'
 import { usePanelStore } from './panel'
-import { useStrategyStore } from './strategy'
 import { useStatusStore } from './status'
+import { useStrategyStore } from './strategy'
 
 export interface Account {
   id: string
@@ -19,7 +19,7 @@ export interface Account {
   connected?: boolean
 }
 
-const useAccountStoreDef = defineStore('account', {
+export const useAccountStore = defineStore('account', {
   state: () => ({
     accounts: [] as Account[],
     currentAccountId: ''
@@ -84,9 +84,3 @@ const useAccountStoreDef = defineStore('account', {
     storage: sessionStorage
   }
 })
-
-export function useAccountStore() {
-  const store = useAccountStoreDef()
-  accountApi.onAccountsUpdate(store.setAccountsFromRealtime)
-  return store
-}

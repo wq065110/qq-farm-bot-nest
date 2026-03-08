@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { logsApi, socket, statusApi } from '@/api'
+import { socket } from '@/api'
 import { LOGS_MAX_LENGTH } from '../constants'
 
 interface DailyGift {
@@ -39,7 +39,7 @@ function normalizeStatusPayload(input: any): Record<string, any> {
   return (input && typeof input === 'object') ? { ...input } : {}
 }
 
-const useStatusStoreDef = defineStore('status', {
+export const useStatusStore = defineStore('status', {
   state: () => ({
     status: null as any,
     logs: [] as any[],
@@ -130,16 +130,3 @@ const useStatusStoreDef = defineStore('status', {
     storage: sessionStorage
   }
 })
-
-export function useStatusStore() {
-  const store = useStatusStoreDef()
-  statusApi.onStatusUpdate(store.applyStatusUpdate)
-  statusApi.onStatusConnection(store.applyStatusConnection)
-  statusApi.onStatusProfile(store.applyStatusProfile)
-  statusApi.onStatusSession(store.applyStatusSession)
-  statusApi.onStatusOperations(store.applyStatusOperations)
-  statusApi.onStatusSchedule(store.applyStatusSchedule)
-  statusApi.onDailyGiftsUpdate(store.applyDailyGifts)
-  logsApi.onLogNew(store.pushRealtimeLog)
-  return store
-}

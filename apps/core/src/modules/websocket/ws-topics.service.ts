@@ -1,5 +1,4 @@
 import type { SocketWithMeta } from './ws-router'
-import process from 'node:process'
 import { Injectable, Logger } from '@nestjs/common'
 import { createEvent } from '@qq-farm/shared'
 import { AccountManagerService } from '../../game/account-manager.service'
@@ -18,61 +17,64 @@ export class WsTopicsService {
   async handleSubscribe(
     client: SocketWithMeta,
     data: Record<string, unknown>
-  ): Promise<{ accountId: string, uptime: number, version: string }> {
+  ): Promise<{ accountId: string }> {
     const incoming = String(data?.accountId ?? '').trim()
     const topics: string[] = Array.isArray(data?.topics) ? data.topics : []
+    const eventsList = (Array.isArray(data?.events) ? data.events : []).filter((e: unknown) => typeof e === 'string') as string[]
     const resolved = incoming && incoming !== 'all' ? this.manager.resolveAccountId(incoming) : ''
-    const prevAccountId = client.data.accountId ?? ''
+    const topicsSet = new Set(topics.filter((t: unknown) => t && typeof t === 'string') as string[])
+    const eventsSet = new Set(eventsList.filter((e: unknown) => e && typeof e === 'string') as string[])
 
     client.data.accountId = resolved
-    client.data.topics = new Set(topics.filter((t: unknown) => t && typeof t === 'string') as string[])
+    const prevTopics = client.data.topics ?? new Set<string>()
+    const prevEvents = client.data.events ?? new Set<string>()
+    client.data.topics = new Set([...prevTopics, ...topicsSet])
+    client.data.events = new Set([...prevEvents, ...eventsSet])
 
-    const rooms = client.rooms
-    for (const r of rooms) {
-      if (r !== client.id && (r.startsWith('account:') || r === RealtimePushService.ROOM_ALL))
-        client.leave(r)
-    }
-    client.join(RealtimePushService.ROOM_ALL)
+    if (!client.rooms.has(RealtimePushService.ROOM_ALL))
+      client.join(RealtimePushService.ROOM_ALL)
+    const broadcastOnlyEvents = new Set(['accounts.update', 'panel.update'])
     if (resolved) {
-      client.join(RealtimePushService.roomForAccount(resolved))
-      for (const t of client.data.topics ?? [])
-        client.join(RealtimePushService.roomForTopic(resolved, t))
+      for (const event of eventsSet) {
+        if (!broadcastOnlyEvents.has(event))
+          client.join(RealtimePushService.roomForEvent(resolved, event))
+      }
     }
 
-    const pkg = require('../../../package.json')
-    const subscribeResult = {
-      accountId: resolved || 'all',
-      uptime: process.uptime(),
-      version: pkg.version as string
-    }
+    const subscribeResult = { accountId: resolved || 'all' }
 
-    this.emitToClient(client, 'accounts.update', this.manager.getAccounts())
+    const ev = eventsSet
+    if (ev.has('accounts.update'))
+      this.emitToClient(client, 'accounts.update', this.manager.getAccounts())
 
-    if (resolved) {
+    if (resolved && ev.has('status.connection')) {
       const s = this.manager.getStatus(resolved)
-      if (s)
-        this.emitToClient(client, 'status.connection', { connected: s.connection?.connected, accountName: s.accountName })
+      this.emitToClient(client, 'status.connection', {
+        connected: s?.connection?.connected ?? false,
+        accountName: s?.accountName ?? ''
+      })
     }
 
-    const contextChanged = prevAccountId !== resolved || topics.length > 0
-    if (resolved && topics.length > 0 && contextChanged)
-      this.pushTopicsInitialData(client)
+    if (resolved && eventsSet.size > 0)
+      this.pushTopicsInitialDataForEvents(client, eventsSet)
 
     return subscribeResult
   }
 
   handleUnsubscribe(client: SocketWithMeta, data: Record<string, unknown>): null {
     const topics: string[] = Array.isArray(data?.topics) ? data.topics : []
+    const eventsList: string[] = (Array.isArray(data?.events) ? data.events : []).filter((e: unknown) => typeof e === 'string') as string[]
     const accountId = client.data.accountId ?? ''
-    for (const t of topics) {
+    for (const event of eventsList) {
       if (accountId)
-        client.leave(RealtimePushService.roomForTopic(accountId, t))
+        client.leave(RealtimePushService.roomForEvent(accountId, event))
     }
-    if (topics.length > 0) {
-      const current = client.data.topics ?? new Set<string>()
-      for (const t of topics)
-        current.delete(t)
-    }
+    const currentTopics = client.data.topics ?? new Set<string>()
+    const currentEvents = client.data.events ?? new Set<string>()
+    for (const t of topics)
+      currentTopics.delete(t)
+    for (const e of eventsList)
+      currentEvents.delete(e)
     return null
   }
 
@@ -80,11 +82,10 @@ export class WsTopicsService {
     client.emit('message', createEvent(route, data))
   }
 
-  private pushTopicsInitialData(client: SocketWithMeta): void {
+  private pushTopicsInitialDataForEvents(client: SocketWithMeta, events: Set<string>): void {
     const accountId = client.data.accountId ?? ''
-    const topics = client.data.topics ?? new Set<string>()
 
-    if (accountId && topics.has('strategy')) {
+    if (accountId && events.has('strategy.update')) {
       this.emitToClient(client, 'strategy.update', {
         intervals: this.store.getIntervals(accountId),
         plantingStrategy: this.store.getPlantingStrategy(accountId),
@@ -95,7 +96,7 @@ export class WsTopicsService {
         automation: this.store.getAutomation(accountId)
       })
     }
-    if (topics.has('panel')) {
+    if (events.has('panel.update')) {
       this.emitToClient(client, 'panel.update', {
         ui: this.store.getUI(),
         offlineReminder: this.store.getOfflineReminder()
@@ -106,47 +107,56 @@ export class WsTopicsService {
     if (!runner)
       return
 
-    if (topics.has('status')) {
+    if (events.has('status.profile') || events.has('status.session') || events.has('status.operations') || events.has('status.schedule')) {
       const s = this.manager.getStatus(accountId)
       if (s) {
-        if (s.status)
+        if (events.has('status.profile') && s.status)
           this.emitToClient(client, 'status.profile', s.status)
-        this.emitToClient(client, 'status.session', {
-          bootAt: s.bootAt,
-          sessionExpGained: s.sessionExpGained,
-          sessionGoldGained: s.sessionGoldGained,
-          sessionCouponGained: s.sessionCouponGained,
-          lastExpGain: s.lastExpGain,
-          lastGoldGain: s.lastGoldGain,
-          levelProgress: s.levelProgress
-        })
-        if (s.operations)
+        if (events.has('status.session')) {
+          this.emitToClient(client, 'status.session', {
+            bootAt: s.bootAt,
+            sessionExpGained: s.sessionExpGained,
+            sessionGoldGained: s.sessionGoldGained,
+            sessionCouponGained: s.sessionCouponGained,
+            lastExpGain: s.lastExpGain,
+            lastGoldGain: s.lastGoldGain,
+            levelProgress: s.levelProgress
+          })
+        }
+        if (events.has('status.operations') && s.operations)
           this.emitToClient(client, 'status.operations', s.operations)
-        this.emitToClient(client, 'status.schedule', {
-          nextFarmRunAt: s.nextChecks?.nextFarmRunAt,
-          nextFriendRunAt: s.nextChecks?.nextFriendRunAt,
-          configRevision: s.configRevision
-        })
+        if (events.has('status.schedule')) {
+          this.emitToClient(client, 'status.schedule', {
+            nextFarmRunAt: s.nextChecks?.nextFarmRunAt,
+            nextFriendRunAt: s.nextChecks?.nextFriendRunAt,
+            configRevision: s.configRevision
+          })
+        }
       }
     }
 
+    const needLands = events.has('lands.update')
+    const needBag = events.has('bag.update')
+    const needDailyGifts = events.has('daily-gifts.update')
+    const needFriends = events.has('friends.update')
+    const needSeeds = events.has('seeds.update')
     Promise.all([
-      topics.has('lands') ? runner.getLands() : Promise.resolve(null),
-      topics.has('bag') ? runner.getBag() : Promise.resolve(null),
-      topics.has('daily-gifts') ? runner.getDailyGiftOverview() : Promise.resolve(null),
-      topics.has('friends') ? runner.getFriends() : Promise.resolve(null),
-      topics.has('seeds') ? runner.getSeeds() : Promise.resolve(null)
+      needLands ? runner.getLands() : Promise.resolve(null),
+      needBag ? runner.getBag() : Promise.resolve(null),
+      needDailyGifts ? runner.getDailyGiftOverview() : Promise.resolve(null),
+      needFriends ? runner.getFriends() : Promise.resolve(null),
+      needSeeds ? runner.getSeeds() : Promise.resolve(null)
     ]).then(([lands, bag, dailyGifts, friends, seeds]) => {
       if (lands != null)
         this.emitToClient(client, 'lands.update', lands)
       if (bag != null)
         this.emitToClient(client, 'bag.update', bag)
       if (dailyGifts != null)
-        this.emitToClient(client, 'dailyGifts.update', dailyGifts)
+        this.emitToClient(client, 'daily-gifts.update', dailyGifts)
       if (friends != null)
         this.emitToClient(client, 'friends.update', friends)
       if (seeds != null)
         this.emitToClient(client, 'seeds.update', seeds)
-    }).catch(err => this.logger.error('pushTopicsInitialData failed:', err))
+    }).catch(err => this.logger.error('pushTopicsInitialDataForEvents failed:', err))
   }
 }

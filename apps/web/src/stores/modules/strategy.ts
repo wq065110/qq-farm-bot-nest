@@ -48,6 +48,8 @@ export interface StrategyState {
   automation: AutomationConfig
 }
 
+const STRATEGY_UPDATE_KEYS = ['intervals', 'plantingStrategy', 'preferredSeedId', 'friendQuietHours', 'stealCropBlacklist', 'automation'] as const
+
 function initialStrategy(): StrategyState {
   return {
     plantingStrategy: 'preferred',
@@ -59,18 +61,18 @@ function initialStrategy(): StrategyState {
   }
 }
 
-const useStrategyStoreDef = defineStore('strategy', {
+export const useStrategyStore = defineStore('strategy', {
   state: () => ({
     settings: initialStrategy()
   }),
   actions: {
-    applyStrategyUpdate(data: any) {
-      if (data != null) {
-        const keys = ['intervals', 'plantingStrategy', 'preferredSeedId', 'friendQuietHours', 'stealCropBlacklist', 'automation'] as const
-        for (const k of keys) {
-          if ((data as any)[k] !== undefined)
-            (this.settings as any)[k] = (data as any)[k]
-        }
+    applyStrategyUpdate(data: unknown): void {
+      if (data == null || typeof data !== 'object')
+        return
+      const payload = data as Record<string, unknown>
+      for (const k of STRATEGY_UPDATE_KEYS) {
+        if (payload[k] !== undefined)
+          (this.settings as Record<string, unknown>)[k] = payload[k]
       }
     },
     async saveSettings(accountId: string): Promise<{ ok: boolean, error?: string }> {
@@ -96,9 +98,3 @@ const useStrategyStoreDef = defineStore('strategy', {
     storage: sessionStorage
   }
 })
-
-export function useStrategyStore() {
-  const store = useStrategyStoreDef()
-  strategyApi.onStrategyUpdate(store.applyStrategyUpdate)
-  return store
-}

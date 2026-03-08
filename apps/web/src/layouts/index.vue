@@ -1,6 +1,16 @@
 <script setup lang="ts">
+import { useWs } from '@/composables/useWs'
+import { useAccountStore, useStatusStore } from '@/stores'
 import LayoutHeader from './components/LayoutHeader.vue'
 import Sidebar from './components/Sidebar.vue'
+
+const accountStore = useAccountStore()
+const statusStore = useStatusStore()
+useWs()
+  .topic('accounts')
+  .topic('status')
+  .on('accounts.update', accountStore.setAccountsFromRealtime)
+  .on('status.connection', statusStore.applyStatusConnection)
 </script>
 
 <template>

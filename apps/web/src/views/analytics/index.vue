@@ -85,8 +85,8 @@ watch(sortKey, loadAnalytics)
 <template>
   <div class="flex flex-col gap-3 h-full">
     <div class="font-bold flex gap-2 items-center a-color-text">
-      <div class="i-twemoji-bar-chart text-lg" />
-      数据分析
+      <div class="i-twemoji-bar-chart text-lg" aria-hidden="true" />
+      <span class="text-lg">数据分析</span>
     </div>
 
     <div v-if="!hasAccount" class="flex flex-1 items-center justify-center">

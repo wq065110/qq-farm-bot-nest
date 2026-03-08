@@ -4,7 +4,7 @@ import { computed, ref } from 'vue'
 import ConfirmModal from '@/components/ConfirmModal.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import { useFriendLandsWithCountdown } from '@/composables/useFriendLandsWithCountdown'
-import { useWsTopics } from '@/composables/useWsTopics'
+import { useWs } from '@/composables/useWs'
 import { useAccountStore, useFriendStore, useStatusStore } from '@/stores'
 import message from '@/utils/message'
 import FriendRow from './components/FriendRow.vue'
@@ -121,14 +121,18 @@ function handleAvatarError(key: string) {
   avatarErrorKeys.value.add(key)
 }
 
-useWsTopics(['friends', 'strategy'])
+useWs()
+  .topic('friends')
+  .topic('strategy')
+  .on('friends.update', friendStore.applyFriendsUpdate)
+  .on('strategy.update', friendStore.applySettingsUpdateForBlacklist)
 </script>
 
 <template>
   <div class="flex flex-col gap-3 h-full">
     <div class="font-bold flex gap-2 items-center a-color-text">
-      <div class="i-twemoji-people-hugging text-lg" />
-      好友农场
+      <div class="i-twemoji-people-hugging text-lg" aria-hidden="true" />
+      <span class="text-lg">好友农场</span>
     </div>
 
     <div v-if="!currentAccountId" class="flex flex-1 items-center justify-center">

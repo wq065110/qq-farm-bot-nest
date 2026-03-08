@@ -5,7 +5,7 @@ import { shopApi } from '@/api'
 import EmptyState from '@/components/EmptyState.vue'
 import { useAccountRefresh } from '@/composables/useAccountRefresh'
 import { useImageFallback } from '@/composables/useImageFallback'
-import { useWsTopics } from '@/composables/useWsTopics'
+import { useWs } from '@/composables/useWs'
 import { useAccountStore, useFarmStore } from '@/stores'
 import message from '@/utils/message'
 import BuyModal from './components/BuyModal.vue'
@@ -61,7 +61,7 @@ function refresh(): void {
     accountStore.selectAccount(String(firstAcc.uin))
 }
 
-useWsTopics(['seeds'])
+useWs('seeds').on('seeds.update', farmStore.applySeedsUpdate)
 useAccountRefresh(refresh)
 </script>
 
@@ -69,7 +69,7 @@ useAccountRefresh(refresh)
   <div class="flex flex-col gap-3 h-full">
     <div class="font-bold flex gap-2 items-center a-color-text">
       <div class="i-twemoji-herb text-lg" aria-hidden="true" />
-      种子商店
+      <span class="text-lg">种子商店</span>
     </div>
 
     <a-card
@@ -84,7 +84,7 @@ useAccountRefresh(refresh)
             placeholder="搜索种子名称…"
             allow-clear
             autocomplete="off"
-            class="mb-3 w-80!"
+            class="mb-3 w-60!"
             aria-label="搜索种子"
           >
             <template #prefix>

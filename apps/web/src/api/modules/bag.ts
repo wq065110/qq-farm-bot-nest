@@ -1,5 +1,3 @@
-import { socket } from '../services/socket'
-
-export function onBagUpdate(handler: (data: any) => void): void {
-  socket.on('bag.update', handler)
-}
+// Event listeners are registered via useWs().on('bag.update', ...) in views
+// Request API for bag can be added here if needed
+export {}

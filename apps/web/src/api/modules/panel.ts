@@ -7,7 +7,3 @@ export function saveTheme(theme: string): Promise<unknown> {
 export function saveOfflineReminder(data: Record<string, unknown>): Promise<unknown> {
   return socket.request('panel.offlineReminder', data)
 }
-
-export function onPanelUpdate(handler: (data: unknown) => void): void {
-  socket.on('panel.update', handler)
-}

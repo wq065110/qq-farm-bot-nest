@@ -6,12 +6,13 @@ export interface SocketWithMeta extends Socket {
   data: Socket['data'] & {
     accountId?: string
     topics?: Set<string>
+    events?: Set<string>
   }
 }
 
 export type RequestHandler = (
   client: SocketWithMeta,
-  data: Record<string, unknown>,
+  data: Record<string, unknown>
 ) => unknown | Promise<unknown>
 
 export const WS_CODE_SUCCESS = 0

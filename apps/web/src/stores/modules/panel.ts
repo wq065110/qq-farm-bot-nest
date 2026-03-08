@@ -28,7 +28,7 @@ function initialPanel(): PanelState {
   }
 }
 
-const usePanelStoreDef = defineStore('panel', {
+export const usePanelStore = defineStore('panel', {
   state: () => ({
     settings: initialPanel()
   }),
@@ -62,9 +62,3 @@ const usePanelStoreDef = defineStore('panel', {
     storage: sessionStorage
   }
 })
-
-export function usePanelStore() {
-  const store = usePanelStoreDef()
-  panelApi.onPanelUpdate(store.applyPanelUpdate)
-  return store
-}

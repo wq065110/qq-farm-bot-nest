@@ -4,7 +4,7 @@ import { computed, ref } from 'vue'
 import ConfirmModal from '@/components/ConfirmModal.vue'
 import { useAccountRefresh } from '@/composables/useAccountRefresh'
 import { useLandsWithCountdown } from '@/composables/useLandsWithCountdown'
-import { useWsTopics } from '@/composables/useWsTopics'
+import { useWs } from '@/composables/useWs'
 import { useAccountStore, useBagStore, useFarmStore, useStatusStore } from '@/stores'
 import BagPanel from './components/BagPanel.vue'
 import DailyGiftPanel from './components/DailyGiftPanel.vue'
@@ -63,7 +63,14 @@ function refresh() {
 
 const landsWithCountdown = useLandsWithCountdown(lands)
 
-useWsTopics(['lands', 'bag', 'daily-gifts'])
+useWs()
+  .topic('lands')
+  .topic('bag')
+  .topic('daily-gifts')
+  .on('lands.update', farmStore.setLandsFromRealtime)
+  .on('bag.update', bagStore.setBagFromRealtime)
+  .on('daily-gifts.update', statusStore.applyDailyGifts)
+
 useAccountRefresh(refresh)
 </script>
 
@@ -71,8 +78,8 @@ useAccountRefresh(refresh)
   <div class="flex flex-col gap-3 md:h-full">
     <div class="flex flex-wrap gap-2 items-center justify-between">
       <div class="font-bold flex gap-2 items-center a-color-text">
-        <div class="i-twemoji-ear-of-corn text-lg" />
-        我的农场
+        <div class="i-twemoji-ear-of-corn text-lg" aria-hidden="true" />
+        <span class="text-lg">我的农场</span>
       </div>
     </div>
 

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useWsTopics } from '@/composables/useWsTopics'
+import { useWs } from '@/composables/useWs'
 import { usePanelStore } from '@/stores'
 import message from '@/utils/message'
 import OfflineReminderCard from './components/OfflineReminderCard.vue'
@@ -61,14 +61,16 @@ async function handleSaveOffline() {
   }
 }
 
-useWsTopics(['panel'])
+useWs()
+  .topic('panel')
+  .on('panel.update', panelStore.applyPanelUpdate)
 </script>
 
 <template>
   <div class="flex flex-col gap-3 h-full">
     <div class="font-bold flex gap-2 items-center a-color-text">
       <div class="i-twemoji-gear text-lg" aria-hidden="true" />
-      面板设置
+      <span class="text-lg">面板设置</span>
     </div>
     <div class="flex shrink-0 flex-col gap-3">
       <PasswordCard

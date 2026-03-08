@@ -11,7 +11,3 @@ export function operate(gid: number, opType: string): Promise<any> {
 export function toggleBlacklist(gid: number): Promise<number[]> {
   return socket.request('friend.blacklistToggle', { gid })
 }
-
-export function onFriendsUpdate(handler: (data: any) => void): void {
-  socket.on('friends.update', handler)
-}

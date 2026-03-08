@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { friendApi, strategyApi } from '@/api'
+import { friendApi } from '@/api'
 
 function buildPlantSummaryFromDetail(lands: any[], summary: any): Record<string, number> {
   const stealNumFromSummary = Array.isArray(summary?.stealable) ? summary.stealable.length : null
@@ -39,7 +39,7 @@ function buildPlantSummaryFromDetail(lands: any[], summary: any): Record<string,
   }
 }
 
-const useFriendStoreDef = defineStore('friend', {
+export const useFriendStore = defineStore('friend', {
   state: () => ({
     friends: [] as any[],
     friendLands: {} as Record<string, any[]>,
@@ -110,10 +110,3 @@ const useFriendStoreDef = defineStore('friend', {
     storage: sessionStorage
   }
 })
-
-export function useFriendStore() {
-  const store = useFriendStoreDef()
-  friendApi.onFriendsUpdate(store.applyFriendsUpdate)
-  strategyApi.onStrategyUpdate(store.applySettingsUpdateForBlacklist)
-  return store
-}

@@ -1,6 +1,6 @@
 import type { WsMessage } from '@qq-farm/shared'
 import type { Socket } from 'socket.io-client'
-import { createRequest } from '@qq-farm/shared'
+import { createRequest, WS_PROTOCOL_VERSION } from '@qq-farm/shared'
 import { io } from 'socket.io-client'
 import { ref } from 'vue'
 
@@ -38,7 +38,8 @@ export class SocketClient {
   private socket: Socket | null = null
   private listeners = new Map<string, Set<EventHandler>>()
   private token = ''
-  private currentTopics: string[] = []
+  private topicRegistry = new Map<string, Set<string>>()
+  private eventRegistry = new Map<string, Set<string>>()
   private pendingRequests = new Map<string, PendingRequest>()
   private queue: QueuedRequest[] = []
   private intentionalClose = false
@@ -93,22 +94,26 @@ export class SocketClient {
     })
   }
 
-  async subscribe(accountId: string, topics?: string[]): Promise<unknown> {
-    this.currentAccountId.value = String(accountId || '').trim()
-    if (topics != null)
-      this.currentTopics = Array.isArray(topics) ? topics : []
-    if (!this.socket?.connected)
-      return Promise.resolve(null)
-    const data = await this.request<{ accountId?: string, uptime?: number, version?: string }>('topic.subscribe', {
-      accountId: this.currentAccountId.value,
-      topics: this.currentTopics
-    })
-    this.handleSubscribed(data)
-    return data
+  registerTopics(consumerId: string, topics: Set<string>, events: Set<string>): void {
+    if (topics.size > 0)
+      this.topicRegistry.set(consumerId, topics)
+    else
+      this.topicRegistry.delete(consumerId)
+    if (events.size > 0)
+      this.eventRegistry.set(consumerId, events)
+    else
+      this.eventRegistry.delete(consumerId)
+    if (topics.size > 0 || events.size > 0)
+      this.sendSubscribe([...topics], [...events])
   }
 
-  unsubscribe(topics: string[]): Promise<unknown> {
-    return this.request('topic.unsubscribe', { topics })
+  unregisterTopics(consumerId: string): void {
+    const topics = this.topicRegistry.get(consumerId)
+    const events = this.eventRegistry.get(consumerId)
+    this.topicRegistry.delete(consumerId)
+    this.eventRegistry.delete(consumerId)
+    if (this.socket?.connected && (topics?.size || events?.size))
+      this.sendUnsubscribe([...(topics ?? [])], [...(events ?? [])])
   }
 
   on(route: string, handler: EventHandler): void {
@@ -120,6 +125,14 @@ export class SocketClient {
     if (set.has(handler))
       return
     set.add(handler)
+  }
+
+  once(route: string, handler: EventHandler): void {
+    const wrapper: EventHandler = (data) => {
+      this.off(route, wrapper)
+      handler(data)
+    }
+    this.on(route, wrapper)
   }
 
   off(route: string, handler: EventHandler): void {
@@ -175,11 +188,61 @@ export class SocketClient {
     }
 
     if (payload.type === 'event' && payload.route) {
+      if (payload.route === 'system.ready') {
+        const d = payload.data as { uptime?: number, version?: string } | undefined
+        if (d && typeof d.uptime === 'number') {
+          this.serverUptime.value = d.uptime
+          this.uptimeReceivedAt.value = Date.now()
+        }
+        if (d?.version != null)
+          this.serverVersion.value = String(d.version)
+      }
       const set = this.listeners.get(payload.route)
       if (set) {
         for (const fn of set)
           fn(payload.data)
       }
+    }
+  }
+
+  private sendSubscribe(topics: string[], events: string[]): void {
+    if (!this.socket?.connected)
+      return
+    this.subscribedAccountId.value = this.currentAccountId.value || ''
+    this.socket.emit('message', {
+      v: WS_PROTOCOL_VERSION,
+      type: 'req' as const,
+      route: 'topic.subscribe',
+      data: {
+        accountId: this.currentAccountId.value,
+        topics,
+        events
+      }
+    })
+  }
+
+  private sendUnsubscribe(topics: string[], events: string[]): void {
+    if (!this.socket?.connected)
+      return
+    this.socket.emit('message', {
+      v: WS_PROTOCOL_VERSION,
+      type: 'req' as const,
+      route: 'topic.unsubscribe',
+      data: {
+        accountId: this.currentAccountId.value,
+        topics,
+        events
+      }
+    })
+  }
+
+  private resendAllSubscriptions(): void {
+    if (!this.socket?.connected)
+      return
+    for (const [consumerId, topics] of this.topicRegistry) {
+      const events = this.eventRegistry.get(consumerId)
+      if (topics.size > 0 || (events?.size ?? 0) > 0)
+        this.sendSubscribe([...topics], [...(events ?? [])])
     }
   }
 
@@ -205,10 +268,7 @@ export class SocketClient {
 
     this.socket.on('connect', () => {
       this.connected.value = true
-
-      if (this.currentAccountId.value || this.currentTopics.length > 0)
-        this.subscribe(this.currentAccountId.value, this.currentTopics).catch(() => {})
-
+      this.resendAllSubscriptions()
       this.flushQueue()
     })
 
@@ -240,20 +300,6 @@ export class SocketClient {
       }
       this.pendingRequests.clear()
     })
-  }
-
-  private handleSubscribed(data: unknown): void {
-    if (!data || typeof data !== 'object' || !('accountId' in data))
-      return
-    const id = (data as { accountId?: string }).accountId === 'all' ? '' : String((data as { accountId?: string }).accountId ?? '').trim()
-    this.subscribedAccountId.value = id
-    const d = data as { uptime?: number, version?: string }
-    if (typeof d.uptime === 'number') {
-      this.serverUptime.value = d.uptime
-      this.uptimeReceivedAt.value = Date.now()
-    }
-    if (d.version != null)
-      this.serverVersion.value = String(d.version)
   }
 
   private cleanupSocket(): void {

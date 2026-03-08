@@ -5,6 +5,8 @@ export const FERTILIZER_OPTIONS = [
   { label: '不施肥', value: 'none' }
 ]
 
+export const PREFERRED_SEED_AUTO_OPTION = { label: '自动选择', value: 0 }
+
 export const PLANTING_STRATEGY_OPTIONS = [
   { label: '优先种植种子', value: 'preferred' },
   { label: '最高等级作物', value: 'level' },
