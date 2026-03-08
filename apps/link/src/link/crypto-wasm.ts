@@ -1,4 +1,3 @@
-import { Buffer } from 'node:buffer'
 import fs from 'node:fs'
 import path from 'node:path'
 
@@ -16,6 +15,7 @@ let initPromise: Promise<void> | null = null
 
 /**
  * 惰性加载 tsdk.wasm，初始化加密/解密导出。
+ * WASM 文件需放在 apps/link/assets/tsdk.wasm（构建后为 dist/assets/tsdk.wasm）。
  */
 export function initWasm(): Promise<void> {
   if (initPromise)
@@ -23,6 +23,7 @@ export function initWasm(): Promise<void> {
 
   initPromise = new Promise((resolve, reject) => {
     try {
+      // 运行时：编译后在 dist/link/，wasm 在 dist/assets/
       const wasmPath = path.join(__dirname, '..', 'assets', 'tsdk.wasm')
       const wasmBuffer = fs.readFileSync(wasmPath)
       const importObject = {

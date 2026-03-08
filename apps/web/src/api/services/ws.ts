@@ -1,25 +1,16 @@
+import type { Socket } from 'socket.io-client'
+import { io } from 'socket.io-client'
 import { ref } from 'vue'
-import { uuid } from '@/utils/uuid'
-
-interface Pending {
-  resolve: (data: any) => void
-  reject: (err: any) => void
-  timer: ReturnType<typeof setTimeout>
-}
 
 interface QueuedRequest {
   method: string
   url: string
-  data: any
-  resolve: (value: any) => void
-  reject: (reason: any) => void
+  data: unknown
+  resolve: (value: unknown) => void
+  reject: (reason: unknown) => void
 }
 
-type EventHandler = (data: any) => void
-
-const REQUEST_TIMEOUT_MS = 10_000
-const RECONNECT_BASE_MS = 1_000
-const RECONNECT_MAX_MS = 30_000
+type EventHandler = (data: unknown) => void
 
 export class WSClient {
   readonly connected = ref(false)
@@ -29,14 +20,12 @@ export class WSClient {
   readonly serverVersion = ref('')
   readonly uptimeReceivedAt = ref(0)
 
-  private ws?: WebSocket
-  private pending = new Map<string, Pending>()
+  private socket: Socket | null = null
   private listeners = new Map<string, Set<EventHandler>>()
+  private listenerWrappers = new Map<string, (data: unknown) => void>()
   private token = ''
   private currentTopics: string[] = []
   private queue: QueuedRequest[] = []
-  private reconnectTimer?: ReturnType<typeof setTimeout>
-  private reconnectAttempt = 0
   private intentionalClose = false
 
   connect(token: string, accountId: string): void {
@@ -48,7 +37,7 @@ export class WSClient {
     this.currentAccountId.value = id
     this.intentionalClose = false
 
-    if (this.ws) {
+    if (this.socket) {
       this.cleanupSocket()
     }
 
@@ -57,13 +46,6 @@ export class WSClient {
 
   disconnect(): void {
     this.intentionalClose = true
-    this.clearReconnectTimer()
-
-    for (const [, p] of this.pending) {
-      clearTimeout(p.timer)
-      p.reject(new Error('WebSocket 已断开'))
-    }
-    this.pending.clear()
 
     for (const item of this.queue.splice(0))
       item.reject(new Error('WebSocket 已断开'))
@@ -72,35 +54,34 @@ export class WSClient {
     this.resetState()
   }
 
-  subscribe(accountId: string, topics?: string[]): Promise<any> {
+  async subscribe(accountId: string, topics?: string[]): Promise<unknown> {
     this.currentAccountId.value = String(accountId || '').trim()
     if (topics != null)
       this.currentTopics = Array.isArray(topics) ? topics : []
-    if (!this.ws || this.ws.readyState !== WebSocket.OPEN)
+    if (!this.socket?.connected)
       return Promise.resolve(null)
-    return this.post('/subscribe', {
+    const data = await this.post('/subscribe', {
       accountId: this.currentAccountId.value,
       topics: this.currentTopics
-    }).then((data) => {
-      this.handleSubscribed(data)
-      return data
     })
+    this.handleSubscribed(data)
+    return data
   }
 
-  get<T = any>(url: string, data?: any): Promise<T> {
-    return this.request('GET', url, data)
+  get<T = unknown>(url: string, data?: unknown): Promise<T> {
+    return this.emitRequest<T>('GET', url, data)
   }
 
-  post<T = any>(url: string, data?: any): Promise<T> {
-    return this.request('POST', url, data)
+  post<T = unknown>(url: string, data?: unknown): Promise<T> {
+    return this.emitRequest<T>('POST', url, data)
   }
 
-  put<T = any>(url: string, data?: any): Promise<T> {
-    return this.request('PUT', url, data)
+  put<T = unknown>(url: string, data?: unknown): Promise<T> {
+    return this.emitRequest<T>('PUT', url, data)
   }
 
-  delete<T = any>(url: string, data?: any): Promise<T> {
-    return this.request('DELETE', url, data)
+  delete<T = unknown>(url: string, data?: unknown): Promise<T> {
+    return this.emitRequest<T>('DELETE', url, data)
   }
 
   on(event: string, handler: EventHandler): void {
@@ -110,152 +91,133 @@ export class WSClient {
       this.listeners.set(event, set)
     }
     set.add(handler)
+    if (!this.listenerWrappers.has(event)) {
+      const wrapper = (data: unknown) => this.listeners.get(event)?.forEach(fn => fn(data))
+      this.listenerWrappers.set(event, wrapper)
+      this.socket?.on(event, wrapper)
+    }
   }
 
   off(event: string, handler: EventHandler): void {
-    this.listeners.get(event)?.delete(handler)
+    const set = this.listeners.get(event)
+    if (!set)
+      return
+    set.delete(handler)
+    if (set.size === 0) {
+      const wrapper = this.listenerWrappers.get(event)
+      if (wrapper)
+        this.socket?.off(event, wrapper)
+      this.listenerWrappers.delete(event)
+      this.listeners.delete(event)
+    }
   }
 
   // ==================== Internal ====================
 
-  private request<T = any>(method: string, url: string, data?: any): Promise<T> {
+  private request<T = unknown>(method: string, url: string, data?: unknown): Promise<T> {
     return new Promise((resolve, reject) => {
       if (this.intentionalClose) {
         reject(new Error('WebSocket 已断开'))
         return
       }
-      if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-        this.queue.push({ method, url, data, resolve, reject })
+      if (!this.socket?.connected) {
+        this.queue.push({ method, url, data, resolve: resolve as (v: unknown) => void, reject })
         return
       }
-      this.sendRequest(method, url, data, resolve, reject)
+      this.emitRequestWithCallback(method, url, data, resolve as (v: unknown) => void, reject)
     })
   }
 
-  private sendRequest(method: string, url: string, data: any, resolve: (v: any) => void, reject: (e: any) => void): void {
-    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+  private emitRequest<T = unknown>(method: string, url: string, data?: unknown): Promise<T> {
+    return this.request<T>(method, url, data)
+  }
+
+  private emitRequestWithCallback(
+    method: string,
+    url: string,
+    data: unknown,
+    resolve: (value: unknown) => void,
+    reject: (reason: unknown) => void
+  ): void {
+    if (!this.socket?.connected) {
       reject(new Error('WebSocket 未连接'))
       return
     }
-    const id = uuid()
-    const payload = { id, method, url, data }
-    const timer = setTimeout(() => {
-      this.pending.delete(id)
-      reject(new Error('请求超时'))
-    }, REQUEST_TIMEOUT_MS)
-    this.pending.set(id, { resolve, reject, timer })
-    this.ws.send(JSON.stringify(payload))
+    this.socket.emit('request', { method, url, data }, (response: { data?: unknown, error?: string }) => {
+      if (response?.error)
+        reject(new Error(response.error))
+      else
+        resolve(response?.data)
+    })
   }
 
   private flushQueue(): void {
     const items = this.queue.splice(0)
     for (const item of items)
-      this.sendRequest(item.method, item.url, item.data, item.resolve, item.reject)
+      this.emitRequestWithCallback(item.method, item.url, item.data, item.resolve, item.reject)
   }
 
   private createSocket(): void {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-    const host = window.location.host
-    const url = `${protocol}//${host}/ws?token=${encodeURIComponent(this.token)}`
+    this.socket = io({
+      auth: { token: this.token },
+      reconnection: true,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 30_000,
+      randomizationFactor: 0.5
+    })
 
-    this.ws = new WebSocket(url)
-
-    this.ws.onopen = () => {
+    this.socket.on('connect', () => {
       this.connected.value = true
-      this.reconnectAttempt = 0
+      for (const [event, wrapper] of this.listenerWrappers)
+        this.socket!.on(event, wrapper as (data: unknown) => void)
 
-      if (this.currentAccountId.value || this.currentTopics.length > 0) {
+      if (this.currentAccountId.value || this.currentTopics.length > 0)
         this.subscribe(this.currentAccountId.value, this.currentTopics).catch(() => {})
-      }
 
       this.flushQueue()
-    }
+    })
 
-    this.ws.onmessage = (e) => {
-      try {
-        const msg = JSON.parse(e.data)
-        if (!msg || typeof msg !== 'object')
-          return
-
-        if (msg.id && this.pending.has(msg.id)) {
-          const p = this.pending.get(msg.id)!
-          clearTimeout(p.timer)
-          this.pending.delete(msg.id)
-          if (msg.error)
-            p.reject(new Error(msg.error))
-          else
-            p.resolve(msg.data)
-          return
-        }
-
-        if (msg.event)
-          this.listeners.get(msg.event)?.forEach(fn => fn(msg.data))
-      } catch {}
-    }
-
-    this.ws.onclose = () => {
+    this.socket.on('disconnect', () => {
       this.connected.value = false
       this.subscribedAccountId.value = ''
       this.serverUptime.value = 0
       this.serverVersion.value = ''
       this.uptimeReceivedAt.value = 0
 
-      for (const [id, p] of this.pending) {
-        clearTimeout(p.timer)
-        p.reject(new Error('WebSocket 连接断开'))
-        this.pending.delete(id)
-      }
-
       for (const item of this.queue.splice(0))
         item.reject(new Error('WebSocket 连接断开'))
+    })
 
-      if (!this.intentionalClose)
-        this.scheduleReconnect()
-    }
-
-    this.ws.onerror = () => {}
+    this.socket.on('connect_error', (err: Error) => {
+      this.connected.value = false
+      if (this.intentionalClose)
+        return
+      for (const item of this.queue.splice(0))
+        item.reject(err)
+    })
   }
 
-  private handleSubscribed(data: any): void {
-    if (!data || typeof data !== 'object')
+  private handleSubscribed(data: unknown): void {
+    if (!data || typeof data !== 'object' || !('accountId' in data))
       return
-    const id = data.accountId === 'all' ? '' : String(data.accountId || '').trim()
+    const id = (data as { accountId?: string }).accountId === 'all' ? '' : String((data as { accountId?: string }).accountId ?? '').trim()
     this.subscribedAccountId.value = id
-    if (typeof data.uptime === 'number') {
-      this.serverUptime.value = data.uptime
+    const d = data as { uptime?: number, version?: string }
+    if (typeof d.uptime === 'number') {
+      this.serverUptime.value = d.uptime
       this.uptimeReceivedAt.value = Date.now()
     }
-    if (data.version != null)
-      this.serverVersion.value = String(data.version)
-  }
-
-  private scheduleReconnect(): void {
-    this.clearReconnectTimer()
-    const delay = Math.min(RECONNECT_BASE_MS * 2 ** this.reconnectAttempt, RECONNECT_MAX_MS)
-    this.reconnectAttempt++
-    this.reconnectTimer = setTimeout(() => {
-      if (!this.intentionalClose)
-        this.createSocket()
-    }, delay)
-  }
-
-  private clearReconnectTimer(): void {
-    if (this.reconnectTimer != null) {
-      clearTimeout(this.reconnectTimer)
-      this.reconnectTimer = undefined
-    }
+    if (d.version != null)
+      this.serverVersion.value = String(d.version)
   }
 
   private cleanupSocket(): void {
-    if (!this.ws)
+    if (!this.socket)
       return
-    this.ws.onopen = null
-    this.ws.onmessage = null
-    this.ws.onclose = null
-    this.ws.onerror = null
-    if (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING)
-      this.ws.close()
-    this.ws = undefined
+    this.socket.removeAllListeners()
+    this.socket.disconnect()
+    this.socket = null
   }
 
   private resetState(): void {

@@ -1,0 +1,55 @@
+import type { Server } from 'socket.io'
+import { Injectable } from '@nestjs/common'
+
+const ROOM_ALL = 'all'
+
+function roomAccount(accountId: string): string {
+  return `account:${accountId}`
+}
+
+function roomTopic(accountId: string, topic: string): string {
+  return `account:${accountId}:${topic}`
+}
+
+@Injectable()
+export class RealtimePushService {
+  private server: Server | null = null
+
+  setServer(server: Server): void {
+    this.server = server
+  }
+
+  broadcast(event: string, data: unknown): void {
+    if (!this.server)
+      return
+    this.server.to(ROOM_ALL).emit(event, data)
+  }
+
+  emitToAccount(accountId: string, event: string, data: unknown): void {
+    const id = String(accountId || '').trim()
+    if (!id || !this.server)
+      return
+    const room = roomAccount(id)
+    this.server.to(room).emit(event, data)
+  }
+
+  emitToTopic(accountId: string, topic: string, event: string, data: unknown): void {
+    const id = String(accountId || '').trim()
+    if (!id || !topic || !this.server)
+      return
+    const room = roomTopic(id, topic)
+    this.server.to(room).emit(event, data)
+  }
+
+  /** Room name for a client subscribed to an account (for join/leave). */
+  static roomForAccount(accountId: string): string {
+    return `account:${accountId}`
+  }
+
+  /** Room name for a client subscribed to an account + topic. */
+  static roomForTopic(accountId: string, topic: string): string {
+    return `account:${accountId}:${topic}`
+  }
+
+  static readonly ROOM_ALL = ROOM_ALL
+}

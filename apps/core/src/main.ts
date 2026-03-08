@@ -1,12 +1,14 @@
 import process from 'node:process'
 import { ValidationPipe } from '@nestjs/common'
 import { NestFactory } from '@nestjs/core'
+import { IoAdapter } from '@nestjs/platform-socket.io'
 import { AppModule } from './app.module'
 import { ApiExceptionFilter } from './common/filters/api-exception.filter'
 import { ResponseInterceptor } from './common/interceptors/response.interceptor'
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { cors: true })
+  app.useWebSocketAdapter(new IoAdapter(app))
 
   app.setGlobalPrefix('api')
   app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }))
