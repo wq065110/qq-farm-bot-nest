@@ -4,6 +4,7 @@ import WebSocket from 'ws'
 import { CLIENT_VERSION, GAME_SERVER_URL, HEARTBEAT_INTERVAL_MS } from '../common/constants'
 import { Scheduler } from '../common/scheduler'
 import { syncServerTime, toLong, toNum } from '../common/utils'
+import * as cryptoWasm from './crypto-wasm'
 
 export interface UserState {
   gid: number
@@ -48,7 +49,11 @@ export class GameClient extends EventEmitter {
   get connected(): boolean { return this._connected }
   get destroyed(): boolean { return this._destroyed }
 
-  private encodeMsg(serviceName: string, methodName: string, bodyBytes: Buffer): Buffer {
+  private async encodeMsg(serviceName: string, methodName: string, bodyBytes: Buffer): Promise<Buffer> {
+    let finalBody = bodyBytes || Buffer.alloc(0)
+    if (finalBody.length > 0)
+      finalBody = await cryptoWasm.encryptBuffer(finalBody)
+
     const t = this.protoTypes
     const msg = t.GateMessage.create({
       meta: {
@@ -58,20 +63,37 @@ export class GameClient extends EventEmitter {
         client_seq: toLong(this.clientSeq),
         server_seq: toLong(this.serverSeq)
       },
-      body: bodyBytes || Buffer.alloc(0)
+      body: finalBody
     })
     const encoded = t.GateMessage.encode(msg).finish()
     this.clientSeq++
     return Buffer.from(encoded)
   }
 
-  sendMsg(serviceName: string, methodName: string, bodyBytes: Buffer, callback?: MessageCallback): boolean {
-    if (!this.ws || this.ws.readyState !== WebSocket.OPEN)
+  async sendMsg(serviceName: string, methodName: string, bodyBytes: Buffer, callback?: MessageCallback): Promise<boolean> {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+      if (callback)
+        callback(new Error('连接未打开'))
       return false
+    }
     const seq = this.clientSeq
-    const encoded = this.encodeMsg(serviceName, methodName, bodyBytes)
+    let encoded: Buffer
+    try {
+      encoded = await this.encodeMsg(serviceName, methodName, bodyBytes)
+    } catch (err) {
+      if (callback)
+        callback(err instanceof Error ? err : new Error(String(err)))
+      return false
+    }
     if (callback)
       this.pendingCallbacks.set(seq, callback)
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+      if (callback) {
+        this.pendingCallbacks.delete(seq)
+        callback(new Error('连接已在加密途中关闭'))
+      }
+      return false
+    }
     this.ws.send(encoded)
     return true
   }
@@ -88,141 +110,149 @@ export class GameClient extends EventEmitter {
         this.pendingCallbacks.delete(seq)
         reject(new Error(`请求超时: ${methodName} (seq=${seq})`))
       })
-      const sent = this.sendMsg(serviceName, methodName, bodyBytes, (err, body, meta) => {
+      this.sendMsg(serviceName, methodName, bodyBytes, (err, body, meta) => {
         this.scheduler.clear(timeoutKey)
         if (err)
           reject(err)
         else resolve({ body: body!, meta })
-      })
-      if (!sent) {
+      }).then((sent) => {
+        if (!sent) {
+          this.scheduler.clear(timeoutKey)
+          reject(new Error(`发送失败: ${methodName}`))
+        }
+      }).catch((err) => {
         this.scheduler.clear(timeoutKey)
-        reject(new Error(`发送失败: ${methodName}`))
-      }
+        reject(err)
+      })
     })
   }
 
-  private handleMessage(data: Buffer) {
+  private async handleMessage(data: Buffer) {
+    const t = this.protoTypes
+    let msg: any
     try {
-      const t = this.protoTypes
-      const msg: any = t.GateMessage.decode(data)
-      const meta = msg.meta
-      if (!meta)
-        return
-
-      if (meta.server_seq) {
-        const seq = toNum(meta.server_seq)
-        if (seq > this.serverSeq)
-          this.serverSeq = seq
-      }
-
-      if (meta.message_type === 3) {
-        this.handleNotify(msg)
-        return
-      }
-
-      if (meta.message_type === 2) {
-        const errorCode = toNum(meta.error_code)
-        const clientSeqVal = toNum(meta.client_seq)
-        const cb = this.pendingCallbacks.get(clientSeqVal)
-        if (cb) {
-          this.pendingCallbacks.delete(clientSeqVal)
-          if (errorCode !== 0)
-            cb(new Error(`${meta.service_name}.${meta.method_name} 错误: code=${errorCode} ${meta.error_message || ''}`))
-          else
-            cb(null, Buffer.from(msg.body), meta)
-        }
-      }
+      msg = t.GateMessage.decode(data)
     } catch (err: any) {
-      console.warn(`[GameClient:${this.accountId}] 消息解码失败: ${err?.message}`)
+      console.warn(`[GameClient:${this.accountId}] 外层 GateMessage 解码失败: ${err?.message}`)
+      return
+    }
+
+    const meta = msg.meta
+    if (!meta)
+      return
+
+    if (meta.server_seq) {
+      const seq = toNum(meta.server_seq)
+      if (seq > this.serverSeq)
+        this.serverSeq = seq
+    }
+
+    if (meta.message_type === 3) {
+      try {
+        this.handleNotify(msg)
+      } catch (e: any) {
+        console.warn(`[GameClient:${this.accountId}] Notify 解码失败: ${e?.message}`)
+      }
+      return
+    }
+
+    if (meta.message_type === 2) {
+      const errorCode = toNum(meta.error_code)
+      const clientSeqVal = toNum(meta.client_seq)
+      const cb = this.pendingCallbacks.get(clientSeqVal)
+      if (cb) {
+        this.pendingCallbacks.delete(clientSeqVal)
+        if (errorCode !== 0)
+          cb(new Error(`${meta.service_name}.${meta.method_name} 错误: code=${errorCode} ${meta.error_message || ''}`))
+        else
+          cb(null, Buffer.from(msg.body), meta)
+      }
     }
   }
 
   private handleNotify(msg: any) {
     if (!msg.body || msg.body.length === 0)
       return
-    try {
-      const t = this.protoTypes
-      const event: any = t.EventMessage.decode(msg.body)
-      const type = event.message_type || ''
-      const eventBody = event.body
+    const event = this.protoTypes.EventMessage.decode(msg.body)
 
-      if (type.includes('Kickout')) {
-        try {
-          const notify: any = t.KickoutNotify.decode(eventBody)
-          const reason = notify.reason_message || '未知'
-          this.emit('kickout', { type, reason })
-        } catch {
-          this.emit('kickout', { type, reason: '未知' })
-        }
-        return
+    const type = event.message_type || ''
+    const eventBody = event.body
+    const t = this.protoTypes
+
+    if (type.includes('Kickout')) {
+      try {
+        const notify: any = t.KickoutNotify.decode(eventBody)
+        const reason = notify.reason_message || '未知'
+        this.emit('kickout', { type, reason })
+      } catch {
+        this.emit('kickout', { type, reason: '未知' })
       }
+      return
+    }
 
-      if (type.includes('ItemNotify')) {
-        try {
-          const notify: any = t.ItemNotify.decode(eventBody)
-          const items = notify.items || []
-          for (const itemChg of items) {
-            const item = itemChg.item
-            if (!item)
-              continue
-            const id = toNum(item.id)
-            const count = toNum(item.count)
-            const delta = toNum(itemChg.delta)
+    if (type.includes('ItemNotify')) {
+      try {
+        const notify: any = t.ItemNotify.decode(eventBody)
+        const items = notify.items || []
+        for (const itemChg of items) {
+          const item = itemChg.item
+          if (!item)
+            continue
+          const id = toNum(item.id)
+          const count = toNum(item.count)
+          const delta = toNum(itemChg.delta)
 
-            if (id === 1101) {
-              if (count > 0)
-                this.userState.exp = count
-              else if (delta !== 0)
-                this.userState.exp = Math.max(0, (this.userState.exp || 0) + delta)
-            } else if (id === 1 || id === 1001) {
-              if (count > 0)
-                this.userState.gold = count
-              else if (delta !== 0)
-                this.userState.gold = Math.max(0, (this.userState.gold || 0) + delta)
-            } else if (id === 1002) {
-              if (count > 0)
-                this.userState.coupon = count
-              else if (delta !== 0)
-                this.userState.coupon = Math.max(0, (this.userState.coupon || 0) + delta)
-            }
+          if (id === 1101) {
+            if (count > 0)
+              this.userState.exp = count
+            else if (delta !== 0)
+              this.userState.exp = Math.max(0, (this.userState.exp || 0) + delta)
+          } else if (id === 1 || id === 1001) {
+            if (count > 0)
+              this.userState.gold = count
+            else if (delta !== 0)
+              this.userState.gold = Math.max(0, (this.userState.gold || 0) + delta)
+          } else if (id === 1002) {
+            if (count > 0)
+              this.userState.coupon = count
+            else if (delta !== 0)
+              this.userState.coupon = Math.max(0, (this.userState.coupon || 0) + delta)
+          }
+        }
+        this.emit('stateChanged', { ...this.userState })
+      } catch {}
+      this.emit('notify', { type, body: Buffer.from(eventBody).toString('base64') })
+      return
+    }
+
+    if (type.includes('BasicNotify')) {
+      try {
+        const notify: any = t.BasicNotify.decode(eventBody)
+        if (notify.basic) {
+          if (Object.prototype.hasOwnProperty.call(notify.basic, 'level')) {
+            const next = toNum(notify.basic.level)
+            if (Number.isFinite(next) && next > 0)
+              this.userState.level = next
+          }
+          if (Object.prototype.hasOwnProperty.call(notify.basic, 'gold')) {
+            const next = toNum(notify.basic.gold)
+            if (Number.isFinite(next) && next >= 0)
+              this.userState.gold = next
+          }
+          if (Object.prototype.hasOwnProperty.call(notify.basic, 'exp')) {
+            const exp = toNum(notify.basic.exp)
+            if (Number.isFinite(exp) && exp >= 0)
+              this.userState.exp = exp
           }
           this.emit('stateChanged', { ...this.userState })
-        } catch {}
-        this.emit('notify', { type, body: Buffer.from(eventBody).toString('base64') })
-        return
-      }
-
-      if (type.includes('BasicNotify')) {
-        try {
-          const notify: any = t.BasicNotify.decode(eventBody)
-          if (notify.basic) {
-            if (Object.prototype.hasOwnProperty.call(notify.basic, 'level')) {
-              const next = toNum(notify.basic.level)
-              if (Number.isFinite(next) && next > 0)
-                this.userState.level = next
-            }
-            if (Object.prototype.hasOwnProperty.call(notify.basic, 'gold')) {
-              const next = toNum(notify.basic.gold)
-              if (Number.isFinite(next) && next >= 0)
-                this.userState.gold = next
-            }
-            if (Object.prototype.hasOwnProperty.call(notify.basic, 'exp')) {
-              const exp = toNum(notify.basic.exp)
-              if (Number.isFinite(exp) && exp >= 0)
-                this.userState.exp = exp
-            }
-            this.emit('stateChanged', { ...this.userState })
-          }
-        } catch {}
-        this.emit('notify', { type, body: Buffer.from(eventBody).toString('base64') })
-        return
-      }
-
-      // Forward all other notifications as raw data to the core process
+        }
+      } catch {}
       this.emit('notify', { type, body: Buffer.from(eventBody).toString('base64') })
-    } catch (e: any) {
-      console.warn(`[GameClient:${this.accountId}] 推送解码失败: ${e?.message}`)
+      return
     }
+
+    // Forward all other notifications as raw data to the core process
+    this.emit('notify', { type, body: Buffer.from(eventBody).toString('base64') })
   }
 
   private sendLogin(): Promise<void> {
@@ -261,32 +291,38 @@ export class GameClient extends EventEmitter {
           reject(err)
           return
         }
+        let reply: any
         try {
-          const reply: any = t.LoginReply.decode(bodyBytes!)
-          if (reply.basic) {
-            this.userState.gid = toNum(reply.basic.gid)
-            this.userState.name = reply.basic.name || '未知'
-            this.userState.level = toNum(reply.basic.level)
-            this.userState.gold = toNum(reply.basic.gold)
-            this.userState.exp = toNum(reply.basic.exp)
-            this.userState.avatarUrl = reply.basic.avatar_url || ''
-            this.userState.openId = reply.basic.open_id || ''
-            if (reply.time_now_millis)
-              syncServerTime(toNum(reply.time_now_millis))
-            this._connected = true
-            this._reconnecting = false
-            this._reconnectAttempts = 0
-            this._loginFailed = false
-            this.startHeartbeat()
-            this.emit('login', this.userState)
-            resolve()
-          } else {
-            reject(new Error('登录响应无 basic 字段'))
-          }
+          reply = t.LoginReply.decode(bodyBytes!)
         } catch (e: any) {
+          this._loginFailed = true
           reject(new Error(`登录解码失败: ${e?.message}`))
+          return
         }
-      })
+        if (reply.basic) {
+          this.userState.gid = toNum(reply.basic.gid)
+          this.userState.name = reply.basic.name || '未知'
+          this.userState.level = toNum(reply.basic.level)
+          this.userState.gold = toNum(reply.basic.gold)
+          this.userState.exp = toNum(reply.basic.exp)
+          this.userState.avatarUrl = reply.basic.avatar_url || ''
+          this.userState.openId = reply.basic.open_id || ''
+          if (reply.time_now_millis)
+            syncServerTime(toNum(reply.time_now_millis))
+          this._connected = true
+          this._reconnecting = false
+          this._reconnectAttempts = 0
+          this._loginFailed = false
+          this.startHeartbeat()
+          this.emit('login', this.userState)
+          resolve()
+        } else {
+          reject(new Error('登录响应无 basic 字段'))
+        }
+      }).then((sent) => {
+        if (!sent)
+          reject(new Error('登录发送失败'))
+      }).catch(reject)
     })
   }
 
@@ -360,6 +396,7 @@ export class GameClient extends EventEmitter {
       this.ws.on('close', (closeCode: number) => {
         this._connected = false
         this.cleanup()
+        reject(new Error(`连接关闭 code=${closeCode}`))
 
         const shouldReconnect = !this._destroyed
           && this.savedCode
