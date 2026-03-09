@@ -18,7 +18,8 @@
     "lint:web": "turbo run lint -F=web",
     "lint:core": "turbo run lint -F=core",
     "lint:link": "turbo run lint -F=link",
-    "install:all": "pnpm install -r"
+    "install:all": "pnpm install -r",
+    "postinstall": "turbo run stub"
   },
   "devDependencies": {
     "turbo": "^2.8.14"

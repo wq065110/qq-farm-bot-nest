@@ -10,7 +10,7 @@ export function registerAnalyticsRoutes(router: WsRouter, deps: AnalyticsHandler
   const { manager } = deps
 
   router.register('analytics.query', (client, data) => {
-    const accountId = requireAccountId(client)
+    requireAccountId(client)
     const sortBy = String(data?.sortBy ?? data?.sort ?? '')
     return manager.getAnalytics(sortBy)
   })
