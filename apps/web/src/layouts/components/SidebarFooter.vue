@@ -13,7 +13,7 @@ defineProps<{
 </script>
 
 <template>
-  <div class="px-3 py-3 border-t border-t-solid a-border-t-border-sec">
+  <div class="px-3 py-3 border-t border-t-solid whitespace-nowrap a-border-t-border-sec">
     <template v-if="collapsed">
       <div class="flex flex-col gap-2.5 items-center">
         <a-badge :status="connectionStatus.badge" />
@@ -24,7 +24,7 @@ defineProps<{
       <div class="flex items-center justify-between">
         <div class="flex gap-1.5 items-center a-color-text-tertiary text-sm">
           <div class="i-streamline-emojis-watch" />
-          {{ uptime }}
+          <span>{{ uptime }}</span>
         </div>
         <ThemeToggle />
       </div>

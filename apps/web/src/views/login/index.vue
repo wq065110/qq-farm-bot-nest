@@ -140,7 +140,7 @@ async function handleLogin() {
         >
           <img src="/icon.ico" alt="" class="mb-2 h-20 w-20">
           <h1 class="tracking-tight font-bold flex items-center a-color-text text-xl">
-            <span class="brand-title mr-2">经典农场助手</span>
+            <span class="brand-title mr-2">农场の助手</span>
           </h1>
         </div>
 
