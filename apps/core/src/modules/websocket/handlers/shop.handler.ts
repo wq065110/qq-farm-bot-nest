@@ -1,22 +1,26 @@
-import type { AccountManagerService } from '../../../game/account-manager.service'
-import type { WsRouter } from '../ws-router'
-import { requireAccountId } from '../ws-guards'
+import { Injectable } from '@nestjs/common'
+import { AccountManagerService } from '../../../game/account-manager.service'
+import { WsAccount } from '../decorators/ws-account.decorator'
+import { WsBody } from '../decorators/ws-body.decorator'
+import { WsRoute } from '../decorators/ws-route.decorator'
 
-export interface ShopHandlerDeps {
-  manager: AccountManagerService
-}
+@Injectable()
+export class ShopHandler {
+  constructor(
+    private readonly manager: AccountManagerService
+  ) {}
 
-export function registerShopRoutes(router: WsRouter, deps: ShopHandlerDeps): void {
-  const { manager } = deps
-
-  router.register('shop.buy', async (client, data) => {
-    const accountId = requireAccountId(client)
+  @WsRoute('shop.buy')
+  async buy(
+    @WsAccount() accountId: string,
+    @WsBody() data: Record<string, unknown>
+  ): Promise<unknown> {
     const goodsId = Number(data?.goodsId)
     const count = Number(data?.count ?? 1)
     const price = Number(data?.price)
     if (!goodsId || count < 1 || price == null || price < 0)
       throw new Error('缺少 goodsId、count 或 price')
-    const runner = manager.getRunnerOrThrow(accountId)
+    const runner = this.manager.getRunnerOrThrow(accountId)
     return runner.buySeed(goodsId, count, price)
-  })
+  }
 }

@@ -1,4 +1,4 @@
-import type { SocketWithMeta } from './ws-router'
+import type { SocketWithMeta } from './ws-router.service'
 
 export function requireAccountId(client: SocketWithMeta): string {
   const id = client.data.accountId ?? ''

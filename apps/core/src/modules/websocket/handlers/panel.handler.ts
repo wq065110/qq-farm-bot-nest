@@ -1,24 +1,27 @@
-import type { AccountManagerService } from '../../../game/account-manager.service'
-import type { StoreService } from '../../../store/store.service'
-import type { WsRouter } from '../ws-router'
+import { Injectable } from '@nestjs/common'
+import { AccountManagerService } from '../../../game/account-manager.service'
+import { StoreService } from '../../../store/store.service'
+import { WsBody } from '../decorators/ws-body.decorator'
+import { WsRoute } from '../decorators/ws-route.decorator'
 
-export interface PanelHandlerDeps {
-  store: StoreService
-  manager: AccountManagerService
-}
+@Injectable()
+export class PanelHandler {
+  constructor(
+    private readonly store: StoreService,
+    private readonly manager: AccountManagerService
+  ) {}
 
-export function registerPanelRoutes(router: WsRouter, deps: PanelHandlerDeps): void {
-  const { store, manager } = deps
-
-  router.register('panel.theme', (_client, data) => {
-    const result = store.setUITheme(data?.theme as string)
-    manager.notifyPanelUpdate()
+  @WsRoute('panel.theme')
+  theme(@WsBody() data: Record<string, unknown>): unknown {
+    const result = this.store.setUITheme(data?.theme as string)
+    this.manager.notifyPanelUpdate()
     return result
-  })
+  }
 
-  router.register('panel.offlineReminder', (_client, data) => {
-    const result = store.setOfflineReminder((data || {}) as Record<string, unknown>)
-    manager.notifyPanelUpdate()
+  @WsRoute('panel.offlineReminder')
+  offlineReminder(@WsBody() data: Record<string, unknown>): unknown {
+    const result = this.store.setOfflineReminder(data || {})
+    this.manager.notifyPanelUpdate()
     return result
-  })
+  }
 }

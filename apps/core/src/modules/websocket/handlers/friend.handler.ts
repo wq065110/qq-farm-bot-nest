@@ -1,47 +1,60 @@
-import type { AccountManagerService } from '../../../game/account-manager.service'
-import type { StoreService } from '../../../store/store.service'
-import type { WsRouter } from '../ws-router'
-import { requireAccountId, requireNumber, requireString } from '../ws-guards'
+import { Injectable } from '@nestjs/common'
+import { AccountManagerService } from '../../../game/account-manager.service'
+import { StoreService } from '../../../store/store.service'
+import { WsAccount } from '../decorators/ws-account.decorator'
+import { WsBody } from '../decorators/ws-body.decorator'
+import { WsRoute } from '../decorators/ws-route.decorator'
+import { requireNumber, requireString } from '../ws-guards'
 
-export interface FriendHandlerDeps {
-  manager: AccountManagerService
-  store: StoreService
-}
+@Injectable()
+export class FriendHandler {
+  constructor(
+    private readonly manager: AccountManagerService,
+    private readonly store: StoreService
+  ) {}
 
-export function registerFriendRoutes(router: WsRouter, deps: FriendHandlerDeps): void {
-  const { manager, store } = deps
-
-  router.register('friend.lands', async (client, data) => {
-    const accountId = requireAccountId(client)
+  @WsRoute('friend.lands')
+  async lands(
+    @WsAccount() accountId: string,
+    @WsBody() data: Record<string, unknown>
+  ): Promise<unknown> {
     const gid = Number(data?.gid ?? data?.friendId)
     if (!gid)
       throw new Error('缺少好友 gid')
-    const runner = manager.getRunnerOrThrow(accountId)
+    const runner = this.manager.getRunnerOrThrow(accountId)
     return runner.getFriendLands(gid)
-  })
+  }
 
-  router.register('friend.operate', async (client, data) => {
-    const accountId = requireAccountId(client)
-    const gid = requireNumber(data as Record<string, unknown>, 'gid', '缺少 gid 或 opType')
-    const opType = requireString(data as Record<string, unknown>, 'opType', '缺少 gid 或 opType')
-    const runner = manager.getRunnerOrThrow(accountId)
+  @WsRoute('friend.operate')
+  async operate(
+    @WsAccount() accountId: string,
+    @WsBody() data: Record<string, unknown>
+  ): Promise<unknown> {
+    const gid = requireNumber(data, 'gid', '缺少 gid 或 opType')
+    const opType = requireString(data, 'opType', '缺少 gid 或 opType')
+    const runner = this.manager.getRunnerOrThrow(accountId)
     return runner.doFriendOp(gid, opType)
-  })
+  }
 
-  router.register('friend.blacklistToggle', (client, data) => {
-    const accountId = requireAccountId(client)
-    const gid = requireNumber(data as Record<string, unknown>, 'gid', '缺少 gid')
-    const current = store.getFriendBlacklist(accountId)
+  @WsRoute('friend.blacklistToggle')
+  blacklistToggle(
+    @WsAccount() accountId: string,
+    @WsBody() data: Record<string, unknown>
+  ): unknown {
+    const gid = requireNumber(data, 'gid', '缺少 gid')
+    const current = this.store.getFriendBlacklist(accountId)
     const next = current.includes(gid) ? current.filter(g => g !== gid) : [...current, gid]
-    const saved = store.setFriendBlacklist(accountId, next)
-    manager.broadcastConfig(accountId)
-    manager.notifyStrategyUpdate(accountId)
+    const saved = this.store.setFriendBlacklist(accountId, next)
+    this.manager.broadcastConfig(accountId)
+    this.manager.notifyStrategyUpdate(accountId)
     return saved
-  })
+  }
 
-  router.register('friend.interactRecords', async (client) => {
-    const accountId = requireAccountId(client)
-    const runner = manager.getRunnerOrThrow(accountId)
+  @WsRoute('friend.interactRecords')
+  async interactRecords(
+    @WsAccount() accountId: string
+  ): Promise<unknown> {
+    const runner = this.manager.getRunnerOrThrow(accountId)
     return runner.getInteractRecords()
-  })
+  }
 }

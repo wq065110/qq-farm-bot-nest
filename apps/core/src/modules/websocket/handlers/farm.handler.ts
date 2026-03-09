@@ -1,17 +1,21 @@
-import type { AccountManagerService } from '../../../game/account-manager.service'
-import type { WsRouter } from '../ws-router'
-import { requireAccountId } from '../ws-guards'
+import { Injectable } from '@nestjs/common'
+import { AccountManagerService } from '../../../game/account-manager.service'
+import { WsAccount } from '../decorators/ws-account.decorator'
+import { WsBody } from '../decorators/ws-body.decorator'
+import { WsRoute } from '../decorators/ws-route.decorator'
 
-export interface FarmHandlerDeps {
-  manager: AccountManagerService
-}
+@Injectable()
+export class FarmHandler {
+  constructor(
+    private readonly manager: AccountManagerService
+  ) {}
 
-export function registerFarmRoutes(router: WsRouter, deps: FarmHandlerDeps): void {
-  const { manager } = deps
-
-  router.register('farm.operate', async (client, data) => {
-    const accountId = requireAccountId(client)
-    const runner = manager.getRunnerOrThrow(accountId)
+  @WsRoute('farm.operate')
+  async operate(
+    @WsAccount() accountId: string,
+    @WsBody() data: Record<string, unknown>
+  ): Promise<unknown> {
+    const runner = this.manager.getRunnerOrThrow(accountId)
     return runner.doFarmOp(data?.opType as string)
-  })
+  }
 }

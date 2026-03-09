@@ -1,4 +1,4 @@
-import type { SocketWithMeta } from './ws-router'
+import type { SocketWithMeta } from './ws-router.service'
 import { Injectable, Logger } from '@nestjs/common'
 import { createEvent } from '@qq-farm/shared'
 import { AccountManagerService } from '../../game/account-manager.service'

@@ -1,17 +1,21 @@
-import type { AccountManagerService } from '../../../game/account-manager.service'
-import type { WsRouter } from '../ws-router'
-import { requireAccountId } from '../ws-guards'
+import { Injectable } from '@nestjs/common'
+import { AccountManagerService } from '../../../game/account-manager.service'
+import { WsAccount } from '../decorators/ws-account.decorator'
+import { WsBody } from '../decorators/ws-body.decorator'
+import { WsRoute } from '../decorators/ws-route.decorator'
 
-export interface AnalyticsHandlerDeps {
-  manager: AccountManagerService
-}
+@Injectable()
+export class AnalyticsHandler {
+  constructor(
+    private readonly manager: AccountManagerService
+  ) {}
 
-export function registerAnalyticsRoutes(router: WsRouter, deps: AnalyticsHandlerDeps): void {
-  const { manager } = deps
-
-  router.register('analytics.query', (client, data) => {
-    requireAccountId(client)
+  @WsRoute('analytics.query')
+  query(
+    @WsAccount() _accountId: string,
+    @WsBody() data: Record<string, unknown>
+  ): unknown {
     const sortBy = String(data?.sortBy ?? data?.sort ?? '')
-    return manager.getAnalytics(sortBy)
-  })
+    return this.manager.getAnalytics(sortBy)
+  }
 }

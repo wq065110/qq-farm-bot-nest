@@ -1,5 +1,5 @@
 import type { WsRequest } from '@qq-farm/shared'
-import type { SocketWithMeta } from './ws-router'
+import type { SocketWithMeta } from './ws-router.service'
 import process from 'node:process'
 import { Logger } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
@@ -16,21 +16,8 @@ import {
 import { createEvent } from '@qq-farm/shared'
 import { Server } from 'socket.io'
 import { AccountManagerService } from '../../game/account-manager.service'
-import { StoreService } from '../../store/store.service'
-import { AccountService } from '../account/account.service'
-import { registerAccountRoutes } from './handlers/account.handler'
-import { registerAnalyticsRoutes } from './handlers/analytics.handler'
-import { registerFarmRoutes } from './handlers/farm.handler'
-import { registerFriendRoutes } from './handlers/friend.handler'
-import { registerLogsRoutes } from './handlers/logs.handler'
-import { registerPanelRoutes } from './handlers/panel.handler'
-import { registerShopRoutes } from './handlers/shop.handler'
-import { registerStrategyRoutes } from './handlers/strategy.handler'
-import { registerTopicsRoutes } from './handlers/topics.handler'
-import { registerWarehouseRoutes } from './handlers/warehouse.handler'
 import { RealtimePushService } from './realtime-push.service'
-import { WsRouter } from './ws-router'
-import { WsTopicsService } from './ws-topics.service'
+import { WsRouterService } from './ws-router.service'
 
 @WebSocketGateway({ cors: true })
 export class RealtimeGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
@@ -42,23 +29,9 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayConnection, OnGa
   constructor(
     private jwtService: JwtService,
     private manager: AccountManagerService,
-    private store: StoreService,
-    private accountService: AccountService,
     private pushService: RealtimePushService,
-    private router: WsRouter,
-    private topicsService: WsTopicsService
-  ) {
-    registerAccountRoutes(this.router, { accountService: this.accountService, manager: this.manager })
-    registerFarmRoutes(this.router, { manager: this.manager })
-    registerFriendRoutes(this.router, { manager: this.manager, store: this.store })
-    registerStrategyRoutes(this.router, { store: this.store, manager: this.manager })
-    registerPanelRoutes(this.router, { store: this.store, manager: this.manager })
-    registerLogsRoutes(this.router, { manager: this.manager })
-    registerAnalyticsRoutes(this.router, { manager: this.manager })
-    registerWarehouseRoutes(this.router, { manager: this.manager })
-    registerShopRoutes(this.router, { manager: this.manager })
-    registerTopicsRoutes(this.router, this.topicsService)
-  }
+    private router: WsRouterService
+  ) {}
 
   afterInit(server: Server): void {
     server.use((socket, next) => {
