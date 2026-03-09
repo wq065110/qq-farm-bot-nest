@@ -1,6 +1,7 @@
 export const WS_PROTOCOL_VERSION = 1
 
 export interface WsRequest<T = unknown> {
+  t: 'req'
   v: number
   id?: string
   r: string
@@ -8,6 +9,7 @@ export interface WsRequest<T = unknown> {
 }
 
 export interface WsResponse<T = unknown> {
+  t: 'res'
   v: number
   id: string
   c: number
@@ -15,6 +17,7 @@ export interface WsResponse<T = unknown> {
 }
 
 export interface WsEvent<T = unknown> {
+  t: 'event'
   v: number
   e: string
   d?: T
@@ -28,6 +31,7 @@ export function createRequest<T = unknown>(
   id?: string,
 ): WsRequest<T> {
   return {
+    t: 'req',
     v: WS_PROTOCOL_VERSION,
     id: id ?? crypto.randomUUID?.() ?? `req-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
     r: route,
@@ -43,6 +47,7 @@ export function createResponse<T = unknown>(
 ): WsResponse<T> {
   if (code !== 0 && msg) {
     return {
+      t: 'res',
       v: WS_PROTOCOL_VERSION,
       id,
       c: code,
@@ -50,6 +55,7 @@ export function createResponse<T = unknown>(
     }
   }
   return {
+    t: 'res',
     v: WS_PROTOCOL_VERSION,
     id,
     c: code,
@@ -62,6 +68,7 @@ export function createEvent<T = unknown>(
   data?: T,
 ): WsEvent<T> {
   return {
+    t: 'event',
     v: WS_PROTOCOL_VERSION,
     e: route,
     d: data,

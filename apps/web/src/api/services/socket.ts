@@ -170,7 +170,7 @@ export class SocketClient {
     if (!payload || typeof payload !== 'object')
       return
 
-    if ('c' in payload && 'id' in payload) {
+    if (payload.t === 'res') {
       const res = payload as WsResponse
       const id = res.id
       if (id) {
@@ -189,7 +189,7 @@ export class SocketClient {
       return
     }
 
-    if ('e' in payload) {
+    if (payload.t === 'event') {
       const evt = payload as WsEvent
       const route = evt.e
       if (!route)

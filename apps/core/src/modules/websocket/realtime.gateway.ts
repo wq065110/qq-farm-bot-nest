@@ -115,7 +115,7 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayConnection, OnGa
     @ConnectedSocket() client: SocketWithMeta,
     @MessageBody() payload: WsRequest
   ): Promise<void> {
-    if (!payload || !payload.r) {
+    if (!payload || payload.t !== 'req' || !payload.r) {
       return
     }
     const id = payload.id ?? ''
