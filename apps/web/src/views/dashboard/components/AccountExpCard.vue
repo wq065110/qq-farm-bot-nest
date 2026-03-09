@@ -19,7 +19,7 @@ function getExpPercent(p: { current: number, needed: number } | null | undefined
   <a-card variant="borderless" size="small" :classes="{ body: '!px-4 !py-3.5 !flex !flex-col !justify-between !h-full !min-h-35' }">
     <div class="flex items-center justify-between">
       <div class="flex gap-4 items-center">
-        <div class="i-twemoji-farmer text-3xl" />
+        <div class="i-streamline-emojis-man-farmer-1 text-3xl" />
         <div class="min-w-0">
           <div class="leading-snug font-bold truncate a-color-text" :title="displayName">
             {{ displayName }}
@@ -33,7 +33,7 @@ function getExpPercent(p: { current: number, needed: number } | null | undefined
     </div>
     <div class="flex items-center justify-between a-color-text-secondary">
       <span class="flex gap-1 items-center">
-        <div class="i-twemoji-glowing-star" />
+        <div class="i-streamline-emojis-sparkles" />
         经验
       </span>
       <span>{{ levelProgress?.current || 0 }} / {{ levelProgress?.needed || '?' }}</span>

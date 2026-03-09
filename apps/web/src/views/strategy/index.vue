@@ -50,7 +50,7 @@ useWs()
   <div class="flex flex-col gap-3">
     <div class="flex flex-wrap gap-2 items-center justify-between">
       <div class="font-bold flex gap-2 items-center a-color-text">
-        <div class="i-twemoji-memo text-lg" aria-hidden="true" />
+        <div class="i-streamline-emojis-clipboard text-lg" aria-hidden="true" />
         <span class="text-lg">策略设置</span>
       </div>
       <a-button

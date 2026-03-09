@@ -78,7 +78,7 @@ useAccountRefresh(refresh)
   <div class="flex flex-col gap-3 md:h-full">
     <div class="flex flex-wrap gap-2 items-center justify-between">
       <div class="font-bold flex gap-2 items-center a-color-text">
-        <div class="i-twemoji-ear-of-corn text-lg" aria-hidden="true" />
+        <div class="i-streamline-emojis-seedling text-lg" aria-hidden="true" />
         <span class="text-lg">我的农场</span>
       </div>
     </div>

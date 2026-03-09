@@ -100,11 +100,12 @@ onMounted(() => {
   >
     <div class="mb-3 flex items-center justify-between">
       <div class="flex gap-2 items-center a-color-text">
-        <div class="i-twemoji-scroll text-lg" aria-hidden="true" />
+        <div class="i-streamline-emojis-scroll text-lg" aria-hidden="true" />
         <span class="whitespace-nowrap">农场日志</span>
       </div>
       <a-popover
         v-model:open="filterPopoverOpen"
+        placement="bottomLeft"
         trigger="click"
       >
         <template #content>
@@ -185,7 +186,7 @@ onMounted(() => {
             size="small"
             aria-label="筛选日志"
           >
-            <div class="i-twemoji-anchor text-base" aria-hidden="true" />
+            <div class="i-carbon-filter text-base" aria-hidden="true" />
           </a-button>
         </a-badge>
       </a-popover>
@@ -197,7 +198,7 @@ onMounted(() => {
       @scroll="onLogScroll"
     >
       <div v-if="!logs.length" class="flex h-full items-center justify-center">
-        <EmptyState icon="i-twemoji-scroll text-4xl" description="暂无日志" />
+        <EmptyState icon="i-streamline-emojis-scroll text-4xl" description="暂无日志" />
       </div>
       <div v-for="log in logs" v-else :key="(log.createdAt ?? log.ts ?? 0) + log.msg" class="mb-1 break-all text-xs">
         <span class="mr-2 select-none a-color-text-tertiary">[{{ formatLogTime(log.time) }}]</span>

@@ -19,7 +19,7 @@ const searchQuery = defineModel<string>('searchQuery', { required: true })
     </div>
     <a-input v-model:value="searchQuery" placeholder="搜索好友..." allow-clear class="!w-48">
       <template #prefix>
-        <div class="i-twemoji-magnifying-glass-tilted-left" />
+        <div class="i-streamline-emojis-magnifying-glass-tilted-left" />
       </template>
     </a-input>
   </div>

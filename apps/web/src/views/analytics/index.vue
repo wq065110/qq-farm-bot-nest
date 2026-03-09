@@ -85,12 +85,12 @@ watch(sortKey, loadAnalytics)
 <template>
   <div class="flex flex-col gap-3 h-full">
     <div class="font-bold flex gap-2 items-center a-color-text">
-      <div class="i-twemoji-bar-chart text-lg" aria-hidden="true" />
+      <div class="i-streamline-emojis-bar-chart text-lg" aria-hidden="true" />
       <span class="text-lg">数据分析</span>
     </div>
 
     <div v-if="!hasAccount" class="flex flex-1 items-center justify-center">
-      <EmptyState icon="i-twemoji-bar-chart text-5xl" description="请先在侧边栏选择账号" />
+      <EmptyState icon="i-streamline-emojis-bar-chart text-5xl" description="请先在侧边栏选择账号" />
     </div>
 
     <a-card

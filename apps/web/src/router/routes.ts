@@ -10,55 +10,55 @@ const routes: RouteRecordRaw[] = [
         path: '',
         name: ROUTE_NAMES.DASHBOARD,
         component: () => import('@/views/dashboard/index.vue'),
-        meta: { label: '概览', icon: 'i-twemoji-house-with-garden' }
+        meta: { label: '概览', icon: 'i-streamline-emojis-house-with-garden' }
       },
       {
         path: 'personal',
         name: 'personal',
         component: () => import('@/views/personal/index.vue'),
-        meta: { label: '我的农场', icon: 'i-twemoji-farmer' }
+        meta: { label: '我的农场', icon: 'i-streamline-emojis-man-farmer-1' }
       },
       {
         path: 'friends',
         name: 'friends',
         component: () => import('@/views/friends/index.vue'),
-        meta: { label: '好友列表', icon: 'i-twemoji-people-hugging' }
+        meta: { label: '好友列表', icon: 'i-streamline-emojis-man-and-woman-holding-hands-1' }
       },
       {
         path: 'analytics',
         name: 'analytics',
         component: () => import('@/views/analytics/index.vue'),
-        meta: { label: '数据分析', icon: 'i-twemoji-bar-chart' }
+        meta: { label: '数据分析', icon: 'i-streamline-emojis-bar-chart' }
       },
       {
         path: 'warehouse',
         name: 'warehouse',
         component: () => import('@/views/warehouse/index.vue'),
-        meta: { label: '我的仓库', icon: 'i-twemoji-package' }
+        meta: { label: '我的仓库', icon: 'i-streamline-emojis-package' }
       },
       {
         path: 'shop',
         name: 'shop',
         component: () => import('@/views/shop/index.vue'),
-        meta: { label: '种子商店', icon: 'i-twemoji-herb' }
+        meta: { label: '种子商店', icon: 'i-streamline-emojis-seedling' }
       },
       {
         path: 'accounts',
         name: 'accounts',
         component: () => import('@/views/accounts/index.vue'),
-        meta: { label: '账号管理', icon: 'i-twemoji-bust-in-silhouette' }
+        meta: { label: '账号管理', icon: 'i-streamline-emojis-bust-in-silhouette' }
       },
       {
         path: 'strategy',
         name: 'strategy',
         component: () => import('@/views/strategy/index.vue'),
-        meta: { label: '策略设置', icon: 'i-twemoji-memo' }
+        meta: { label: '策略设置', icon: 'i-streamline-emojis-direct-hit' }
       },
       {
         path: 'panel',
         name: 'panel',
         component: () => import('@/views/panel/index.vue'),
-        meta: { label: '面板设置', icon: 'i-twemoji-gear' }
+        meta: { label: '面板设置', icon: 'i-streamline-emojis-nut-and-bolt' }
       }
     ]
   },

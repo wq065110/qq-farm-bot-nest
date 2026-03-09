@@ -81,7 +81,7 @@ function getHighlightColor(key: string): string {
         <template v-if="column.key === 'rank'">
           <div v-if="(currentPage - 1) * pageSize + index < 3" class="flex items-center justify-center">
             <div
-              class="text-2xl"
+              class="text-xl"
               :class="[
                 (currentPage - 1) * pageSize + index === 0 ? 'i-twemoji-1st-place-medal' : '',
                 (currentPage - 1) * pageSize + index === 1 ? 'i-twemoji-2nd-place-medal' : '',
@@ -102,7 +102,7 @@ function getHighlightColor(key: string): string {
                 loading="lazy"
                 @error="imageErrors[record.seedId] = true"
               >
-              <div v-else class="i-twemoji-seedling text-lg" />
+              <div v-else class="i-streamline-emojis-seedling text-lg" />
             </div>
             <div class="flex flex-col gap-1.5 min-w-0">
               <div class="font-semibold a-color-text">
@@ -153,7 +153,7 @@ function getHighlightColor(key: string): string {
 
       <template #emptyText>
         <EmptyState
-          icon="i-twemoji-bar-chart text-4xl"
+          icon="i-streamline-emojis-bar-chart text-4xl"
           :description="searchQuery ? '未找到匹配的作物' : '暂无数据'"
           class="py-4"
         />

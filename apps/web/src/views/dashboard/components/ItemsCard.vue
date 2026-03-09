@@ -20,22 +20,22 @@ function formatBucketTime(item: any): string {
   <a-card variant="borderless" size="small" class="h-full" :classes="{ body: '!px-4 !py-3 !h-full' }">
     <div class="gap-2 grid grid-cols-4 h-full">
       <div class="px-2 py-3 flex flex-col gap-1.5 items-center justify-center a-bg-layout rounded-lg">
-        <div class="i-twemoji-droplet text-2xl" />
+        <div class="i-streamline-emojis-droplet text-2xl" />
         <span class="text-center a-color-text-secondary text-sm">普通化肥</span>
         <span class="font-bold a-color-text">{{ formatBucketTime(fertilizerNormal) }}</span>
       </div>
       <div class="px-2 py-3 flex flex-col gap-1.5 items-center justify-center a-bg-layout rounded-lg">
-        <div class="i-twemoji-herb text-2xl" />
+        <div class="i-streamline-emojis-herb text-2xl" />
         <span class="text-center a-color-text-secondary text-sm">有机化肥</span>
         <span class="font-bold a-color-text">{{ formatBucketTime(fertilizerOrganic) }}</span>
       </div>
       <div class="px-2 py-3 flex flex-col gap-1.5 items-center justify-center a-bg-layout rounded-lg">
-        <div class="i-twemoji-four-leaf-clover text-2xl" />
+        <div class="i-streamline-emojis-four-leaf-clover text-2xl" />
         <span class="text-center a-color-text-secondary text-sm">普通收藏</span>
         <span class="font-bold a-color-text">{{ collectionNormal?.count || 0 }}</span>
       </div>
       <div class="px-2 py-3 flex flex-col gap-1.5 items-center justify-center a-bg-layout rounded-lg">
-        <div class="i-twemoji-gem-stone text-2xl" />
+        <div class="i-streamline-emojis-diamond-suit text-2xl" />
         <span class="text-center a-color-text-secondary text-sm">典藏收藏</span>
         <span class="font-bold a-color-text">{{ collectionRare?.count || 0 }}</span>
       </div>

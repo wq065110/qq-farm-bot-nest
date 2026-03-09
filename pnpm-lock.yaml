@@ -190,18 +190,6 @@ importers:
 
   apps/web:
     dependencies:
-      '@antdv-next/icons':
-        specifier: ^1.0.4
-        version: 1.0.4(vue@3.5.29(typescript@5.9.3))
-      '@iconify-json/carbon':
-        specifier: ^1.2.19
-        version: 1.2.19
-      '@iconify-json/icon-park-solid':
-        specifier: ^1.2.4
-        version: 1.2.4
-      '@iconify-json/twemoji':
-        specifier: ^1.2.5
-        version: 1.2.5
       '@qq-farm/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -220,9 +208,6 @@ importers:
       pinia:
         specifier: ^3.0.4
         version: 3.0.4(typescript@5.9.3)(vue@3.5.29(typescript@5.9.3))
-      pinia-plugin-persistedstate:
-        specifier: ^4.7.1
-        version: 4.7.1(pinia@3.0.4(typescript@5.9.3)(vue@3.5.29(typescript@5.9.3)))
       socket.io-client:
         specifier: ^4.8.3
         version: 4.8.3
@@ -236,12 +221,27 @@ importers:
       '@antdv-next/auto-import-resolver':
         specifier: ^1.0.5
         version: 1.0.5(unplugin-vue-components@31.0.0(vue@3.5.29(typescript@5.9.3)))
+      '@antdv-next/icons':
+        specifier: ^1.0.4
+        version: 1.0.4(vue@3.5.29(typescript@5.9.3))
       '@antdv-next/unocss':
         specifier: ^1.0.2
         version: 1.0.2(unocss@66.6.6(vite@7.3.1(@types/node@25.3.5)(jiti@2.6.1)(sass@1.97.3)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)))
       '@antfu/eslint-config':
         specifier: ^7.7.0
         version: 7.7.0(@typescript-eslint/rule-tester@8.56.1(eslint@10.0.3(jiti@2.6.1))(typescript@5.9.3))(@typescript-eslint/typescript-estree@8.56.1(typescript@5.9.3))(@typescript-eslint/utils@8.56.1(eslint@10.0.3(jiti@2.6.1))(typescript@5.9.3))(@unocss/eslint-plugin@66.6.6(eslint@10.0.3(jiti@2.6.1))(typescript@5.9.3))(@vue/compiler-sfc@3.5.29)(eslint-plugin-format@2.0.1(eslint@10.0.3(jiti@2.6.1)))(eslint@10.0.3(jiti@2.6.1))(typescript@5.9.3)
+      '@iconify-json/carbon':
+        specifier: ^1.2.19
+        version: 1.2.19
+      '@iconify-json/icon-park-solid':
+        specifier: ^1.2.4
+        version: 1.2.4
+      '@iconify-json/streamline-emojis':
+        specifier: ^1.2.4
+        version: 1.2.4
+      '@iconify-json/twemoji':
+        specifier: ^1.2.5
+        version: 1.2.5
       '@types/node':
         specifier: ^25.3.5
         version: 25.3.5
@@ -266,6 +266,9 @@ importers:
       eslint-plugin-format:
         specifier: ^2.0.1
         version: 2.0.1(eslint@10.0.3(jiti@2.6.1))
+      pinia-plugin-persistedstate:
+        specifier: ^4.7.1
+        version: 4.7.1(pinia@3.0.4(typescript@5.9.3)(vue@3.5.29(typescript@5.9.3)))
       sass:
         specifier: ^1.97.3
         version: 1.97.3
@@ -769,6 +772,9 @@ packages:
 
   '@iconify-json/icon-park-solid@1.2.4':
     resolution: {integrity: sha512-030MChSP6lCY7N+U5J5R7YguHTGcm7qQEI/ivBjk77El/i8yJatoj568cwwXGM8c6HEU/kIxEE4m3O/6w0WBGg==}
+
+  '@iconify-json/streamline-emojis@1.2.4':
+    resolution: {integrity: sha512-iNr9T9XuZVTyQPJO8ZlLxBzPkpi7qMl+z1l0C31vpEMqhPMelth3n7CeWQYtixdetDPdI81yeG4ROqjWpYJE6A==}
 
   '@iconify-json/twemoji@1.2.5':
     resolution: {integrity: sha512-uKpuIEV0v6K5BW3Mjdyl+XKFVAbbcPxAgifKvEMtZoUZB5+YiY5zaMm2uNNCxyXzAWU9yNLlj41WU6/mvgALsw==}
@@ -5377,6 +5383,10 @@ snapshots:
       '@iconify/types': 2.0.0
 
   '@iconify-json/icon-park-solid@1.2.4':
+    dependencies:
+      '@iconify/types': 2.0.0
+
+  '@iconify-json/streamline-emojis@1.2.4':
     dependencies:
       '@iconify/types': 2.0.0
 

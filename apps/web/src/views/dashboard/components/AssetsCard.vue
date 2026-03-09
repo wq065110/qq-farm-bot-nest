@@ -31,7 +31,7 @@ function formatDuration(seconds: number): string {
     <div class="flex-1 gap-3 grid grid-cols-2 min-h-0">
       <div class="p-2 flex flex-col gap-0.5 items-center justify-center a-bg-layout rounded-lg">
         <div class="flex gap-1.5 items-center a-color-text-secondary">
-          <div class="i-twemoji-coin" />
+          <div class="i-streamline-emojis-credit-card" />
           金币
         </div>
         <div class="font-bold a-color-text text-xl">
@@ -48,7 +48,7 @@ function formatDuration(seconds: number): string {
       </div>
       <div class="p-2 flex flex-col gap-0.5 items-center justify-center a-bg-layout rounded-lg">
         <div class="flex gap-1.5 items-center a-color-text-secondary">
-          <div class="i-twemoji-ticket" />
+          <div class="i-carbon-ticket" />
           点券
         </div>
         <div class="font-bold a-color-text text-xl">
@@ -64,7 +64,7 @@ function formatDuration(seconds: number): string {
         </div>
       </div>
       <div class="px-3 py-1.5 flex gap-2 col-span-2 items-center justify-center a-bg-layout rounded-lg">
-        <div class="i-twemoji-stopwatch text-lg" />
+        <div class="i-streamline-emojis-watch text-lg" />
         <span class="a-color-text-secondary">挂机时长</span>
         <span class="font-bold font-mono a-color-primary">{{ formatDuration(uptime) }}</span>
       </div>

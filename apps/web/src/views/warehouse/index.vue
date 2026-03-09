@@ -23,10 +23,10 @@ const sellTarget = ref<{ id: number, name: string, count: number, image?: string
 const selling = ref(false)
 
 const CATEGORY_TABS = [
-  { key: 'all', label: '全部', icon: 'i-twemoji-card-file-box' },
-  { key: 'fruit', label: '果实', icon: 'i-twemoji-red-apple' },
-  { key: 'seed', label: '种子', icon: 'i-twemoji-seedling' },
-  { key: 'item', label: '道具', icon: 'i-twemoji-wrench' }
+  { key: 'all', label: '全部', icon: 'i-streamline-emojis-file-folder' },
+  { key: 'fruit', label: '果实', icon: 'i-streamline-emojis-red-apple' },
+  { key: 'seed', label: '种子', icon: 'i-streamline-emojis-seedling' },
+  { key: 'item', label: '道具', icon: 'i-streamline-emojis-wrench' }
 ] as const
 
 const filteredItems = computed(() => {
@@ -82,7 +82,7 @@ useAccountRefresh(refresh)
 <template>
   <div class="flex flex-col gap-3 h-full">
     <div class="font-bold flex gap-2 items-center a-color-text">
-      <div class="i-twemoji-package text-lg" aria-hidden="true" />
+      <div class="i-streamline-emojis-package text-lg" aria-hidden="true" />
       <span class="text-lg">我的仓库</span>
     </div>
 
@@ -108,7 +108,7 @@ useAccountRefresh(refresh)
 
         <div class="flex flex-1 flex-col min-h-0 overflow-y-auto">
           <div v-if="!filteredItems.length" class="flex flex-1 min-h-[12rem] items-center justify-center">
-            <EmptyState icon="i-twemoji-sheaf-of-rice text-3xl" description="仓库暂无物品，收获的作物会出现在这里" />
+            <EmptyState icon="i-streamline-emojis-cooked-rice text-3xl" description="仓库暂无物品，收获的作物会出现在这里" />
           </div>
           <div v-else class="gap-2 grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))]">
             <ItemCard

@@ -64,7 +64,7 @@ async function toggleAccount(account: any) {
     <!-- Header -->
     <div class="flex items-center justify-between">
       <div class="font-bold flex gap-2 items-center a-color-text">
-        <div class="i-twemoji-bust-in-silhouette text-lg" aria-hidden="true" />
+        <div class="i-streamline-emojis-bust-in-silhouette text-lg" aria-hidden="true" />
         <span class="text-lg">账号管理</span>
         <span v-if="accounts.length" class="font-normal ml-1 a-color-text-tertiary text-sm">{{ accounts.length }} 个账号</span>
       </div>
@@ -74,7 +74,7 @@ async function toggleAccount(account: any) {
     </div>
 
     <div v-if="accounts.length === 0" class="flex flex-1 items-center justify-center">
-      <EmptyState icon="i-twemoji-bust-in-silhouette text-5xl" description="暂无账号">
+      <EmptyState icon="i-streamline-emojis-bust-in-silhouette text-5xl" description="暂无账号">
         <span class="a-color-text-tertiary text-sm">添加一个账号开始自动化管理农场</span>
       </EmptyState>
     </div>
@@ -120,16 +120,16 @@ async function toggleAccount(account: any) {
           <!-- Actions -->
           <div class="px-3 pb-3 gap-1.5 grid grid-cols-4 text-sm">
             <a-button color="primary" variant="filled" @click="toggleAccount(acc)">
-              <div class="" :class="acc.running ? 'i-twemoji-stop-button' : 'i-twemoji-play-button'" />
+              <div class="" :class="acc.running ? 'i-carbon-stop-filled' : 'i-carbon-play-filled'" />
             </a-button>
             <a-button color="primary" variant="filled" @click="openSettings(acc)">
-              <div class="i-twemoji-gear" />
+              <div class="i-streamline-emojis-nut-and-bolt" />
             </a-button>
             <a-button color="primary" variant="filled" @click="openEditModal(acc)">
-              <div class="i-twemoji-memo" />
+              <div class="i-streamline-emojis-clipboard" />
             </a-button>
             <a-button color="primary" variant="filled" @click="handleDelete(acc)">
-              <div class="i-twemoji-wastebasket" />
+              <div class="i-carbon-trash-can" />
             </a-button>
           </div>
         </div>

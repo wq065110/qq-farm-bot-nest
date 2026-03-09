@@ -39,7 +39,7 @@ function openChannelDocs() {
     <template #title>
       <div class="flex gap-2 items-center justify-between">
         <div class="font-bold flex gap-2 items-center">
-          <div class="i-twemoji-bell" aria-hidden="true" />
+          <div class="i-streamline-emojis-bell" aria-hidden="true" />
           下线提醒
         </div>
         <a-button type="primary" size="small" :loading="saving" @click="handleSave">
@@ -54,7 +54,7 @@ function openChannelDocs() {
             <a-select v-model:value="settings.offlineReminder.channel" :options="CHANNEL_OPTIONS" class="flex-1" />
             <a-tooltip v-if="currentChannelDocUrl" title="查看渠道文档" placement="top">
               <a-button size="small" @click="openChannelDocs">
-                <div class="i-twemoji-open-book" />
+                <div class="i-streamline-emojis-open-book" />
               </a-button>
             </a-tooltip>
           </div>

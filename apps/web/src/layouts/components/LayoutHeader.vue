@@ -36,7 +36,7 @@ function logout() {
     </div>
 
     <a-button class="flex items-center hover:shadow-sm" color="primary" variant="filled" @click="logout">
-      <div class="i-twemoji-waving-hand" />
+      <div class="i-streamline-emojis-waving-hand-1" />
       <span>登出</span>
     </a-button>
   </a-layout-header>

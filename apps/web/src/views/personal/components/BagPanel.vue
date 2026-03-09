@@ -22,14 +22,14 @@ function onImageError(id: string | number) {
   >
     <div class="mb-2 flex items-center justify-between">
       <div class="font-bold flex gap-2 items-center a-color-text">
-        <div class="i-twemoji-package" />
+        <div class="i-streamline-emojis-package" />
         仓库
       </div>
       <span v-if="items.length" class="a-color-text-tertiary text-sm">{{ items.length }} 种</span>
     </div>
     <div class="flex-1 min-h-0 overflow-y-auto">
       <div v-if="!items.length" class="flex h-full items-center justify-center">
-        <EmptyState icon="i-twemoji-package text-3xl" description="背包空空" />
+        <EmptyState icon="i-streamline-emojis-package text-3xl" description="背包空空" />
       </div>
       <div v-else class="space-y-1">
         <div

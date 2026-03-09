@@ -11,13 +11,13 @@ const emit = defineEmits<{
 }>()
 
 const CATEGORY_ICON: Record<string, string> = {
-  fruit: 'i-twemoji-red-apple',
-  seed: 'i-twemoji-seedling',
-  item: 'i-twemoji-wrench'
+  fruit: 'i-streamline-emojis-red-apple',
+  seed: 'i-streamline-emojis-seedling',
+  item: 'i-streamline-emojis-wrench'
 }
 
 function categoryIcon(category: string): string {
-  return CATEGORY_ICON[category || 'item'] ?? 'i-twemoji-card-file-box'
+  return CATEGORY_ICON[category || 'item'] ?? 'i-streamline-emojis-file-folder'
 }
 
 function handleImageError(): void {
@@ -57,7 +57,7 @@ function handleImageError(): void {
       aria-label="售卖"
       @click="emit('sell')"
     >
-      <span class="i-twemoji-coin text-lg" aria-hidden="true" />
+      <span class="i-streamline-emojis-dollar-banknote text-lg" aria-hidden="true" />
     </a-button>
   </div>
 </template>

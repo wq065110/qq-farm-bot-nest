@@ -67,31 +67,31 @@ async function handleLogin() {
     <!-- Floating icons (cloud) -->
     <div class="pointer-events-none inset-0 absolute z-2" aria-hidden="true">
       <span
-        class="i-twemoji-cloud animate-float-1 absolute"
+        class="animate-float-1 i-streamline-emojis-cloud-1 absolute"
         :style="{
           top: '10%',
           left: '8%',
-          fontSize: '48px',
-          color: 'var(--ant-color-fill)'
+          fontSize: '54px',
+          color: 'var(-ant-color-bg-layout)'
         }"
       />
       <span
-        class="i-twemoji-cloud animate-float-2 absolute"
+        class="animate-float-2 i-streamline-emojis-cloud-1 absolute"
         :style="{
           top: '25%',
           right: '10%',
           fontSize: '36px',
-          color: 'var(--ant-color-fill)',
+          color: 'var(-ant-color-bg-layout)',
           opacity: 0.2
         }"
       />
       <span
-        class="i-twemoji-cloud animate-float-3 absolute"
+        class="animate-float-3 i-streamline-emojis-cloud-1 absolute"
         :style="{
           top: '45%',
           left: '5%',
-          fontSize: '28px',
-          color: 'var(--ant-color-fill)',
+          fontSize: '42px',
+          color: 'var(-ant-color-bg-layout)',
           opacity: 0.9
         }"
       />
@@ -100,23 +100,23 @@ async function handleLogin() {
     <!-- Decorations -->
     <div class="pointer-events-none inset-0 absolute z-10" aria-hidden="true">
       <span
-        class="i-twemoji-evergreen-tree bottom-[36%] left-[6%] absolute max-md:hidden"
+        class="i-streamline-emojis-christmas-tree bottom-[36%] left-[6%] absolute max-md:hidden"
         :style="{ fontSize: '40px', color: 'var(--ant-color-primary)', opacity: 1 }"
       />
       <span
-        class="i-twemoji-deciduous-tree bottom-[33%] right-[10%] absolute max-md:hidden"
+        class="i-streamline-emojis-fallen-leaf bottom-[33%] right-[10%] absolute max-md:hidden"
         :style="{ fontSize: '48px', color: 'var(--ant-color-primary)', opacity: 1 }"
       />
       <span
-        class="i-twemoji-house-with-garden bottom-[31%] left-[22%] absolute max-md:hidden"
+        class="i-streamline-emojis-house-with-garden bottom-[31%] left-[22%] absolute max-md:hidden"
         :style="{ fontSize: '36px', color: 'var(--ant-color-primary-text)', opacity: 1 }"
       />
       <span
-        class="i-twemoji-sunflower bottom-[29%] right-[30%] absolute max-md:hidden"
+        class="i-streamline-emojis-sunflower-1 bottom-[29%] right-[30%] absolute max-md:hidden"
         :style="{ fontSize: '28px', color: 'var(--ant-color-primary)', opacity: 1 }"
       />
       <span
-        class="i-twemoji-farmer animate-sway bottom-[27%] right-[6%] absolute max-md:bottom-[33%] max-md:right-[4%]"
+        class="animate-sway i-streamline-emojis-man-farmer-1 bottom-[27%] right-[6%] absolute max-md:bottom-[33%] max-md:right-[4%]"
         :style="{ fontSize: '36px', color: 'var(--ant-color-primary-text)', opacity: 1 }"
       />
     </div>
@@ -127,7 +127,7 @@ async function handleLogin() {
         variant="borderless"
         class="login-card max-w-[380px] w-full relative overflow-hidden rounded-2xl"
         :classes="{ body: '!p-0' }"
-        :style="{ boxShadow: '0 8px 40px var(--ant-color-fill-secondary), 0 0 0 1px var(--ant-color-border-secondary)' }"
+        :style="{ boxShadow: '0 8px 40px var(-ant-color-bg-layout-secondary), 0 0 0 1px var(--ant-color-border-secondary)' }"
       >
         <span class="brand-plus right-2 top-2 absolute">PLUS</span>
 
@@ -138,14 +138,14 @@ async function handleLogin() {
             background: `linear-gradient(to bottom, var(--ant-color-primary-bg), var(--ant-color-bg-container))`
           }"
         >
-          <img src="/icon.ico" alt="" class="h-20 w-20">
+          <img src="/icon.ico" alt="" class="mb-2 h-20 w-20">
           <h1 class="tracking-tight font-bold flex items-center a-color-text text-xl">
             <span class="brand-title mr-2">经典农场助手</span>
           </h1>
         </div>
 
         <!-- Form -->
-        <div class="px-7 py-5 pb-7">
+        <div class="px-7 pb-7">
           <a-form layout="vertical" @submit.prevent="handleLogin">
             <a-form-item :validate-status="error ? 'error' : ''" :help="error || undefined">
               <a-input-password
@@ -160,7 +160,7 @@ async function handleLogin() {
                 <template #prefix>
                   <span
                     class="transition-colors duration-200"
-                    :class="focused ? 'i-twemoji-unlocked' : 'i-twemoji-locked'"
+                    :class="focused ? 'i-streamline-emojis-right-anger-bubble' : 'i-streamline-emojis-thought-balloon'"
                     :style="{ color: focused ? 'var(--ant-color-primary)' : 'var(--ant-color-text-tertiary)' }"
                   />
                 </template>
@@ -169,14 +169,14 @@ async function handleLogin() {
 
             <a-button html-type="submit" type="primary" block size="large" :loading="loading" class="mt-1">
               <template v-if="!loading" #icon>
-                <span class="i-twemoji-seedling" />
+                <span class="i-streamline-emojis-seedling" />
               </template>
               进入农场
             </a-button>
           </a-form>
 
           <div class="mt-4 flex gap-1.5 select-none items-center justify-center a-color-text-tertiary text-xs">
-            <span class="i-twemoji-shield text-sm" />
+            <span class="i-carbon-security text-sm" />
             <span>数据经加密传输，仅管理员可访问</span>
           </div>
         </div>

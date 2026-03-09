@@ -6,17 +6,17 @@ defineProps<{
 }>()
 
 const GIFT_ICONS: Record<string, string> = {
-  task_claim: 'i-twemoji-check-mark-button',
-  email_rewards: 'i-twemoji-envelope',
-  mall_free_gifts: 'i-twemoji-shopping-bags',
-  daily_share: 'i-twemoji-loudspeaker',
-  vip_daily_gift: 'i-twemoji-crown',
-  month_card_gift: 'i-twemoji-calendar',
-  open_server_gift: 'i-twemoji-wrapped-gift'
+  task_claim: 'i-streamline-emojis-ballot-box-with-check',
+  email_rewards: 'i-streamline-emojis-e-mail-1',
+  mall_free_gifts: 'i-streamline-emojis-confetti-ball',
+  daily_share: 'i-streamline-emojis-speaking-head',
+  vip_daily_gift: 'i-streamline-emojis-crown',
+  month_card_gift: 'i-streamline-emojis-calendar',
+  open_server_gift: 'i-streamline-emojis-wrapped-gift-1'
 }
 
 function getGiftIcon(key: string) {
-  return GIFT_ICONS[key] || 'i-twemoji-wrapped-gift'
+  return GIFT_ICONS[key] || 'i-streamline-emojis-wrapped-gift-1'
 }
 
 function getGiftStatus(gift: any) {
@@ -35,11 +35,10 @@ function getGiftStatus(gift: any) {
 <template>
   <a-card variant="borderless" size="small" :classes="{ body: '!p-3' }">
     <div class="font-bold mb-2 flex gap-2 items-center a-color-text">
-      <div class="i-twemoji-wrapped-gift" />
+      <div class="i-streamline-emojis-wrapped-gift-1" />
       每日礼包
     </div>
-    <EmptyState v-if="!gifts.length" icon="i-twemoji-wrapped-gift text-3xl" description="暂无数据" />
-    <div v-else class="gap-1.5 grid grid-cols-2">
+    <div v-if="gifts.length" class="gap-1.5 grid grid-cols-2">
       <div
         v-for="gift in gifts"
         :key="gift.key"
@@ -57,5 +56,6 @@ function getGiftStatus(gift: any) {
         </div>
       </div>
     </div>
+    <EmptyState v-else icon="i-streamline-emojis-wrapped-gift-1 text-3xl mt-4" description="暂无数据" />
   </a-card>
 </template>

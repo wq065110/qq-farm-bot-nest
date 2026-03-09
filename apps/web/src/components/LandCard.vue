@@ -65,10 +65,10 @@ function getLandTypeName(level: number) {
     :class="getLandStatusClass(land)"
   >
     <div class="p-1.5 flex gap-1.5 right-0 top-0 absolute">
-      <i v-if="land.needWater" class="i-twemoji-droplet" title="需浇水" />
-      <i v-if="land.needWeed" class="i-twemoji-herb" title="需除草" />
-      <i v-if="land.needBug" class="i-twemoji-bug" title="需除虫" />
-      <i v-if="land.status === 'harvestable'" class="i-twemoji-pinching-hand" title="可偷取" />
+      <i v-if="land.needWater" class="i-streamline-emojis-droplet" title="需浇水" />
+      <i v-if="land.needWeed" class="i-streamline-emojis-herb" title="需除草" />
+      <i v-if="land.needBug" class="i-streamline-emojis-bug" title="需除虫" />
+      <i v-if="land.status === 'harvestable'" class="i-streamline-emojis-ok-hand-1" title="可偷取" />
     </div>
 
     <span class="font-mono self-start a-color-text-tertiary text-xs">#{{ land.id }}</span>
@@ -81,7 +81,7 @@ function getLandTypeName(level: number) {
         loading="lazy"
         referrerpolicy="no-referrer"
       >
-      <div v-else class="i-twemoji-seedling a-color-text-quat text-xl" />
+      <div v-else class="i-streamline-emojis-seedling a-color-text-quat text-xl" />
     </div>
 
     <div class="font-bold px-1 text-center w-full truncate text-sm" :title="land.plantName">

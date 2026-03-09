@@ -22,15 +22,14 @@ function formatTaskProgress(task: any) {
   <a-card variant="borderless" size="small" :classes="{ body: '!p-3' }">
     <div class="mb-2 flex items-center justify-between">
       <div class="font-bold flex gap-2 items-center a-color-text">
-        <div class="i-twemoji-check-mark-button" />
+        <div class="i-streamline-emojis-clipboard" />
         成长任务
       </div>
       <a-tag v-if="growth" :color="growth.doneToday ? 'green' : 'blue'" size="small">
         {{ growth.doneToday ? '已完成' : `${growth.completedCount}/${growth.totalCount}` }}
       </a-tag>
     </div>
-    <EmptyState v-if="!growth?.tasks?.length" icon="i-twemoji-clipboard text-3xl" description="暂无任务" />
-    <div v-else class="space-y-1">
+    <div v-if="growth?.tasks?.length" class="space-y-1">
       <div
         v-for="(task, idx) in growth.tasks"
         :key="idx"
@@ -42,5 +41,6 @@ function formatTaskProgress(task: any) {
         </a-tag>
       </div>
     </div>
+    <EmptyState v-else icon="i-streamline-emojis-clipboard text-3xl mt-4" description="暂无任务" />
   </a-card>
 </template>

@@ -51,7 +51,7 @@ const avatarClass = computed(() => {
       @error="handleAvatarError"
     >
       <template #icon>
-        <div class="i-twemoji-farmer" :class="size >= 40 ? 'text-xl' : ''" />
+        <div class="i-streamline-emojis-man-farmer-1" :class="size >= 40 ? 'text-xl' : ''" />
       </template>
     </a-avatar>
     <div

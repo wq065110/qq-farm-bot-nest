@@ -57,7 +57,7 @@ async function save() {
   >
     <template #title>
       <div class="flex gap-2 items-center">
-        <div class="i-twemoji-label text-lg" />
+        <div class="i-carbon-tag text-lg" />
         <span>修改备注</span>
       </div>
     </template>
@@ -66,7 +66,7 @@ async function save() {
       v-if="errorMessage"
       class="mb-4 px-3 py-2 opacity-90 flex gap-2 items-center a-color-white a-bg-error rounded-lg"
     >
-      <div class="i-twemoji-warning shrink-0" />
+      <div class="i-streamline-emojis-double-exclamation-mark shrink-0" />
       {{ errorMessage }}
     </div>
 
@@ -86,7 +86,7 @@ async function save() {
       <a-form-item label="备注名称">
         <a-input v-model:value="name" placeholder="请输入备注名称" @press-enter="save">
           <template #prefix>
-            <div class="i-twemoji-memo" />
+            <div class="i-streamline-emojis-clipboard" />
           </template>
         </a-input>
       </a-form-item>
@@ -98,7 +98,7 @@ async function save() {
       </a-button>
       <a-button type="primary" :loading="loading" @click="save">
         <template v-if="!loading" #icon>
-          <div class="i-twemoji-check-mark-button" />
+          <div class="i-streamline-emojis-ballot-box-with-check" />
         </template>
         保存
       </a-button>

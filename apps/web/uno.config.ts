@@ -19,8 +19,14 @@ export default defineConfig({
       antPrefix: 'ant'
     }),
     presetIcons({
-      scale: 1.2,
-      warn: true
+      scale: 1.3,
+      warn: true,
+      collections: {
+        'twemoji': () => import('@iconify-json/twemoji/icons.json').then(m => m.default as any),
+        'streamline-emojis': () => import('@iconify-json/streamline-emojis/icons.json').then(m => m.default as any),
+        'carbon': () => import('@iconify-json/carbon/icons.json').then(m => m.default as any),
+        'iconParkSolid': () => import('@iconify-json/icon-park-solid/icons.json').then(m => m.default as any)
+      }
     }),
     presetWebFonts({
       fonts: {

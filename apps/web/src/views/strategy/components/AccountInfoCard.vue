@@ -23,7 +23,7 @@ defineProps<{
       </div>
     </div>
     <div v-else class="py-1 flex gap-3 items-center">
-      <div class="i-twemoji-gear opacity-40 text-2xl" />
+      <div class="i-streamline-emojis-nut-and-bolt opacity-40 text-2xl" />
       <div>
         <div class="a-color-text-secondary">
           未选择账号

@@ -51,18 +51,18 @@ export const LOG_LEVELS = [
 ]
 
 export const OP_META: Record<string, { label: string, icon: string }> = {
-  harvest: { label: '收获', icon: 'i-twemoji-sheaf-of-rice' },
-  water: { label: '浇水', icon: 'i-twemoji-droplet' },
-  weed: { label: '除草', icon: 'i-twemoji-herb' },
-  bug: { label: '除虫', icon: 'i-twemoji-bug' },
-  fertilize: { label: '施肥', icon: 'i-twemoji-test-tube' },
-  plant: { label: '种植', icon: 'i-twemoji-seedling' },
-  upgrade: { label: '土地升级', icon: 'i-twemoji-building-construction' },
-  levelUp: { label: '账号升级', icon: 'i-twemoji-star' },
-  steal: { label: '偷菜', icon: 'i-twemoji-ninja' },
-  helpWater: { label: '帮浇水', icon: 'i-twemoji-sweat-droplets' },
-  helpWeed: { label: '帮除草', icon: 'i-twemoji-four-leaf-clover' },
-  helpBug: { label: '帮除虫', icon: 'i-twemoji-lady-beetle' },
-  taskClaim: { label: '任务', icon: 'i-twemoji-check-mark-button' },
-  sell: { label: '出售', icon: 'i-twemoji-coin' }
+  harvest: { label: '收获', icon: 'i-streamline-emojis-cooked-rice' },
+  water: { label: '浇水', icon: 'i-streamline-emojis-droplet' },
+  weed: { label: '除草', icon: 'i-streamline-emojis-herb' },
+  bug: { label: '除虫', icon: 'i-streamline-emojis-bug' },
+  fertilize: { label: '施肥', icon: 'i-streamline-emojis-syringe' },
+  plant: { label: '种植', icon: 'i-streamline-emojis-seedling' },
+  upgrade: { label: '土地升级', icon: 'i-streamline-emojis-construction' },
+  levelUp: { label: '账号升级', icon: 'i-streamline-emojis-sparkles' },
+  steal: { label: '偷菜', icon: 'i-streamline-emojis-detective-1' },
+  helpWater: { label: '帮浇水', icon: 'i-streamline-emojis-cloud-with-rain-1' },
+  helpWeed: { label: '帮除草', icon: 'i-streamline-emojis-leaf-fluttering-in-wind' },
+  helpBug: { label: '帮除虫', icon: 'i-streamline-emojis-lady-beetle' },
+  taskClaim: { label: '任务', icon: 'i-streamline-emojis-ballot-box-with-check' },
+  sell: { label: '出售', icon: 'i-streamline-emojis-dollar-banknote' }
 }

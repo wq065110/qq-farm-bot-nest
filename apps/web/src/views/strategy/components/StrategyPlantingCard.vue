@@ -87,7 +87,7 @@ watchEffect(async () => {
   <a-card variant="borderless" class="shrink-0" :classes="{ body: '!p-4', header: '!min-h-11 !px-4' }">
     <template #title>
       <div class="font-bold flex gap-2 items-center">
-        <div class="i-twemoji-seedling" aria-hidden="true" />
+        <div class="i-streamline-emojis-seedling" aria-hidden="true" />
         种植策略
       </div>
     </template>

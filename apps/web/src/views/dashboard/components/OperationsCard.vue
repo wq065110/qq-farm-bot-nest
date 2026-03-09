@@ -11,7 +11,7 @@ function getOpName(key: string | number): string {
 }
 
 function getOpIcon(key: string | number): string {
-  return OP_META[String(key)]?.icon || 'i-twemoji-seedling'
+  return OP_META[String(key)]?.icon || 'i-streamline-emojis-seedling'
 }
 </script>
 
@@ -22,7 +22,7 @@ function getOpIcon(key: string | number): string {
     :classes="{ body: '!p-4 !h-full !flex !flex-col !overflow-hidden' }"
   >
     <div class="mb-3 flex gap-2 items-center a-color-text">
-      <div class="i-twemoji-bar-chart text-lg" />
+      <div class="i-streamline-emojis-bar-chart text-lg" />
       今日统计
     </div>
     <div v-if="operations && Object.keys(operations).length" class="gap-2 grid grid-cols-2 min-h-20 overflow-y-auto">
@@ -39,7 +39,7 @@ function getOpIcon(key: string | number): string {
       </div>
     </div>
     <div v-else class="flex flex-1 items-center justify-center">
-      <EmptyState icon="i-twemoji-bar-chart text-3xl" description="今日暂无统计数据" />
+      <EmptyState icon="i-streamline-emojis-bar-chart text-3xl" description="今日暂无统计数据" />
     </div>
   </a-card>
 </template>

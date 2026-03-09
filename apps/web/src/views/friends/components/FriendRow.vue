@@ -27,18 +27,18 @@ function getFriendStatusTags(friend: any) {
   if (p.stealNum) {
     tags.push({
       label: `可偷 ${p.stealNum}`,
-      icon: 'i-twemoji-pinching-hand',
+      icon: 'i-streamline-emojis-ok-hand-1',
       class: 'a-bg-layout a-color-text-secondary'
     })
   }
   if (p.dryNum) {
-    tags.push({ label: `浇水 ${p.dryNum}`, icon: 'i-twemoji-droplet', class: 'a-bg-layout a-color-info' })
+    tags.push({ label: `浇水 ${p.dryNum}`, icon: 'i-streamline-emojis-droplet', class: 'a-bg-layout a-color-info' })
   }
   if (p.weedNum) {
-    tags.push({ label: `除草 ${p.weedNum}`, icon: 'i-twemoji-herb', class: 'a-bg-layout a-color-success' })
+    tags.push({ label: `除草 ${p.weedNum}`, icon: 'i-streamline-emojis-herb', class: 'a-bg-layout a-color-success' })
   }
   if (p.insectNum) {
-    tags.push({ label: `除虫 ${p.insectNum}`, icon: 'i-twemoji-bug', class: 'a-bg-layout a-color-warning' })
+    tags.push({ label: `除虫 ${p.insectNum}`, icon: 'i-streamline-emojis-bug', class: 'a-bg-layout a-color-warning' })
   }
   return tags
 }
@@ -153,13 +153,13 @@ function handleToggleBlacklist(e: Event) {
             "
             @click="handleToggleBlacklist($event)"
           >
-            <div :class="blacklisted ? 'i-twemoji-check-mark-button' : 'i-twemoji-prohibited'" />
+            <div :class="blacklisted ? 'i-streamline-emojis-ballot-box-with-check' : 'i-streamline-emojis-cross-mark'" />
           </a-button>
         </a-tooltip>
       </div>
 
       <div class="transition-transform a-color-text-tertiary" :class="expanded ? 'rotate-90' : ''">
-        <div class="i-twemoji-right-arrow" />
+        <div class="i-streamline-emojis-backhand-index-pointing-right-1" />
       </div>
     </div>
 
@@ -190,7 +190,7 @@ function handleToggleBlacklist(e: Event) {
         "
         @click="handleToggleBlacklist($event)"
       >
-        <div class="" :class="blacklisted ? 'i-twemoji-check-mark-button' : 'i-twemoji-prohibited'" />
+        <div class="" :class="blacklisted ? 'i-streamline-emojis-ballot-box-with-check' : 'i-streamline-emojis-cross-mark'" />
         {{ blacklisted ? '取消屏蔽' : '屏蔽' }}
       </a-button>
     </div>

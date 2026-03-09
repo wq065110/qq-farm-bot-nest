@@ -131,20 +131,20 @@ useWs()
 <template>
   <div class="flex flex-col gap-3 h-full">
     <div class="font-bold flex gap-2 items-center a-color-text">
-      <div class="i-twemoji-people-hugging text-lg" aria-hidden="true" />
+      <div class="i-streamline-emojis-man-and-woman-holding-hands-1 text-lg" aria-hidden="true" />
       <span class="text-lg">好友农场</span>
     </div>
 
     <div v-if="!currentAccountId" class="flex flex-1 items-center justify-center">
-      <EmptyState icon="i-twemoji-people-hugging text-5xl" description="请先在侧边栏选择账号" />
+      <EmptyState icon="i-streamline-emojis-man-and-woman-holding-hands-1 text-5xl" description="请先在侧边栏选择账号" />
     </div>
 
     <div v-else-if="!connected" class="flex flex-1 items-center justify-center">
-      <EmptyState icon="i-twemoji-electric-plug text-5xl" description="账号未连接，请先运行账号" />
+      <EmptyState icon="i-streamline-emojis-electric-plug text-5xl" description="账号未连接，请先运行账号" />
     </div>
 
     <div v-else-if="friends.length === 0" class="flex flex-1 items-center justify-center">
-      <EmptyState icon="i-twemoji-person-shrugging text-5xl" description="暂无好友数据" />
+      <EmptyState icon="i-streamline-emojis-man-shrugging-1 text-5xl" description="暂无好友数据" />
     </div>
 
     <a-card
@@ -161,7 +161,7 @@ useWs()
 
       <div class="flex-1 min-h-0 overflow-y-auto">
         <div v-if="filteredFriends.length === 0" class="py-16 flex items-center justify-center">
-          <EmptyState icon="i-twemoji-magnifying-glass-tilted-left text-4xl" description="未找到匹配的好友" />
+          <EmptyState icon="i-streamline-emojis-magnifying-glass-tilted-left text-4xl" description="未找到匹配的好友" />
         </div>
 
         <div v-else>
@@ -172,7 +172,7 @@ useWs()
             @click="normalCollapsed = !normalCollapsed"
           >
             <div class="flex gap-2 items-center">
-              <div class="i-twemoji-thumbs-up a-color-text-tertiary text-base" />
+              <div class="i-streamline-emojis-thumbs-up-1 a-color-text-tertiary text-base" />
               <div class="font-medium a-color-text-tertiary">
                 正常好友
               </div>
@@ -221,7 +221,7 @@ useWs()
               @click="blacklistCollapsed = !blacklistCollapsed"
             >
               <div class="flex gap-2 items-center">
-                <div class="i-twemoji-prohibited a-color-text-tertiary text-base" />
+                <div class="i-streamline-emojis-cross-mark a-color-text-tertiary text-base" />
                 <div class="font-medium a-color-text-tertiary">
                   黑名单
                 </div>

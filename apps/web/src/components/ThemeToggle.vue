@@ -23,8 +23,8 @@ function handleToggle() {
     @click="handleToggle"
   >
     <Transition name="theme-icon" mode="out-in">
-      <div v-if="isDark" key="dark" class="i-twemoji-crescent-moon" />
-      <div v-else key="light" class="i-twemoji-sun" />
+      <div v-if="isDark" key="dark" class="i-streamline-emojis-crescent-moon" />
+      <div v-else key="light" class="i-streamline-emojis-sun-with-face" />
     </Transition>
   </a-button>
 </template>

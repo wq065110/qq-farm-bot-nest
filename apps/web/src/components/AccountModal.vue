@@ -227,7 +227,7 @@ watch(
       v-if="errorMessage"
       class="mb-4 px-3 py-2 opacity-90 flex gap-2 items-center a-color-white a-bg-error rounded-lg"
     >
-      <div class="i-twemoji-warning shrink-0" />
+      <div class="i-streamline-emojis-double-exclamation-mark shrink-0" />
       {{ errorMessage }}
     </div>
 
@@ -245,7 +245,7 @@ watch(
         disabled
         @click="((activeTab = 'qr'), loadQRCode())"
       >
-        <div class="i-twemoji-camera-with-flash" />
+        <div class="i-carbon-camera" />
         {{ editData ? '扫码更新' : '扫码登录' }}
       </a-button>
       <a-button
@@ -258,7 +258,7 @@ watch(
         "
         @click="((activeTab = 'manual'), stopQRCheck())"
       >
-        <div class="i-twemoji-keyboard" />
+        <div class="i-carbon-keyboard" />
         手动填码
       </a-button>
     </div>
@@ -292,7 +292,7 @@ watch(
         <div v-else class="flex flex-col gap-2 h-52 w-52 items-center justify-center a-bg-layout rounded-lg">
           <a-spin v-if="loading" />
           <template v-else>
-            <div class="i-twemoji-framed-picture opacity-30 text-3xl" />
+            <div class="i-carbon-image opacity-30 text-3xl" />
             <span class="a-color-text-tertiary text-sm">二维码区域</span>
           </template>
         </div>
@@ -301,7 +301,7 @@ watch(
           class="flex items-center inset-0 justify-center absolute backdrop-blur-[1px] a-bg-primary-bg rounded-xl"
         >
           <div class="flex flex-col gap-1 items-center">
-            <div class="i-twemoji-check-mark-button text-4xl" />
+            <div class="i-streamline-emojis-ballot-box-with-check text-4xl" />
             <span class="font-bold a-color-primary">登录成功</span>
           </div>
         </div>
@@ -309,20 +309,20 @@ watch(
 
       <div class="flex gap-1.5 items-center a-color-text-secondary">
         <div v-if="qrStatus === '等待扫码...'" class="rounded-full h-1.5 w-1.5 animate-pulse a-bg-info" />
-        <div v-else-if="qrStatus.includes('失效')" class="i-twemoji-warning" />
+        <div v-else-if="qrStatus.includes('失效')" class="i-streamline-emojis-double-exclamation-mark" />
         {{ qrStatus }}
       </div>
 
       <div class="flex gap-2 items-center">
         <a-button @click="loadQRCode">
           <template #icon>
-            <div class="i-twemoji-counterclockwise-arrows-button" />
+            <div class="i-carbon-renew" />
           </template>
           刷新二维码
         </a-button>
         <a-button v-if="qrData?.url" class="md:hidden" @click="openQRCodeLoginUrl">
           <template #icon>
-            <div class="i-twemoji-mobile-phone" />
+            <div class="i-streamline-emojis-telephone" />
           </template>
           跳转QQ登录
         </a-button>
@@ -335,7 +335,7 @@ watch(
         <a-form-item label="备注名称">
           <a-input v-model:value="form.name" placeholder="留空默认使用昵称">
             <template #prefix>
-              <div class="i-twemoji-label" />
+              <div class="i-carbon-tag" />
             </template>
           </a-input>
         </a-form-item>
@@ -361,7 +361,7 @@ watch(
         </a-button>
         <a-button type="primary" :loading="loading" @click="submitManual">
           <template v-if="!loading" #icon>
-            <div class="i-twemoji-check-mark-button" />
+            <div class="i-streamline-emojis-ballot-box-with-check" />
           </template>
           {{ editData ? '保存' : '添加' }}
         </a-button>

@@ -7,11 +7,11 @@ export const SORT_OPTIONS = [
 ]
 
 export const SORT_ICONS: Record<string, string> = {
-  exp: 'i-twemoji-star',
-  fert: 'i-twemoji-test-tube',
-  profit: 'i-twemoji-coin',
-  fert_profit: 'i-twemoji-money-bag',
-  level: 'i-twemoji-trophy'
+  exp: 'i-streamline-emojis-sparkles',
+  fert: 'i-streamline-emojis-syringe',
+  profit: 'i-streamline-emojis-dollar-banknote',
+  fert_profit: 'i-streamline-emojis-money-bag',
+  level: 'i-streamline-emojis-graduation-cap'
 }
 
 export const METRIC_MAP: Record<string, string> = {

@@ -47,18 +47,18 @@ function handleCardClick(): void {
       </div>
       <div class="mt-0.5 flex flex-wrap gap-2 items-center text-xs">
         <span class="flex gap-1 items-center a-color-warning">
-          <span class="i-twemoji-coin text-xs" aria-hidden="true" />
+          <span class="i-streamline-emojis-credit-card text-xs" aria-hidden="true" />
           {{ seed.price ?? 0 }} 金币
         </span>
         <span v-if="(seed.requiredLevel ?? 0) > 0" class="inline-flex gap-0.5 items-center">
-          <span class="i-twemoji-seedling shrink-0 scale-80 text-xs" aria-hidden="true" />
+          <span class="i-streamline-emojis-seedling shrink-0 scale-80 text-xs" aria-hidden="true" />
           <span>Lv.{{ seed.requiredLevel ?? 0 }}</span>
         </span>
         <span v-if="seed.locked" class="inline-flex shrink-0 gap-0.5 items-center" title="未解锁">
-          <span class="i-twemoji-locked text-xs" aria-hidden="true" />
+          <span class="i-streamline-emojis-locked-with-key text-xs" aria-hidden="true" />
         </span>
         <span v-if="seed.soldOut" class="inline-flex shrink-0 gap-0.5 items-center" title="售罄">
-          <span class="i-twemoji-prohibited text-xs" aria-hidden="true" />
+          <span class="i-streamline-emojis-cross-mark text-xs" aria-hidden="true" />
         </span>
       </div>
     </div>
@@ -70,7 +70,7 @@ function handleCardClick(): void {
       aria-label="购买"
       @click="handleCardClick"
     >
-      <span class="i-twemoji-shopping-cart text-lg" aria-hidden="true" />
+      <span class="i-streamline-emojis-handbag text-lg" aria-hidden="true" />
     </a-button>
   </div>
 </template>

@@ -68,7 +68,7 @@ useAccountRefresh(refresh)
 <template>
   <div class="flex flex-col gap-3 h-full">
     <div class="font-bold flex gap-2 items-center a-color-text">
-      <div class="i-twemoji-herb text-lg" aria-hidden="true" />
+      <div class="i-streamline-emojis-herb text-lg" aria-hidden="true" />
       <span class="text-lg">种子商店</span>
     </div>
 
@@ -88,16 +88,16 @@ useAccountRefresh(refresh)
             aria-label="搜索种子"
           >
             <template #prefix>
-              <span class="i-twemoji-magnifying-glass-tilted-left a-color-text-tertiary text-base" aria-hidden="true" />
+              <span class="i-streamline-emojis-magnifying-glass-tilted-left a-color-text-tertiary text-base" aria-hidden="true" />
             </template>
           </a-input>
         </div>
         <div class="flex-1 min-h-0 overflow-y-auto">
-          <div v-if="!seeds?.length" class="flex h-48 items-center justify-center">
-            <EmptyState icon="i-twemoji-seedling text-3xl" description="暂无种子数据，请先选择账号并连接" />
+          <div v-if="!seeds?.length" class="flex h-full items-center justify-center">
+            <EmptyState icon="i-streamline-emojis-seedling text-3xl" description="暂无种子数据，请先选择账号并连接" />
           </div>
-          <div v-else-if="!filteredSeeds.length" class="flex h-48 items-center justify-center">
-            <EmptyState icon="i-twemoji-magnifying-glass-tilted-left text-3xl" description="未找到匹配的种子" />
+          <div v-else-if="!filteredSeeds.length" class="flex h-full items-center justify-center">
+            <EmptyState icon="i-streamline-emojis-magnifying-glass-tilted-left text-3xl" description="未找到匹配的种子" />
           </div>
           <div v-else class="gap-2 grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))]">
             <SeedCard

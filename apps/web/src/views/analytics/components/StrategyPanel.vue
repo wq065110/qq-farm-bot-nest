@@ -185,7 +185,7 @@ function clearLevelFilter() {
                   loading="lazy"
                   @error="imageErrors[bestByStrategy[s.value]?.seedId] = true"
                 >
-                <div v-else class="i-twemoji-seedling text-lg" />
+                <div v-else class="i-streamline-emojis-seedling text-lg" />
               </div>
 
               <div class="flex-1 min-w-0">
