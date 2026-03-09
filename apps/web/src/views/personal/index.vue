@@ -66,10 +66,10 @@ const landsWithCountdown = useLandsWithCountdown(lands)
 useWs()
   .topic('lands')
   .topic('bag')
-  .topic('daily-gifts')
+  .topic('dailyGifts')
   .on('lands.update', farmStore.setLandsFromRealtime)
   .on('bag.update', bagStore.setBagFromRealtime)
-  .on('daily-gifts.update', statusStore.applyDailyGifts)
+  .on('dailyGifts.update', statusStore.applyDailyGifts)
 
 useAccountRefresh(refresh)
 </script>

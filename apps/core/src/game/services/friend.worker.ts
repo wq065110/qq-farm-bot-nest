@@ -410,79 +410,60 @@ export class FriendWorker {
 
   // ========== Manual Operation ==========
 
-  async doFriendOperation(friendGid: number, opType: string) {
-    const gid = toNum(friendGid)
-    if (!gid)
-      return { ok: false, message: '无效好友ID', opType }
-
-    let enterReply: any
-    try {
-      enterReply = await this.enterFriendFarm(gid)
-    } catch (e: any) {
-      return { ok: false, message: `进入好友农场失败: ${e?.message}`, opType }
-    }
-
-    try {
-      const lands = enterReply.lands || []
-      const status = this.analyzeFriendLands(lands, this.client.userState.gid)
-      let count = 0
-
-      if (opType === 'steal') {
+  private buildFriendOpHandlers(): Record<string, (status: ReturnType<FriendWorker['analyzeFriendLands']>, gid: number) => Promise<{ ok: boolean, opType: string, count?: number, message: string, bugCount?: number, weedCount?: number }>> {
+    return {
+      steal: async (status, gid) => {
         if (!status.stealable.length)
-          return { ok: true, opType, count: 0, message: '没有可偷取土地' }
+          return { ok: true, opType: 'steal', count: 0, message: '没有可偷取土地' }
         const pre = await this.checkCanOperateRemote(gid, 10008)
         if (!pre.canOperate)
-          return { ok: true, opType, count: 0, message: '今日偷菜次数已用完' }
+          return { ok: true, opType: 'steal', count: 0, message: '今日偷菜次数已用完' }
         const target = status.stealable.slice(0, pre.canStealNum > 0 ? pre.canStealNum : status.stealable.length)
-        count = await this.runBatchWithFallback(target, ids => this.stealHarvest(gid, ids), ids => this.stealHarvest(gid, ids))
+        const count = await this.runBatchWithFallback(target, ids => this.stealHarvest(gid, ids), ids => this.stealHarvest(gid, ids))
         if (count > 0) {
           this.stats.recordOperation('steal', count)
           await this.warehouse.sellAllFruits()
         }
-        return { ok: true, opType, count, message: `偷取完成 ${count} 块` }
-      }
-
-      if (opType === 'water') {
+        return { ok: true, opType: 'steal', count, message: `偷取完成 ${count} 块` }
+      },
+      water: async (status, gid) => {
         if (!status.needWater.length)
-          return { ok: true, opType, count: 0, message: '没有可浇水土地' }
+          return { ok: true, opType: 'water', count: 0, message: '没有可浇水土地' }
         const pre = await this.checkCanOperateRemote(gid, 10007)
         if (!pre.canOperate)
-          return { ok: true, opType, count: 0, message: '今日浇水次数已用完' }
-        count = await this.runBatchWithFallback(status.needWater, ids => this.helpWater(gid, ids), ids => this.helpWater(gid, ids))
+          return { ok: true, opType: 'water', count: 0, message: '今日浇水次数已用完' }
+        const count = await this.runBatchWithFallback(status.needWater, ids => this.helpWater(gid, ids), ids => this.helpWater(gid, ids))
         if (count > 0)
           this.stats.recordOperation('helpWater', count)
-        return { ok: true, opType, count, message: `浇水完成 ${count} 块` }
-      }
-
-      if (opType === 'weed') {
+        return { ok: true, opType: 'water', count, message: `浇水完成 ${count} 块` }
+      },
+      weed: async (status, gid) => {
         if (!status.needWeed.length)
-          return { ok: true, opType, count: 0, message: '没有可除草土地' }
+          return { ok: true, opType: 'weed', count: 0, message: '没有可除草土地' }
         const pre = await this.checkCanOperateRemote(gid, 10005)
         if (!pre.canOperate)
-          return { ok: true, opType, count: 0, message: '今日除草次数已用完' }
-        count = await this.runBatchWithFallback(status.needWeed, ids => this.helpWeed(gid, ids), ids => this.helpWeed(gid, ids))
+          return { ok: true, opType: 'weed', count: 0, message: '今日除草次数已用完' }
+        const count = await this.runBatchWithFallback(status.needWeed, ids => this.helpWeed(gid, ids), ids => this.helpWeed(gid, ids))
         if (count > 0)
           this.stats.recordOperation('helpWeed', count)
-        return { ok: true, opType, count, message: `除草完成 ${count} 块` }
-      }
-
-      if (opType === 'bug') {
+        return { ok: true, opType: 'weed', count, message: `除草完成 ${count} 块` }
+      },
+      bug: async (status, gid) => {
         if (!status.needBug.length)
-          return { ok: true, opType, count: 0, message: '没有可除虫土地' }
+          return { ok: true, opType: 'bug', count: 0, message: '没有可除虫土地' }
         const pre = await this.checkCanOperateRemote(gid, 10006)
         if (!pre.canOperate)
-          return { ok: true, opType, count: 0, message: '今日除虫次数已用完' }
-        count = await this.runBatchWithFallback(status.needBug, ids => this.helpInsecticide(gid, ids), ids => this.helpInsecticide(gid, ids))
+          return { ok: true, opType: 'bug', count: 0, message: '今日除虫次数已用完' }
+        const count = await this.runBatchWithFallback(status.needBug, ids => this.helpInsecticide(gid, ids), ids => this.helpInsecticide(gid, ids))
         if (count > 0)
           this.stats.recordOperation('helpBug', count)
-        return { ok: true, opType, count, message: `除虫完成 ${count} 块` }
-      }
-
-      if (opType === 'bad') {
+        return { ok: true, opType: 'bug', count, message: `除虫完成 ${count} 块` }
+      },
+      bad: async (status, gid) => {
         let bugCount = 0
         let weedCount = 0
         if (!status.canPutBug.length && !status.canPutWeed.length)
-          return { ok: true, opType, count: 0, bugCount: 0, weedCount: 0, message: '没有可捣乱土地' }
+          return { ok: true, opType: 'bad', count: 0, bugCount: 0, weedCount: 0, message: '没有可捣乱土地' }
         const failDetails: string[] = []
         if (status.canPutBug.length) {
           const r = await this.putInsectsDetailed(gid, status.canPutBug)
@@ -498,13 +479,35 @@ export class FriendWorker {
           if (weedCount > 0)
             this.stats.recordOperation('weed', weedCount)
         }
-        count = bugCount + weedCount
+        const count = bugCount + weedCount
         if (count <= 0)
-          return { ok: true, opType, count: 0, bugCount, weedCount, message: failDetails.slice(0, 2).join(' | ') || '捣乱失败或今日次数已用完' }
-        return { ok: true, opType, count, bugCount, weedCount, message: `捣乱完成 虫${bugCount}/草${weedCount}` }
+          return { ok: true, opType: 'bad', count: 0, bugCount, weedCount, message: failDetails.slice(0, 2).join(' | ') || '捣乱失败或今日次数已用完' }
+        return { ok: true, opType: 'bad', count, bugCount, weedCount, message: `捣乱完成 虫${bugCount}/草${weedCount}` }
       }
+    }
+  }
 
-      return { ok: false, opType, count: 0, message: '未知操作类型' }
+  private friendOpHandlers = this.buildFriendOpHandlers()
+
+  async doFriendOperation(friendGid: number, opType: string) {
+    const gid = toNum(friendGid)
+    if (!gid)
+      return { ok: false, message: '无效好友ID', opType }
+
+    let enterReply: any
+    try {
+      enterReply = await this.enterFriendFarm(gid)
+    } catch (e: any) {
+      return { ok: false, message: `进入好友农场失败: ${e?.message}`, opType }
+    }
+
+    try {
+      const lands = enterReply.lands || []
+      const status = this.analyzeFriendLands(lands, this.client.userState.gid)
+      const handler = this.friendOpHandlers[opType]
+      if (!handler)
+        return { ok: false, opType, count: 0, message: '未知操作类型' }
+      return await handler(status, gid)
     } catch (e: any) {
       return { ok: false, opType, count: 0, message: e?.message || '操作失败' }
     } finally {

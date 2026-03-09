@@ -79,6 +79,7 @@ export class AccountRunner {
     this.scheduler = new Scheduler(`runner-${accountId}`, this.logger)
     this.stats = new StatsTracker(accountId)
     this.analytics = new AnalyticsWorker(gameConfig)
+    this.linkEventHandlers = this.buildLinkEventHandlers()
   }
 
   private log(msg: string, event?: string) {
@@ -413,38 +414,34 @@ export class AccountRunner {
 
   // ========== Events (from LinkClient) ==========
 
-  handleLinkEvent(event: string, data: any) {
-    switch (event) {
-      case 'kicked':
-        this.onKickout(data)
-        break
-      case 'ws_error':
-        this.onWsError(data)
-        break
-      case 'reconnecting':
-        this.log(`WS 断开，正在重连 (${data?.attempt}/${data?.maxAttempts})...`, 'reconnecting')
-        break
-      case 'disconnected':
+  private linkEventHandlers: Record<string, (data: any) => void> = {}
+
+  private buildLinkEventHandlers(): Record<string, (data: any) => void> {
+    return {
+      kicked: data => this.onKickout(data),
+      ws_error: data => this.onWsError(data),
+      reconnecting: data => this.log(`WS 断开，正在重连 (${data?.attempt}/${data?.maxAttempts})...`, 'reconnecting'),
+      disconnected: () => {
         if (this.loginReady) {
           this.loginReady = false
           this.emitConnection()
         }
-        break
-      case 'login_failed':
+      },
+      login_failed: (data) => {
         this.warn(`登录失败: ${data?.error || '未知原因'}，code 可能已过期`, 'login_failed')
         if (this.loginReady) {
           this.loginReady = false
           this.emitConnection()
         }
-        break
-      case 'connected':
+      },
+      connected: (data) => {
         if (data) {
           this.userState = { ...this.userState, ...data }
           this.loginReady = true
           this.syncStatusAtomic()
         }
-        break
-      case 'state_update':
+      },
+      state_update: (data) => {
         if (data && typeof data === 'object') {
           const merged = { ...this.userState, ...data }
           if (Number(data.coupon) === 0 && Number(this.userState.coupon) > 0)
@@ -453,8 +450,12 @@ export class AccountRunner {
           this.syncTransportUserState()
           this.deferStatusFlush()
         }
-        break
+      }
     }
+  }
+
+  handleLinkEvent(event: string, data: any) {
+    this.linkEventHandlers[event]?.(data)
   }
 
   private onKickout(payload: any) {

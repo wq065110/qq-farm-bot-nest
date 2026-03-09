@@ -4,7 +4,26 @@ import { QRLoginService } from '../../game/services/qrlogin.worker'
 
 @Controller('qr')
 export class QrController {
-  constructor(private qrLogin: QRLoginService) {}
+  private statusHandlers: Record<string, (result: any) => any> = {}
+
+  constructor(private qrLogin: QRLoginService) {
+    this.statusHandlers = {
+      OK: async (result: any) => {
+        const ticket = result.ticket
+        const uin = result.uin || ''
+        try {
+          const authCode = await this.qrLogin.getMiniProgramAuthCode(ticket!, '1112386029')
+          const avatar = uin ? `https://q1.qlogo.cn/g?b=qq&nk=${uin}&s=640` : ''
+          return { status: 'OK', code: authCode, uin, avatar, nickname: result.nickname || '' }
+        } catch (e: any) {
+          return { status: 'Error', error: e?.message || '获取登录码失败' }
+        }
+      },
+      Used: () => ({ status: 'Used' }),
+      Wait: () => ({ status: 'Wait' }),
+      Error: (result: any) => ({ status: 'Error', error: result?.msg })
+    }
+  }
 
   @Public()
   @Post('create')
@@ -19,23 +38,7 @@ export class QrController {
       throw new BadRequestException('缺少 code')
 
     const result = await this.qrLogin.queryMiniProgramStatus(code)
-
-    if (result.status === 'OK') {
-      const ticket = result.ticket
-      const uin = result.uin || ''
-      const nickname = result.nickname || ''
-      try {
-        const authCode = await this.qrLogin.getMiniProgramAuthCode(ticket!, '1112386029')
-        const avatar = uin ? `https://q1.qlogo.cn/g?b=qq&nk=${uin}&s=640` : ''
-        return { status: 'OK', code: authCode, uin, avatar, nickname }
-      } catch (e: any) {
-        return { status: 'Error', error: e?.message || '获取登录码失败' }
-      }
-    }
-    if (result.status === 'Used')
-      return { status: 'Used' }
-    if (result.status === 'Wait')
-      return { status: 'Wait' }
-    return { status: 'Error', error: (result as any).msg }
+    const handler = this.statusHandlers[result.status] ?? this.statusHandlers.Error
+    return await handler(result)
   }
 }

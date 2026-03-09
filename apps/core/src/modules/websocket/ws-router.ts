@@ -1,4 +1,4 @@
-import type { WsMessage } from '@qq-farm/shared'
+import type { WsResponse } from '@qq-farm/shared'
 import type { Socket } from 'socket.io'
 import { createResponse } from '@qq-farm/shared'
 
@@ -38,16 +38,16 @@ export class WsRouter {
     route: string,
     client: SocketWithMeta,
     data: Record<string, unknown>
-  ): Promise<WsMessage> {
+  ): Promise<WsResponse> {
     const handler = this.handlers.get(route)
     if (!handler)
-      return createResponse(id, route, WS_CODE_NOT_FOUND, undefined, `Unknown route: ${route}`)
+      return createResponse(id, WS_CODE_NOT_FOUND, undefined, `Unknown route: ${route}`)
     try {
       const result = await handler(client, data ?? {})
-      return createResponse(id, route, WS_CODE_SUCCESS, result ?? null)
+      return createResponse(id, WS_CODE_SUCCESS, result ?? null)
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : '操作失败'
-      return createResponse(id, route, WS_CODE_INTERNAL, undefined, msg)
+      return createResponse(id, WS_CODE_INTERNAL, undefined, msg)
     }
   }
 }

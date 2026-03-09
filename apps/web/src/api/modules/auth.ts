@@ -1,7 +1,7 @@
 import api from '../services/request'
 
 export function login(password: string) {
-  return api.post('/api/login', { password })
+  return api.post('/api/auth/login', { password })
 }
 
 export function validate() {
@@ -9,9 +9,9 @@ export function validate() {
 }
 
 export function changePassword(oldPassword: string, newPassword: string) {
-  return api.post('/api/admin/change-password', { oldPassword, newPassword })
+  return api.post('/api/auth/change-password', { oldPassword, newPassword })
 }
 
 export function logout() {
-  return api.post('/api/logout')
+  return api.post('/api/auth/logout')
 }

@@ -1,6 +1,6 @@
-import type { WsMessage } from '@qq-farm/shared'
+import type { WsEvent, WsMessage, WsResponse } from '@qq-farm/shared'
 import type { Socket } from 'socket.io-client'
-import { createRequest, WS_PROTOCOL_VERSION } from '@qq-farm/shared'
+import { createRequest } from '@qq-farm/shared'
 import { io } from 'socket.io-client'
 import { ref } from 'vue'
 
@@ -170,26 +170,33 @@ export class SocketClient {
     if (!payload || typeof payload !== 'object')
       return
 
-    if (payload.type === 'res') {
-      const id = payload.id
+    if ('c' in payload && 'id' in payload) {
+      const res = payload as WsResponse
+      const id = res.id
       if (id) {
         const pr = this.pendingRequests.get(id)
         if (pr) {
           clearTimeout(pr.timer)
           this.pendingRequests.delete(id)
-          const code = payload.code ?? 0
-          if (code === 0)
-            pr.resolve(payload.data)
-          else
-            pr.reject(new Error(payload.msg ?? '请求失败'))
+          if (res.c === 0) {
+            pr.resolve(res.d)
+          } else {
+            const errData = res.d as { message?: string } | undefined
+            pr.reject(new Error(errData?.message ?? '请求失败'))
+          }
         }
       }
       return
     }
 
-    if (payload.type === 'event' && payload.route) {
-      if (payload.route === 'system.ready') {
-        const d = payload.data as { uptime?: number, version?: string } | undefined
+    if ('e' in payload) {
+      const evt = payload as WsEvent
+      const route = evt.e
+      if (!route)
+        return
+
+      if (route === 'system.ready') {
+        const d = evt.d as { uptime?: number, version?: string } | undefined
         if (d && typeof d.uptime === 'number') {
           this.serverUptime.value = d.uptime
           this.uptimeReceivedAt.value = Date.now()
@@ -197,10 +204,10 @@ export class SocketClient {
         if (d?.version != null)
           this.serverVersion.value = String(d.version)
       }
-      const set = this.listeners.get(payload.route)
+      const set = this.listeners.get(route)
       if (set) {
         for (const fn of set)
-          fn(payload.data)
+          fn(evt.d)
       }
     }
   }
@@ -209,31 +216,23 @@ export class SocketClient {
     if (!this.socket?.connected)
       return
     this.subscribedAccountId.value = this.currentAccountId.value || ''
-    this.socket.emit('message', {
-      v: WS_PROTOCOL_VERSION,
-      type: 'req' as const,
-      route: 'topic.subscribe',
-      data: {
-        accountId: this.currentAccountId.value,
-        topics,
-        events
-      }
+    const msg = createRequest('topic.sub', {
+      accountId: this.currentAccountId.value,
+      topics,
+      events
     })
+    this.socket.emit('message', msg)
   }
 
   private sendUnsubscribe(topics: string[], events: string[]): void {
     if (!this.socket?.connected)
       return
-    this.socket.emit('message', {
-      v: WS_PROTOCOL_VERSION,
-      type: 'req' as const,
-      route: 'topic.unsubscribe',
-      data: {
-        accountId: this.currentAccountId.value,
-        topics,
-        events
-      }
+    const msg = createRequest('topic.unsub', {
+      accountId: this.currentAccountId.value,
+      topics,
+      events
     })
+    this.socket.emit('message', msg)
   }
 
   private resendAllSubscriptions(): void {

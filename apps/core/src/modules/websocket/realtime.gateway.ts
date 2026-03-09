@@ -1,4 +1,4 @@
-import type { WsMessage } from '@qq-farm/shared'
+import type { WsRequest } from '@qq-farm/shared'
 import type { SocketWithMeta } from './ws-router'
 import process from 'node:process'
 import { Logger } from '@nestjs/common'
@@ -88,7 +88,7 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayConnection, OnGa
       onAccountsUpdate: data => this.pushService.broadcast('accounts.update', data),
       onLandsUpdate: (accountId, data) => this.pushService.emitToEvent(accountId, 'lands.update', data),
       onBagUpdate: (accountId, data) => this.pushService.emitToEvent(accountId, 'bag.update', data),
-      onDailyGiftsUpdate: (accountId, data) => this.pushService.emitToEvent(accountId, 'daily-gifts.update', data),
+      onDailyGiftsUpdate: (accountId, data) => this.pushService.emitToEvent(accountId, 'dailyGifts.update', data),
       onFriendsUpdate: (accountId, data) => this.pushService.emitToEvent(accountId, 'friends.update', data),
       onStrategyUpdate: (accountId, data) => this.pushService.emitToEvent(accountId, 'strategy.update', data),
       onPanelUpdate: data => this.pushService.broadcast('panel.update', data)
@@ -113,14 +113,14 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayConnection, OnGa
   @SubscribeMessage('message')
   async handleMessage(
     @ConnectedSocket() client: SocketWithMeta,
-    @MessageBody() payload: WsMessage
+    @MessageBody() payload: WsRequest
   ): Promise<void> {
-    if (!payload || payload.type !== 'req' || !payload.route) {
+    if (!payload || !payload.r) {
       return
     }
     const id = payload.id ?? ''
-    const route = payload.route
-    const data = (payload.data ?? {}) as Record<string, unknown>
+    const route = payload.r
+    const data = (payload.d ?? {}) as Record<string, unknown>
     const response = await this.router.dispatch(id, route, client, data)
     if (id)
       client.emit('message', response)

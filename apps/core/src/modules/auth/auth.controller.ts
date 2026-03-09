@@ -2,7 +2,7 @@ import { Body, Controller, Get, HttpCode, HttpStatus, Post } from '@nestjs/commo
 import { Public } from '../../common/decorators/public.decorator'
 import { AuthService } from './auth.service'
 
-@Controller()
+@Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
@@ -13,12 +13,12 @@ export class AuthController {
     return this.authService.login(password)
   }
 
-  @Get('auth/validate')
+  @Get('validate')
   async validate() {
     return this.authService.validate()
   }
 
-  @Post('admin/change-password')
+  @Post('change-password')
   @HttpCode(HttpStatus.OK)
   async changePassword(
     @Body('oldPassword') oldPassword: string,

@@ -37,7 +37,9 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
     private store: StoreService,
     private gameLog: GameLogService,
     private gamePush: GamePushService
-  ) {}
+  ) {
+    this.statusEventHandlers = this.buildStatusEventHandlers()
+  }
 
   setRealtimeCallbacks(callbacks: {
     onStatusEvent?: (accountId: string, event: StatusEventName, data: any) => void
@@ -264,83 +266,92 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
 
   // ========== Event Handlers ==========
 
+  private statusEventHandlers: Partial<Record<StatusEventName, (record: RunningAccount, accountId: string, data: any) => void>> = {}
+
+  private buildStatusEventHandlers(): Partial<Record<StatusEventName, (record: RunningAccount, accountId: string, data: any) => void>> {
+    return {
+      connection: (record, accountId, data) => {
+        const connected = !!data?.connected
+        if (data?.accountName && data.accountName !== '未知' && data.accountName !== '未登录' && record.name !== data.accountName) {
+          const oldName = record.name
+          record.name = data.accountName
+          record.runner.name = data.accountName
+          this.store.addOrUpdateAccount({ id: accountId, nick: data.accountName })
+          this.logger.log(`已同步账号昵称: ${oldName || 'None'} -> ${data.accountName}`)
+          this.gameLog.appendLog(accountId, record.name, {
+            msg: `已同步账号昵称: ${oldName || 'None'} -> ${data.accountName}`,
+            tag: '系统',
+            meta: { module: 'system', event: 'nick_sync' }
+          })
+        }
+        if (connected) {
+          record.disconnectedSince = 0
+          record.autoDeleteTriggered = false
+          record.wsError = null
+        } else if (record.runner.isActive()) {
+          const now = Date.now()
+          if (!record.disconnectedSince)
+            record.disconnectedSince = now
+          const offlineMs = now - record.disconnectedSince
+          const offlineReminder = this.store.getOfflineReminder()
+          const autoDeleteMs = (offlineReminder?.offlineDeleteSec || 120) * 1000
+
+          if (!record.autoDeleteTriggered && offlineMs >= autoDeleteMs) {
+            record.autoDeleteTriggered = true
+            const offlineMin = Math.floor(offlineMs / 60000)
+            this.logger.warn(`账号 ${record.name} 持续离线 ${offlineMin} 分钟，自动删除`)
+            this.gamePush.triggerOfflineReminder(accountId, record.name, 'offline_timeout', offlineMs)
+            this.gameLog.addAccountLog(
+              'offline_delete',
+              `账号 ${record.name} 持续离线 ${offlineMin} 分钟，已自动删除`,
+              accountId,
+              record.name
+            )
+            this.stopAccount(accountId).then(() => this.disconnectFromLink(accountId)).catch(() => {})
+            this.store.deleteAccount(accountId)
+          }
+        }
+      },
+      profile: (record, accountId, data) => {
+        const profileName = data?.name
+        if (profileName && profileName !== '未知' && profileName !== '未登录' && record.name !== profileName) {
+          const oldName = record.name
+          record.name = profileName
+          record.runner.name = profileName
+          this.store.addOrUpdateAccount({ id: accountId, nick: profileName })
+          this.logger.log(`已同步账号昵称: ${oldName || 'None'} -> ${profileName}`)
+          this.gameLog.appendLog(accountId, record.name, {
+            msg: `已同步账号昵称: ${oldName || 'None'} -> ${profileName}`,
+            tag: '系统',
+            meta: { module: 'system', event: 'nick_sync' }
+          })
+        }
+        const avatarUrl = data?.avatarUrl
+        if (avatarUrl && typeof avatarUrl === 'string' && avatarUrl.trim() !== '') {
+          const existing = this.store.getAccountById(accountId)
+          if (!existing?.avatar || String(existing.avatar).trim() === '') {
+            this.store.addOrUpdateAccount({ id: accountId, avatarUrl })
+          }
+        }
+        const openId = data?.openId
+        if (openId && typeof openId === 'string' && openId.trim() !== '') {
+          const existing = this.store.getAccountById(accountId)
+          if (!existing?.uin || String(existing.uin).trim() === '') {
+            this.store.addOrUpdateAccount({ id: accountId, uin: openId })
+          }
+        }
+      }
+    }
+  }
+
   private handleStatusEvent(accountId: string, event: StatusEventName, data: any, _name: string) {
     const record = this.runners.get(accountId)
     if (!record)
       return
 
-    if (event === 'connection') {
-      const connected = !!data?.connected
-      if (data?.accountName && data.accountName !== '未知' && data.accountName !== '未登录' && record.name !== data.accountName) {
-        const oldName = record.name
-        record.name = data.accountName
-        record.runner.name = data.accountName
-        this.store.addOrUpdateAccount({ id: accountId, nick: data.accountName })
-        this.logger.log(`已同步账号昵称: ${oldName || 'None'} -> ${data.accountName}`)
-        this.gameLog.appendLog(accountId, record.name, {
-          msg: `已同步账号昵称: ${oldName || 'None'} -> ${data.accountName}`,
-          tag: '系统',
-          meta: { module: 'system', event: 'nick_sync' }
-        })
-      }
-      if (connected) {
-        record.disconnectedSince = 0
-        record.autoDeleteTriggered = false
-        record.wsError = null
-      } else if (record.runner.isActive()) {
-        const now = Date.now()
-        if (!record.disconnectedSince)
-          record.disconnectedSince = now
-        const offlineMs = now - record.disconnectedSince
-        const offlineReminder = this.store.getOfflineReminder()
-        const autoDeleteMs = (offlineReminder?.offlineDeleteSec || 120) * 1000
-
-        if (!record.autoDeleteTriggered && offlineMs >= autoDeleteMs) {
-          record.autoDeleteTriggered = true
-          const offlineMin = Math.floor(offlineMs / 60000)
-          this.logger.warn(`账号 ${record.name} 持续离线 ${offlineMin} 分钟，自动删除`)
-          this.gamePush.triggerOfflineReminder(accountId, record.name, 'offline_timeout', offlineMs)
-          this.gameLog.addAccountLog(
-            'offline_delete',
-            `账号 ${record.name} 持续离线 ${offlineMin} 分钟，已自动删除`,
-            accountId,
-            record.name
-          )
-          this.stopAccount(accountId).then(() => this.disconnectFromLink(accountId)).catch(() => {})
-          this.store.deleteAccount(accountId)
-        }
-      }
-    }
-
-    if (event === 'profile') {
-      const profileName = data?.name
-      if (profileName && profileName !== '未知' && profileName !== '未登录' && record.name !== profileName) {
-        const oldName = record.name
-        record.name = profileName
-        record.runner.name = profileName
-        this.store.addOrUpdateAccount({ id: accountId, nick: profileName })
-        this.logger.log(`已同步账号昵称: ${oldName || 'None'} -> ${profileName}`)
-        this.gameLog.appendLog(accountId, record.name, {
-          msg: `已同步账号昵称: ${oldName || 'None'} -> ${profileName}`,
-          tag: '系统',
-          meta: { module: 'system', event: 'nick_sync' }
-        })
-      }
-      const avatarUrl = data?.avatarUrl
-      if (avatarUrl && typeof avatarUrl === 'string' && avatarUrl.trim() !== '') {
-        const existing = this.store.getAccountById(accountId)
-        if (!existing?.avatar || String(existing.avatar).trim() === '') {
-          this.store.addOrUpdateAccount({ id: accountId, avatarUrl })
-        }
-      }
-      const openId = data?.openId
-      if (openId && typeof openId === 'string' && openId.trim() !== '') {
-        const existing = this.store.getAccountById(accountId)
-        if (!existing?.uin || String(existing.uin).trim() === '') {
-          this.store.addOrUpdateAccount({ id: accountId, uin: openId })
-        }
-      }
-    }
+    const handler = this.statusEventHandlers[event]
+    if (handler)
+      handler(record, accountId, data)
 
     if (event === 'connection' || event === 'profile')
       this.notifyAccountsUpdate()

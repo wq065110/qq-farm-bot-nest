@@ -5,14 +5,168 @@ import { AccountManagerService } from '../../game/account-manager.service'
 import { StoreService } from '../../store/store.service'
 import { RealtimePushService } from './realtime-push.service'
 
+interface EventConfig {
+  provider: (accountId: string) => unknown | Promise<unknown>
+  broadcastOnly?: boolean
+}
+
 @Injectable()
 export class WsTopicsService {
   private logger = new Logger(WsTopicsService.name)
+  private eventConfigs: Record<string, EventConfig>
+  private broadcastOnlyEvents: Set<string>
 
   constructor(
     private manager: AccountManagerService,
     private store: StoreService
-  ) {}
+  ) {
+    this.eventConfigs = {
+      'accounts.update': {
+        broadcastOnly: true,
+        provider: () => this.manager.getAccounts()
+      },
+
+      'status.connection': {
+        provider: (accountId) => {
+          if (!accountId)
+            return undefined
+          const s = this.manager.getStatus(accountId)
+          return {
+            connected: s?.connection?.connected ?? false,
+            accountName: s?.accountName ?? ''
+          }
+        }
+      },
+
+      'strategy.update': {
+        provider: (accountId) => {
+          if (!accountId)
+            return undefined
+          return {
+            intervals: this.store.getIntervals(accountId),
+            plantingStrategy: this.store.getPlantingStrategy(accountId),
+            preferredSeedId: this.store.getPreferredSeed(accountId),
+            friendQuietHours: this.store.getFriendQuietHours(accountId),
+            stealCropBlacklist: this.store.getStealCropBlacklist(accountId),
+            friendBlacklist: this.store.getFriendBlacklist(accountId),
+            automation: this.store.getAutomation(accountId)
+          }
+        }
+      },
+
+      'panel.update': {
+        broadcastOnly: true,
+        provider: () => ({
+          ui: this.store.getUI(),
+          offlineReminder: this.store.getOfflineReminder()
+        })
+      },
+
+      'status.profile': {
+        provider: (accountId) => {
+          if (!accountId)
+            return undefined
+          if (!this.manager.getRunner(accountId))
+            return undefined
+          return this.manager.getStatus(accountId)?.status
+        }
+      },
+
+      'status.session': {
+        provider: (accountId) => {
+          if (!accountId)
+            return undefined
+          if (!this.manager.getRunner(accountId))
+            return undefined
+          const s = this.manager.getStatus(accountId)
+          if (!s)
+            return undefined
+          return {
+            bootAt: s.bootAt,
+            sessionExpGained: s.sessionExpGained,
+            sessionGoldGained: s.sessionGoldGained,
+            sessionCouponGained: s.sessionCouponGained,
+            lastExpGain: s.lastExpGain,
+            lastGoldGain: s.lastGoldGain,
+            levelProgress: s.levelProgress
+          }
+        }
+      },
+
+      'status.operations': {
+        provider: (accountId) => {
+          if (!accountId)
+            return undefined
+          if (!this.manager.getRunner(accountId))
+            return undefined
+          return this.manager.getStatus(accountId)?.operations
+        }
+      },
+
+      'status.schedule': {
+        provider: (accountId) => {
+          if (!accountId)
+            return undefined
+          if (!this.manager.getRunner(accountId))
+            return undefined
+          const s = this.manager.getStatus(accountId)
+          if (!s)
+            return undefined
+          return {
+            nextFarmRunAt: s.nextChecks?.nextFarmRunAt,
+            nextFriendRunAt: s.nextChecks?.nextFriendRunAt,
+            configRevision: s.configRevision
+          }
+        }
+      },
+
+      'lands.update': {
+        provider: (accountId) => {
+          if (!accountId)
+            return undefined
+          return this.manager.getRunner(accountId)?.getLands()
+        }
+      },
+
+      'bag.update': {
+        provider: (accountId) => {
+          if (!accountId)
+            return undefined
+          return this.manager.getRunner(accountId)?.getBag()
+        }
+      },
+
+      'dailyGifts.update': {
+        provider: (accountId) => {
+          if (!accountId)
+            return undefined
+          return this.manager.getRunner(accountId)?.getDailyGiftOverview()
+        }
+      },
+
+      'friends.update': {
+        provider: (accountId) => {
+          if (!accountId)
+            return undefined
+          return this.manager.getRunner(accountId)?.getFriends()
+        }
+      },
+
+      'seeds.update': {
+        provider: (accountId) => {
+          if (!accountId)
+            return undefined
+          return this.manager.getRunner(accountId)?.getSeeds()
+        }
+      }
+    }
+
+    this.broadcastOnlyEvents = new Set(
+      Object.entries(this.eventConfigs)
+        .filter(([, cfg]) => cfg.broadcastOnly)
+        .map(([event]) => event)
+    )
+  }
 
   async handleSubscribe(
     client: SocketWithMeta,
@@ -33,32 +187,17 @@ export class WsTopicsService {
 
     if (!client.rooms.has(RealtimePushService.ROOM_ALL))
       client.join(RealtimePushService.ROOM_ALL)
-    const broadcastOnlyEvents = new Set(['accounts.update', 'panel.update'])
     if (resolved) {
       for (const event of eventsSet) {
-        if (!broadcastOnlyEvents.has(event))
+        if (!this.broadcastOnlyEvents.has(event))
           client.join(RealtimePushService.roomForEvent(resolved, event))
       }
     }
 
-    const subscribeResult = { accountId: resolved || 'all' }
+    if (eventsSet.size > 0)
+      this.pushInitialData(client, eventsSet)
 
-    const ev = eventsSet
-    if (ev.has('accounts.update'))
-      this.emitToClient(client, 'accounts.update', this.manager.getAccounts())
-
-    if (resolved && ev.has('status.connection')) {
-      const s = this.manager.getStatus(resolved)
-      this.emitToClient(client, 'status.connection', {
-        connected: s?.connection?.connected ?? false,
-        accountName: s?.accountName ?? ''
-      })
-    }
-
-    if (resolved && eventsSet.size > 0)
-      this.pushTopicsInitialDataForEvents(client, eventsSet)
-
-    return subscribeResult
+    return { accountId: resolved || 'all' }
   }
 
   handleUnsubscribe(client: SocketWithMeta, data: Record<string, unknown>): null {
@@ -82,81 +221,29 @@ export class WsTopicsService {
     client.emit('message', createEvent(route, data))
   }
 
-  private pushTopicsInitialDataForEvents(client: SocketWithMeta, events: Set<string>): void {
+  private pushInitialData(client: SocketWithMeta, events: Set<string>): void {
     const accountId = client.data.accountId ?? ''
+    const asyncTasks: Promise<void>[] = []
 
-    if (accountId && events.has('strategy.update')) {
-      this.emitToClient(client, 'strategy.update', {
-        intervals: this.store.getIntervals(accountId),
-        plantingStrategy: this.store.getPlantingStrategy(accountId),
-        preferredSeedId: this.store.getPreferredSeed(accountId),
-        friendQuietHours: this.store.getFriendQuietHours(accountId),
-        stealCropBlacklist: this.store.getStealCropBlacklist(accountId),
-        friendBlacklist: this.store.getFriendBlacklist(accountId),
-        automation: this.store.getAutomation(accountId)
-      })
-    }
-    if (events.has('panel.update')) {
-      this.emitToClient(client, 'panel.update', {
-        ui: this.store.getUI(),
-        offlineReminder: this.store.getOfflineReminder()
-      })
-    }
+    for (const event of events) {
+      const config = this.eventConfigs[event]
+      if (!config)
+        continue
 
-    const runner = this.manager.getRunner(accountId)
-    if (!runner)
-      return
-
-    if (events.has('status.profile') || events.has('status.session') || events.has('status.operations') || events.has('status.schedule')) {
-      const s = this.manager.getStatus(accountId)
-      if (s) {
-        if (events.has('status.profile') && s.status)
-          this.emitToClient(client, 'status.profile', s.status)
-        if (events.has('status.session')) {
-          this.emitToClient(client, 'status.session', {
-            bootAt: s.bootAt,
-            sessionExpGained: s.sessionExpGained,
-            sessionGoldGained: s.sessionGoldGained,
-            sessionCouponGained: s.sessionCouponGained,
-            lastExpGain: s.lastExpGain,
-            lastGoldGain: s.lastGoldGain,
-            levelProgress: s.levelProgress
+      const result = config.provider(accountId)
+      if (result instanceof Promise) {
+        asyncTasks.push(
+          result.then((data) => {
+            if (data != null)
+              this.emitToClient(client, event, data)
           })
-        }
-        if (events.has('status.operations') && s.operations)
-          this.emitToClient(client, 'status.operations', s.operations)
-        if (events.has('status.schedule')) {
-          this.emitToClient(client, 'status.schedule', {
-            nextFarmRunAt: s.nextChecks?.nextFarmRunAt,
-            nextFriendRunAt: s.nextChecks?.nextFriendRunAt,
-            configRevision: s.configRevision
-          })
-        }
+        )
+      } else if (result != null) {
+        this.emitToClient(client, event, result)
       }
     }
 
-    const needLands = events.has('lands.update')
-    const needBag = events.has('bag.update')
-    const needDailyGifts = events.has('daily-gifts.update')
-    const needFriends = events.has('friends.update')
-    const needSeeds = events.has('seeds.update')
-    Promise.all([
-      needLands ? runner.getLands() : Promise.resolve(null),
-      needBag ? runner.getBag() : Promise.resolve(null),
-      needDailyGifts ? runner.getDailyGiftOverview() : Promise.resolve(null),
-      needFriends ? runner.getFriends() : Promise.resolve(null),
-      needSeeds ? runner.getSeeds() : Promise.resolve(null)
-    ]).then(([lands, bag, dailyGifts, friends, seeds]) => {
-      if (lands != null)
-        this.emitToClient(client, 'lands.update', lands)
-      if (bag != null)
-        this.emitToClient(client, 'bag.update', bag)
-      if (dailyGifts != null)
-        this.emitToClient(client, 'daily-gifts.update', dailyGifts)
-      if (friends != null)
-        this.emitToClient(client, 'friends.update', friends)
-      if (seeds != null)
-        this.emitToClient(client, 'seeds.update', seeds)
-    }).catch(err => this.logger.error('pushTopicsInitialDataForEvents failed:', err))
+    if (asyncTasks.length > 0)
+      Promise.all(asyncTasks).catch(err => this.logger.error('pushInitialData failed:', err))
   }
 }

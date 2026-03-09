@@ -67,7 +67,7 @@ useWs()
 </script>
 
 <template>
-  <div class="flex flex-col gap-3 h-full">
+  <div class="flex flex-col gap-3">
     <div class="font-bold flex gap-2 items-center a-color-text">
       <div class="i-twemoji-gear text-lg" aria-hidden="true" />
       <span class="text-lg">面板设置</span>
