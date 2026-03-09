@@ -100,7 +100,7 @@ function setMax(): void {
         <div v-if="(item.price ?? 0) > 0" class="flex items-center justify-between text-sm">
           <span class="a-color-text-secondary">单价</span>
           <span class="flex gap-1 items-center a-color-warning">
-            <span class="i-streamline-emojis-credit-card text-sm" aria-hidden="true" />
+            <span class="i-streamline-emojis-credit-card text-sm"  />
             {{ item.price ?? 0 }} 金币
           </span>
         </div>
@@ -130,7 +130,7 @@ function setMax(): void {
           <div class="pt-1 flex items-center justify-between text-sm">
             <span class="a-color-text-secondary">预计获得</span>
             <span class="font-bold flex gap-1 items-center a-color-warning">
-              <span class="i-streamline-emojis-credit-card text-sm" aria-hidden="true" />
+              <span class="i-streamline-emojis-credit-card text-sm"  />
               {{ totalGold }} 金币
             </span>
           </div>

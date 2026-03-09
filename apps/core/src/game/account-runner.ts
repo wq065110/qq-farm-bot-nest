@@ -611,6 +611,10 @@ export class AccountRunner {
     return result
   }
 
+  async getInteractRecords() {
+    return this.friend.getInteractRecords()
+  }
+
   async getBag() { return this.warehouse.getBagDetail() }
 
   async sellItem(itemId: number, count: number) {

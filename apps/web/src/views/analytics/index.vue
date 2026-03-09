@@ -85,7 +85,7 @@ watch(sortKey, loadAnalytics)
 <template>
   <div class="flex flex-col gap-3 h-full">
     <div class="font-bold flex gap-2 items-center a-color-text">
-      <div class="i-streamline-emojis-bar-chart text-lg" aria-hidden="true" />
+      <div class="i-streamline-emojis-bar-chart text-lg"  />
       <span class="text-lg">数据分析</span>
     </div>
 

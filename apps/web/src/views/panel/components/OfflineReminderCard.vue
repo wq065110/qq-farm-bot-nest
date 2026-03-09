@@ -39,7 +39,7 @@ function openChannelDocs() {
     <template #title>
       <div class="flex gap-2 items-center justify-between">
         <div class="font-bold flex gap-2 items-center">
-          <div class="i-streamline-emojis-bell" aria-hidden="true" />
+          <div class="i-streamline-emojis-bell"  />
           下线提醒
         </div>
         <a-button type="primary" size="small" :loading="saving" @click="handleSave">

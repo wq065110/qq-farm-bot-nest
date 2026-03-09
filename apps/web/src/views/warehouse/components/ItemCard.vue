@@ -44,7 +44,7 @@ function handleImageError(): void {
         {{ item.name || `物品${item.id}` }}
       </div>
       <div class="flex gap-1.5 items-center a-color-text-tertiary text-xs">
-        <span :class="categoryIcon(item.category || '')" class="shrink-0" aria-hidden="true" />
+        <span :class="categoryIcon(item.category || '')" class="shrink-0"  />
         {{ item.hoursText || `x${item.count ?? 0}` }}
       </div>
     </div>
@@ -57,7 +57,7 @@ function handleImageError(): void {
       aria-label="售卖"
       @click="emit('sell')"
     >
-      <span class="i-streamline-emojis-dollar-banknote text-lg" aria-hidden="true" />
+      <span class="i-streamline-emojis-dollar-banknote text-lg"  />
     </a-button>
   </div>
 </template>

@@ -20,6 +20,14 @@ const INVOKE_TYPE_MAP: Record<string, Record<string, [string, string]>> = {
     PutInsects: ['PutInsectsRequest', 'PutInsectsReply'],
     PutWeeds: ['PutWeedsRequest', 'PutWeedsReply']
   },
+  'gamepb.interactpb.InteractService': {
+    InteractRecords: ['InteractRecordsRequest', 'InteractRecordsReply'],
+    GetInteractRecords: ['InteractRecordsRequest', 'InteractRecordsReply']
+  },
+  'gamepb.interactpb.VisitorService': {
+    InteractRecords: ['InteractRecordsRequest', 'InteractRecordsReply'],
+    GetInteractRecords: ['InteractRecordsRequest', 'InteractRecordsReply']
+  },
   'gamepb.shoppb.ShopService': {
     ShopInfo: ['ShopInfoRequest', 'ShopInfoReply'],
     BuyGoods: ['BuyGoodsRequest', 'BuyGoodsReply']
@@ -98,6 +106,7 @@ export class GameInvokeService implements OnModuleInit {
       'shoppb.proto',
       'friendpb.proto',
       'visitpb.proto',
+      'interactpb.proto',
       'notifypb.proto',
       'taskpb.proto',
       'itempb.proto',
@@ -209,7 +218,9 @@ export class GameInvokeService implements OnModuleInit {
       ClaimShareRewardRequest: 'gamepb.sharepb',
       ClaimShareRewardReply: 'gamepb.sharepb',
       ClaimAllRewardsV2Request: 'gamepb.illustratedpb',
-      ClaimAllRewardsV2Reply: 'gamepb.illustratedpb'
+      ClaimAllRewardsV2Reply: 'gamepb.illustratedpb',
+      InteractRecordsRequest: 'gamepb.interactpb',
+      InteractRecordsReply: 'gamepb.interactpb'
     }
 
     for (const name of Object.keys(prefixMap)) {

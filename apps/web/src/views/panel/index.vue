@@ -69,7 +69,7 @@ useWs()
 <template>
   <div class="flex flex-col gap-3">
     <div class="font-bold flex gap-2 items-center a-color-text">
-      <div class="i-streamline-emojis-nut-and-bolt text-lg" aria-hidden="true" />
+      <div class="i-streamline-emojis-nut-and-bolt text-lg"  />
       <span class="text-lg">面板设置</span>
     </div>
     <div class="flex shrink-0 flex-col gap-3">

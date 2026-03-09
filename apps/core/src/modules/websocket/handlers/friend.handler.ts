@@ -38,4 +38,10 @@ export function registerFriendRoutes(router: WsRouter, deps: FriendHandlerDeps):
     manager.notifyStrategyUpdate(accountId)
     return saved
   })
+
+  router.register('friend.interactRecords', async (client) => {
+    const accountId = requireAccountId(client)
+    const runner = manager.getRunnerOrThrow(accountId)
+    return runner.getInteractRecords()
+  })
 }

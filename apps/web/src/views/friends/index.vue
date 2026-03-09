@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { InteractFilterKey } from './constants'
 import { storeToRefs } from 'pinia'
 import { computed, ref } from 'vue'
 import ConfirmModal from '@/components/ConfirmModal.vue'
@@ -9,6 +10,7 @@ import { useAccountStore, useFriendStore, useStatusStore } from '@/stores'
 import message from '@/utils/message'
 import FriendRow from './components/FriendRow.vue'
 import FriendToolbar from './components/FriendToolbar.vue'
+import InteractPanel from './components/InteractPanel.vue'
 import { OP_BUTTONS } from './constants'
 
 const OP_TYPE_LABEL: Record<string, string> = Object.fromEntries(OP_BUTTONS.map(op => [op.type, op.label]))
@@ -17,7 +19,15 @@ const accountStore = useAccountStore()
 const friendStore = useFriendStore()
 const statusStore = useStatusStore()
 const { currentAccountId, currentAccount } = storeToRefs(accountStore)
-const { friends, friendLands, friendLandsLoading, blacklist } = storeToRefs(friendStore)
+const {
+  friends,
+  friendLands,
+  friendLandsLoading,
+  blacklist,
+  interactRecords,
+  interactLoading,
+  interactError
+} = storeToRefs(friendStore)
 const { status } = storeToRefs(statusStore)
 
 const showConfirm = ref(false)
@@ -50,6 +60,15 @@ const blacklistFriends = computed(() => {
 })
 
 const expandedFriends = ref<Set<string>>(new Set())
+
+const interactCollapsed = ref(true)
+const interactFilter = ref<InteractFilterKey>('all')
+
+async function refreshInteractRecords(): Promise<void> {
+  if (!currentAccountId.value)
+    return
+  await friendStore.fetchInteractRecords(currentAccountId.value)
+}
 
 function confirmAction(msg: string, action: () => Promise<void>, opType?: string) {
   confirmMessage.value = msg
@@ -131,7 +150,7 @@ useWs()
 <template>
   <div class="flex flex-col gap-3 h-full">
     <div class="font-bold flex gap-2 items-center a-color-text">
-      <div class="i-streamline-emojis-man-and-woman-holding-hands-1 text-lg" aria-hidden="true" />
+      <div class="i-streamline-emojis-man-and-woman-holding-hands-1 text-lg" />
       <span class="text-lg">好友农场</span>
     </div>
 
@@ -159,12 +178,18 @@ useWs()
         :blacklisted-count="blacklistedCount"
       />
 
-      <div class="flex-1 min-h-0 overflow-y-auto">
-        <div v-if="filteredFriends.length === 0" class="py-16 flex items-center justify-center">
-          <EmptyState icon="i-streamline-emojis-magnifying-glass-tilted-left text-4xl" description="未找到匹配的好友" />
-        </div>
+      <div class="p-4 flex-1 min-h-0 overflow-y-auto space-y-3">
+        <InteractPanel
+          v-model:collapsed="interactCollapsed"
+          v-model:filter="interactFilter"
+          :records="interactRecords"
+          :loading="interactLoading"
+          :error="interactError"
+          @refresh="refreshInteractRecords"
+        />
 
-        <div v-else>
+        <!-- 好友列表 -->
+        <div class="border-solid a-border-border-sec border rounded-lg shadow-sm">
           <!-- 正常好友分区 -->
           <button
             type="button"
@@ -183,7 +208,6 @@ useWs()
             <div
               class="i-carbon-chevron-right transition-transform duration-200 a-color-text-tertiary text-base"
               :class="[normalCollapsed ? '' : 'rotate-90']"
-              aria-hidden="true"
             />
           </button>
 
@@ -232,7 +256,6 @@ useWs()
               <div
                 class="i-carbon-chevron-right transition-transform duration-200 a-color-text-tertiary text-base"
                 :class="[blacklistCollapsed ? '' : 'rotate-90']"
-                aria-hidden="true"
               />
             </button>
 

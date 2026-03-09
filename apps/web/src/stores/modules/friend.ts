@@ -44,7 +44,10 @@ export const useFriendStore = defineStore('friend', {
     friends: [] as any[],
     friendLands: {} as Record<string, any[]>,
     friendLandsLoading: {} as Record<string, boolean>,
-    blacklist: [] as number[]
+    blacklist: [] as number[],
+    interactRecords: [] as any[],
+    interactLoading: false as boolean,
+    interactError: '' as string
   }),
   actions: {
     syncFriendPlantSummary(friendId: string, lands: any[], summary: any) {
@@ -87,6 +90,21 @@ export const useFriendStore = defineStore('friend', {
       if (!accountId || !friendId)
         return
       await friendApi.operate(Number(friendId), opType)
+    },
+    async fetchInteractRecords(accountId: string) {
+      if (!accountId)
+        return
+      this.interactLoading = true
+      this.interactError = ''
+      this.interactRecords = []
+      try {
+        const records = await friendApi.getInteractRecords()
+        this.interactRecords = Array.isArray(records) ? records : []
+      } catch (e: any) {
+        this.interactError = e?.message || '加载访客记录失败'
+      } finally {
+        this.interactLoading = false
+      }
     },
     setFriendsFromRealtime(list: any[]) {
       this.friends = Array.isArray(list) ? list : []

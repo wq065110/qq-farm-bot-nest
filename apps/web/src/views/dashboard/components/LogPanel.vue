@@ -100,7 +100,7 @@ onMounted(() => {
   >
     <div class="mb-3 flex items-center justify-between">
       <div class="flex gap-2 items-center a-color-text">
-        <div class="i-streamline-emojis-scroll text-lg" aria-hidden="true" />
+        <div class="i-streamline-emojis-scroll text-lg"  />
         <span class="whitespace-nowrap">农场日志</span>
       </div>
       <a-popover
@@ -186,7 +186,7 @@ onMounted(() => {
             size="small"
             aria-label="筛选日志"
           >
-            <div class="i-carbon-filter text-base" aria-hidden="true" />
+            <div class="i-carbon-filter text-base"  />
           </a-button>
         </a-badge>
       </a-popover>

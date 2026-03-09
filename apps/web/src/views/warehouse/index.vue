@@ -82,7 +82,7 @@ useAccountRefresh(refresh)
 <template>
   <div class="flex flex-col gap-3 h-full">
     <div class="font-bold flex gap-2 items-center a-color-text">
-      <div class="i-streamline-emojis-package text-lg" aria-hidden="true" />
+      <div class="i-streamline-emojis-package text-lg"  />
       <span class="text-lg">我的仓库</span>
     </div>
 
@@ -101,7 +101,7 @@ useAccountRefresh(refresh)
             :class="activeTab === t.key ? 'a-bg-primary-bg a-color-primary font-medium' : 'a-bg-layout a-color-text-secondary hover:a-bg-layout/80'"
             @click="activeTab = t.key"
           >
-            <div :class="t.icon" class="shrink-0 text-sm" aria-hidden="true" />
+            <div :class="t.icon" class="shrink-0 text-sm"  />
             {{ t.label }}
           </button>
         </div>

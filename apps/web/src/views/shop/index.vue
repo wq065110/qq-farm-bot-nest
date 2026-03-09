@@ -68,7 +68,7 @@ useAccountRefresh(refresh)
 <template>
   <div class="flex flex-col gap-3 h-full">
     <div class="font-bold flex gap-2 items-center a-color-text">
-      <div class="i-streamline-emojis-herb text-lg" aria-hidden="true" />
+      <div class="i-streamline-emojis-herb text-lg"  />
       <span class="text-lg">种子商店</span>
     </div>
 
@@ -88,7 +88,7 @@ useAccountRefresh(refresh)
             aria-label="搜索种子"
           >
             <template #prefix>
-              <span class="i-streamline-emojis-magnifying-glass-tilted-left a-color-text-tertiary text-base" aria-hidden="true" />
+              <span class="i-streamline-emojis-magnifying-glass-tilted-left a-color-text-tertiary text-base"  />
             </template>
           </a-input>
         </div>

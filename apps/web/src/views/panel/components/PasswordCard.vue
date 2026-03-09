@@ -19,7 +19,7 @@ const passwordForm = defineModel<{ old: string, new: string, confirm: string }>(
     <template #title>
       <div class="flex gap-2 items-center justify-between">
         <div class="font-bold flex gap-2 items-center">
-          <div class="i-streamline-emojis-locked-with-key" aria-hidden="true" />
+          <div class="i-streamline-emojis-locked-with-key"  />
           管理密码
           <span class="font-normal ml-1 a-color-text-tertiary text-sm">建议修改默认密码</span>
         </div>

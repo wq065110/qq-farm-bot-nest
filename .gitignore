@@ -29,6 +29,7 @@ yarn-error.log*
 .env.*
 !.env.example
 *.local
+.external*
 
 # Editor & OS
 .idea/

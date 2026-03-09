@@ -58,3 +58,7 @@ export function useWs(initialTopic?: string) {
 
   return builder
 }
+
+useWs.request = function <T = unknown>(event: string, payload?: any): Promise<T> {
+  return socket.request(event, payload)
+}
