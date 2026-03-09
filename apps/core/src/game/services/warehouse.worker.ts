@@ -1,6 +1,7 @@
 import type { StoreService } from '../../store/store.service'
 import type { GameConfigService } from '../game-config.service'
 import type { IGameTransport } from '../interfaces/game-transport.interface'
+import type { StatsTracker } from './stats.worker'
 import { Logger } from '@nestjs/common'
 import { getDateKey, sleep, toNum } from '../utils'
 
@@ -22,7 +23,8 @@ export class WarehouseWorker {
     private accountId: string,
     private client: IGameTransport,
     private gameConfig: GameConfigService,
-    private store: StoreService
+    private store: StoreService,
+    private stats: StatsTracker | null = null
   ) {
     this.logger = new Logger(`Warehouse:${accountId}`)
   }
@@ -268,6 +270,7 @@ export class WarehouseWorker {
       const goldAfter = Number(this.client.userState?.gold || 0)
       const totalGoldEarned = Math.max(serverGoldTotal, goldAfter > goldBefore ? goldAfter - goldBefore : 0)
       this.log(`出售 ${names.join(', ')}${totalGoldEarned > 0 ? `，获得 ${totalGoldEarned} 金币` : ''}`, 'sell_success')
+      this.stats?.recordOperation('sell', toSell.length)
       if (totalGoldEarned > 0)
         this.client.emit('sell', totalGoldEarned)
     } catch (e: any) { this.warn(`出售失败: ${e?.message}`, 'sell_success') }

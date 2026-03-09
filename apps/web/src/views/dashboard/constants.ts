@@ -37,6 +37,7 @@ export const EVENTS = [
   { label: '图鉴奖励', value: 'illustrated_rewards' },
   { label: '邮箱领取', value: 'email_rewards' },
   { label: '出售成功', value: 'sell_success' },
+  { label: '账号升级', value: 'level_up' },
   { label: '土地升级', value: 'upgrade_land' },
   { label: '土地解锁', value: 'unlock_land' },
   { label: '好友巡查', value: 'friend_cycle' },

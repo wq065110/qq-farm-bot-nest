@@ -107,7 +107,7 @@ export class AccountRunner {
     this.isRunning = true
 
     this.transport = this.linkClient.createTransport(this.accountId)
-    this.warehouse = new WarehouseWorker(this.accountId, this.transport, this.gameConfig, this.store)
+    this.warehouse = new WarehouseWorker(this.accountId, this.transport, this.gameConfig, this.store, this.stats)
     this.warehouse.onLog = this.forwardLog
     this.farm = new FarmWorker(this.accountId, this.transport, this.gameConfig, this.store, this.stats, this.analytics)
     this.farm.onLog = this.forwardLog
@@ -443,11 +443,16 @@ export class AccountRunner {
       },
       state_update: (data) => {
         if (data && typeof data === 'object') {
+          const oldLevel = this.userState.level
           const merged = { ...this.userState, ...data }
           if (Number(data.coupon) === 0 && Number(this.userState.coupon) > 0)
             merged.coupon = this.userState.coupon
           this.userState = merged
           this.syncTransportUserState()
+          if (merged.level != null && merged.level > oldLevel && oldLevel > 0) {
+            this.stats.recordOperation('levelUp', 1)
+            this.log(`账号升级至 Lv${merged.level}`, 'level_up')
+          }
           this.deferStatusFlush()
         }
       }
@@ -610,6 +615,7 @@ export class AccountRunner {
 
   async sellItem(itemId: number, count: number) {
     const result = await this.warehouse.sellItemByIdAndCount(itemId, count)
+    this.stats.recordOperation('sell', count)
     this.pushLandsAndBag().catch(() => {})
     return result
   }

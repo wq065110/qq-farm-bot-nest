@@ -1,7 +1,5 @@
 <script setup lang="ts">
-import type { SelectValue } from 'antdv-next'
-import { SearchOutlined } from '@antdv-next/icons'
-import { nextTick, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import EmptyState from '@/components/EmptyState.vue'
 import { EVENTS, LOG_LEVELS, MODULES } from '../constants'
 
@@ -14,28 +12,36 @@ const emit = defineEmits<{
   'update:filter': [value: typeof props.filter]
 }>()
 
-function updateFilterField(key: keyof typeof props.filter, value: string) {
-  emit('update:filter', { ...props.filter, [key]: value })
+const filterPopoverOpen = ref(false)
+
+const draftFilter = ref<typeof props.filter>({
+  module: '',
+  event: '',
+  keyword: '',
+  isWarn: ''
+})
+
+watch(filterPopoverOpen, (open) => {
+  if (open)
+    draftFilter.value = { ...props.filter }
+})
+
+const hasActiveFilter = computed(() =>
+  !!(props.filter.module || props.filter.event || props.filter.keyword.trim() || props.filter.isWarn))
+
+function setDraftField(key: keyof typeof props.filter, value: string) {
+  draftFilter.value = { ...draftFilter.value, [key]: value }
 }
 
-function onModuleChange(v: SelectValue) {
-  updateFilterField('module', String(v ?? ''))
+function applyQuery() {
+  emit('update:filter', { ...draftFilter.value })
+  filterPopoverOpen.value = false
 }
 
-function onEventChange(v: SelectValue) {
-  updateFilterField('event', String(v ?? ''))
-}
-
-function onIsWarnChange(v: SelectValue) {
-  updateFilterField('isWarn', String(v ?? ''))
-}
-
-function updateKeyword(value: string) {
-  emit('update:filter', { ...props.filter, keyword: value })
-}
-
-function triggerFilterChange() {
-  emit('update:filter', { ...props.filter })
+function resetFilter() {
+  draftFilter.value = { module: '', event: '', keyword: '', isWarn: '' }
+  emit('update:filter', { ...draftFilter.value })
+  filterPopoverOpen.value = false
 }
 
 const logContainer = ref<HTMLElement | null>(null)
@@ -92,51 +98,97 @@ onMounted(() => {
     class="flex flex-1 flex-col md:overflow-hidden"
     :classes="{ body: '!flex !flex-col !flex-1 !overflow-hidden !p-4' }"
   >
-    <div class="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-      <div class="mr-2.5 flex gap-2 items-center a-color-text">
-        <div class="i-twemoji-scroll text-lg" />
+    <div class="mb-3 flex items-center justify-between">
+      <div class="flex gap-2 items-center a-color-text">
+        <div class="i-twemoji-scroll text-lg" aria-hidden="true" />
         <span class="whitespace-nowrap">农场日志</span>
       </div>
-      <div class="flex flex-wrap gap-2 items-center">
-        <a-select
-          :value="filter.module"
-          :options="MODULES"
-          placeholder="模块"
-          size="small"
-          class="w-28"
-          @update:value="onModuleChange"
-        />
-        <a-select
-          :value="filter.event"
-          :options="EVENTS"
-          placeholder="事件"
-          size="small"
-          class="w-28"
-          @update:value="onEventChange"
-        />
-        <a-select
-          :value="filter.isWarn"
-          :options="LOG_LEVELS"
-          placeholder="级别"
-          size="small"
-          class="w-28"
-          @update:value="onIsWarnChange"
-        />
-        <a-input
-          :value="filter.keyword"
-          placeholder="搜索..."
-          allow-clear
-          size="small"
-          class="w-28"
-          @update:value="updateKeyword"
-          @press-enter="triggerFilterChange"
-        />
-        <a-button type="primary" size="small" @click="triggerFilterChange">
-          <template #icon>
-            <SearchOutlined />
-          </template>
-        </a-button>
-      </div>
+      <a-popover
+        v-model:open="filterPopoverOpen"
+        trigger="click"
+      >
+        <template #content>
+          <div
+            class="overscroll-contain flex flex-col gap-3 min-w-36"
+            role="group"
+            aria-label="日志筛选"
+          >
+            <div class="flex flex-col gap-1.5">
+              <label class="a-color-text-secondary text-xs">模块</label>
+              <a-select
+                :value="draftFilter.module"
+                :options="MODULES"
+                placeholder="选择模块"
+                size="small"
+                class="w-full"
+                @update:value="v => setDraftField('module', String(v ?? ''))"
+              />
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <label class="a-color-text-secondary text-xs">事件</label>
+              <a-select
+                :value="draftFilter.event"
+                :options="EVENTS"
+                placeholder="选择事件"
+                size="small"
+                class="w-full"
+                @update:value="v => setDraftField('event', String(v ?? ''))"
+              />
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <label class="a-color-text-secondary text-xs">级别</label>
+              <a-select
+                :value="draftFilter.isWarn"
+                :options="LOG_LEVELS"
+                placeholder="选择级别"
+                size="small"
+                class="w-full"
+                @update:value="v => setDraftField('isWarn', String(v ?? ''))"
+              />
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <label class="a-color-text-secondary text-xs">关键词</label>
+              <a-input
+                :value="draftFilter.keyword"
+                placeholder="输入关键词…"
+                allow-clear
+                size="small"
+                class="w-full"
+                @update:value="v => setDraftField('keyword', v ?? '')"
+                @press-enter="applyQuery"
+              />
+            </div>
+            <div class="mt-0.5 flex gap-2">
+              <a-button
+                size="small"
+                class="flex-1"
+                aria-label="重置"
+                @click="resetFilter"
+              >
+                重置
+              </a-button>
+              <a-button
+                type="primary"
+                size="small"
+                class="flex-1"
+                aria-label="查询"
+                @click="applyQuery"
+              >
+                查询
+              </a-button>
+            </div>
+          </div>
+        </template>
+        <a-badge color="green" :dot="hasActiveFilter">
+          <a-button
+            type="text"
+            size="small"
+            aria-label="筛选日志"
+          >
+            <div class="i-twemoji-anchor text-base" aria-hidden="true" />
+          </a-button>
+        </a-badge>
+      </a-popover>
     </div>
 
     <div
