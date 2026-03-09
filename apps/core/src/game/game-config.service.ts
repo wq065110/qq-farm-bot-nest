@@ -263,10 +263,25 @@ export class GameConfigService implements OnModuleInit {
     }))
   }
 
-  // ---- 图片 ----
+  private getMappedSeedImage(targetId: number): string {
+    const id = Number(targetId) || 0
+    if (id <= 0)
+      return ''
+
+    const direct = this.seedImageMap.get(id)
+    if (direct)
+      return direct
+
+    const item = this.itemInfoMap.get(id)
+    const assetName = item?.asset_name ? String(item.asset_name).trim() : ''
+    if (!assetName)
+      return ''
+
+    return this.seedAssetImageMap.get(assetName) || ''
+  }
 
   getSeedImageBySeedId(seedId: number): string {
-    return this.seedImageMap.get(Number(seedId) || 0) || ''
+    return this.getMappedSeedImage(seedId)
   }
 
   getItemImageById(itemId: number): string {
@@ -274,19 +289,7 @@ export class GameConfigService implements OnModuleInit {
     if (id <= 0)
       return ''
 
-    const getImg = (targetId: number): string => {
-      const direct = this.seedImageMap.get(targetId)
-      if (direct)
-        return direct
-      const item = this.itemInfoMap.get(targetId)
-      const assetName = item?.asset_name ? String(item.asset_name) : ''
-      if (assetName) {
-        const byAsset = this.seedAssetImageMap.get(assetName)
-        if (byAsset)
-          return byAsset
-      }
-      return ''
-    }
+    const getImg = (targetId: number): string => this.getMappedSeedImage(targetId)
 
     let img = getImg(id)
     if (img)

@@ -12,6 +12,7 @@ const NORMAL_CONTAINER_ID = 1011
 const ORGANIC_CONTAINER_ID = 1012
 const NORMAL_FERTILIZER_ITEM_HOURS = new Map([[80001, 1], [80002, 4], [80003, 8], [80004, 12]])
 const ORGANIC_FERTILIZER_ITEM_HOURS = new Map([[80011, 1], [80012, 4], [80013, 8], [80014, 12]])
+const ITEM_TYPE_PRIORITY = new Map<number, number>([[17, 0], [5, 1], [6, 2]])
 
 export class WarehouseWorker {
   private logger: Logger
@@ -307,6 +308,8 @@ export class WarehouseWorker {
       if (!name)
         name = `物品${id}`
       const interactionType = info?.interaction_type ? String(info.interaction_type) : ''
+      const priceId = info ? (Number(info.price_id) || 0) : 0
+      const priceUnit = priceId === 1005 ? '金豆豆' : priceId === 1002 ? '点券' : '金'
 
       if (!merged.has(id)) {
         merged.set(id, {
@@ -317,7 +320,9 @@ export class WarehouseWorker {
           image: this.gameConfig.getItemImageById(id),
           category,
           itemType: info ? (Number(info.type) || 0) : 0,
+          priceId,
           price: info ? (Number(info.price) || 0) : 0,
+          priceUnit,
           level: info ? (Number(info.level) || 0) : 0,
           interactionType,
           hoursText: ''
@@ -332,7 +337,29 @@ export class WarehouseWorker {
       }
       return row
     })
-    items.sort((a, b) => (b.count - a.count) || (a.id - b.id))
+    items.sort((a, b) => {
+      const taRaw = Number(a.itemType || 0)
+      const tbRaw = Number(b.itemType || 0)
+
+      const getPriority = (t: number): number => {
+        const fromMap = ITEM_TYPE_PRIORITY.get(t)
+        if (fromMap != null)
+          return fromMap
+        return t > 0 ? 1000 + t : Number.MAX_SAFE_INTEGER
+      }
+
+      const ta = getPriority(taRaw)
+      const tb = getPriority(tbRaw)
+      if (ta !== tb)
+        return ta - tb
+
+      const ca = Number(a.count || 0)
+      const cb = Number(b.count || 0)
+      if (cb !== ca)
+        return cb - ca
+
+      return Number(a.id || 0) - Number(b.id || 0)
+    })
     return { totalKinds: items.length, items }
   }
 
