@@ -15,7 +15,7 @@ import {
 } from '@nestjs/websockets'
 import { createEvent } from '@qq-farm/shared'
 import { Server } from 'socket.io'
-import { AccountManagerService } from '../../game/account-manager.service'
+import { AccountManagerService } from '@/game/account-manager.service'
 import { RealtimePushService } from './realtime-push.service'
 import { WsRouterService } from './ws-router.service'
 

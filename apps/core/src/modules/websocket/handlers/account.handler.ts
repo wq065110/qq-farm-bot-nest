@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common'
-import { AccountManagerService } from '../../../game/account-manager.service'
-import { AccountService } from '../../account/account.service'
+import { AccountManagerService } from '@/game/account-manager.service'
+import { AccountService } from '@/modules/account/account.service'
 import { WsBody } from '../decorators/ws-body.decorator'
 import { WsRoute } from '../decorators/ws-route.decorator'
 import { requireString } from '../ws-guards'

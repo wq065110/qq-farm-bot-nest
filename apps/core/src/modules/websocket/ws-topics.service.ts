@@ -1,8 +1,8 @@
 import type { SocketWithMeta } from './ws-router.service'
 import { Injectable, Logger } from '@nestjs/common'
 import { createEvent } from '@qq-farm/shared'
-import { AccountManagerService } from '../../game/account-manager.service'
-import { StoreService } from '../../store/store.service'
+import { AccountManagerService } from '@/game/account-manager.service'
+import { StoreService } from '@/store/store.service'
 import { RealtimePushService } from './realtime-push.service'
 
 interface EventConfig {
