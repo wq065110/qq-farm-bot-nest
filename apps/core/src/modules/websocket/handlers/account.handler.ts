@@ -24,7 +24,7 @@ export class AccountHandler {
   async stop(@WsBody() data: Record<string, unknown>): Promise<null> {
     const id = requireString(data, 'id', '缺少账号 id')
     const resolved = this.manager.resolveAccountId(id) || id
-    this.accountService.stopAccount(resolved)
+    await this.accountService.stopAccount(resolved)
     this.manager.notifyAccountsUpdate()
     return null
   }

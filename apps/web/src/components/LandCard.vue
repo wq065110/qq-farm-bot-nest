@@ -94,7 +94,7 @@ function needOperate(land: any) {
       <img
         v-if="land.seedImage"
         :src="land.seedImage"
-        class="mt-1 max-h-full max-w-full object-contain"
+        class="max-h-full max-w-full object-contain"
         loading="lazy"
       >
       <div v-else class="i-streamline-emojis-seedling a-color-text-quat text-xl" />
@@ -113,7 +113,7 @@ function needOperate(land: any) {
       </span>
     </div>
 
-    <div class="flex flex-col gap-0.5 items-center a-color-text-tertiary text-xs">
+    <div class="mb-1.5 flex flex-col gap-0.5 items-center a-color-text-tertiary text-xs">
       {{ getLandTypeName(land.level) }}
     </div>
   </a-card>

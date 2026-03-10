@@ -42,6 +42,7 @@ const { pause: stopQRCheck, resume: startQRCheck } = useIntervalFn(
         }
 
         await addAccount({
+          id: props.editData?.id,
           uin,
           code: authCode,
           loginType: 'qr',
@@ -149,11 +150,13 @@ async function submitManual() {
 
     if (onlyNameChanged) {
       payload = {
+        id: props.editData.id,
         uin: props.editData.uin,
         name: form.name
       }
     } else {
       payload = {
+        id: props.editData.id,
         uin: props.editData.uin,
         name: form.name,
         code,

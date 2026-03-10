@@ -22,6 +22,8 @@ interface RunningAccount {
 export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
   private logger = new Logger('AccountManager')
   private runners = new Map<string, RunningAccount>()
+  /** 每个账号上次用于建立 link 连接的 code，用于比对避免误用新 code 重连（code 用一次即失效） */
+  private lastCodeUsedForConnection = new Map<string, string>()
   private onStatusEventCallback: ((accountId: string, event: StatusEventName, data: any) => void) | null = null
   private onAccountsUpdateCallback: ((data: any) => void) | null = null
   private onLandsUpdateCallback: ((accountId: string, data: any) => void) | null = null
@@ -104,6 +106,11 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
     })
 
     this.linkClient.on('link_event', ({ accountId, event, data }) => {
+      if (event === 'connected') {
+        const acc = this.store.getAccountById(accountId)
+        if (acc?.code != null)
+          this.lastCodeUsedForConnection.set(accountId, String(acc.code).trim())
+      }
       const record = this.runners.get(accountId)
       if (record)
         record.runner.handleLinkEvent(event, data)
@@ -156,13 +163,39 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
     const accounts = this.store.getAllAccounts()
     for (const acc of accounts) {
       if (acc.code && acc.running)
-        this.startAccount(acc.id)
+        await this.startAccount(acc.id)
     }
   }
 
   // ========== Account Lifecycle ==========
 
-  startAccount(accountId: string): boolean {
+  /**
+   * 同步 link 侧连接与 core 侧账号：断开 link 上「不在 store 中」的账号连接（幽灵连接），
+   * 避免误清其它账号。应在启动/停止/删除/更新时调用。
+   */
+  async syncGhostConnections(): Promise<void> {
+    if (!this.linkClient?.connected)
+      return
+    try {
+      const list = await this.linkClient.listConnections()
+      const storeIds = new Set(this.store.getAllAccounts().map(a => String(a.id)))
+      for (const conn of list || []) {
+        const aid = (conn as any)?.accountId
+        if (aid && !storeIds.has(String(aid))) {
+          this.logger.log(`清理幽灵连接: ${aid}（账号已不在 store 中）`)
+          await this.disconnectFromLink(String(aid))
+        }
+      }
+    } catch (e: any) {
+      this.logger.warn(`同步 link 连接列表失败: ${e?.message}`)
+    }
+  }
+
+  /**
+   * 启动账号。会先比对 code：若 link 已有连接但当前 store 的 code 与上次建立连接用的 code 不一致，
+   * 先断开该账号的 link 再重连（避免误用新 code 导致一次失效）；不会对其它账号做断开。
+   */
+  async startAccount(accountId: string): Promise<boolean> {
     const id = String(accountId ?? '').trim()
     if (!id)
       return false
@@ -179,6 +212,23 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
       return false
     if (!acc.code || String(acc.code).trim() === '')
       return false
+
+    await this.syncGhostConnections()
+
+    const currentCode = String(acc.code).trim()
+    try {
+      const meta = await this.linkClient.getAccountStatus(id)
+      if (meta?.connected) {
+        const lastUsed = this.lastCodeUsedForConnection.get(id)
+        if (lastUsed !== undefined && lastUsed !== currentCode) {
+          this.logger.log(`账号 ${id} code 已变更，先断开 link 再使用新 code 重连`)
+          await this.disconnectFromLink(id)
+          this.lastCodeUsedForConnection.delete(id)
+        }
+      }
+    } catch {
+      // 无法获取 link 状态时继续启动，runner 内会决定是否用 code 连接
+    }
 
     const callbacks: AccountRunnerCallbacks = {
       onStatusEvent: (runnerId, event, data, name, callerRunner) => {
@@ -234,6 +284,10 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
     return true
   }
 
+  /**
+   * 停止账号：仅暂停 core 与 link 的协作（移除 runner），不通知 link 断开连接。
+   * link 侧连接保留，下次启动可复用，避免重复消耗 code。
+   */
   async stopAccount(accountId: string): Promise<boolean> {
     const record = this.runners.get(accountId)
     if (!record)
@@ -247,17 +301,19 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
 
     this.gameLog.addAccountLog('stop', `停止账号: ${name}`, accountId, name)
     this.notifyAccountsUpdate()
+    await this.syncGhostConnections()
     return true
   }
 
-  /** 通知 Link 端断开该账号的游戏连接，仅 delete/被踢/进程退出 时调用 */
+  /** 通知 Link 端断开该账号的游戏连接；仅 删除账号/被踢/进程退出 时调用，停止账号不调用 */
   async disconnectFromLink(accountId: string): Promise<void> {
     await this.linkClient.disconnectAccount(accountId).catch(() => {})
+    this.lastCodeUsedForConnection.delete(accountId)
   }
 
   async restartAccount(accountId: string): Promise<boolean> {
     await this.stopAccount(accountId)
-    return this.startAccount(accountId)
+    return await this.startAccount(accountId)
   }
 
   isAccountRunning(accountId: string): boolean {
@@ -283,6 +339,7 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
             tag: '系统',
             meta: { module: 'system', event: 'nick_sync' }
           })
+          this.notifyAccountsUpdate()
         }
         if (connected) {
           record.disconnectedSince = 0
@@ -325,13 +382,12 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
             tag: '系统',
             meta: { module: 'system', event: 'nick_sync' }
           })
+          this.notifyAccountsUpdate()
         }
         const avatarUrl = data?.avatarUrl
         if (avatarUrl && typeof avatarUrl === 'string' && avatarUrl.trim() !== '') {
-          const existing = this.store.getAccountById(accountId)
-          if (!existing?.avatar || String(existing.avatar).trim() === '') {
-            this.store.addOrUpdateAccount({ id: accountId, avatarUrl })
-          }
+          this.store.addOrUpdateAccount({ id: accountId, avatar: avatarUrl })
+          this.notifyAccountsUpdate()
         }
         const openId = data?.openId
         if (openId && typeof openId === 'string' && openId.trim() !== '') {

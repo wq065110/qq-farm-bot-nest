@@ -397,7 +397,7 @@ export class WarehouseWorker {
       merged.get(id)!.count += count
     }
 
-    const seeds = Array.from(merged.values())
+    const seeds = [...merged.values()]
     seeds.sort((a, b) => b.requiredLevel - a.requiredLevel)
     return seeds
   }

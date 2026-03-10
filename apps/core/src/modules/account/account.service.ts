@@ -71,13 +71,15 @@ export class AccountService {
     if (!effectiveIsUpdate) {
       const newAcc = afterAccounts.find((a: any) => String(a.id) === accountId) || afterAccounts.at(-1)
       if (newAcc)
-        this.manager.startAccount(String(newAcc.id))
+        await this.manager.startAccount(String(newAcc.id))
     }
 
+    await this.manager.syncGhostConnections()
     this.manager.notifyAccountsUpdate()
     return this.manager.getAccounts()
   }
 
+  /** 删除账号：先停止 core 侧 runner，再通知 link 真正断开连接并清理 store */
   async deleteAccount(id: string) {
     const resolvedId = this.manager.resolveAccountId(id) || String(id)
     const before = this.manager.getAccounts()
@@ -89,6 +91,7 @@ export class AccountService {
     await this.manager.disconnectFromLink(resolvedId)
     const data = this.store.deleteAccount(resolvedId)
     this.gameLog.deleteAccountLogs(resolvedId)
+    await this.manager.syncGhostConnections()
 
     this.manager.addAccountLog(
       'delete',
@@ -101,7 +104,7 @@ export class AccountService {
     return data
   }
 
-  startAccount(id: string) {
+  async startAccount(id: string) {
     const resolvedId = (this.manager.resolveAccountId(id) || String(id || '').trim()).trim()
     if (!resolvedId)
       throw new NotFoundException('账号未找到')
@@ -111,15 +114,15 @@ export class AccountService {
     if (!acc.code || String(acc.code).trim() === '') {
       throw new NotFoundException('请先扫码登录获取 Code 后再启动')
     }
-    const ok = this.manager.startAccount(resolvedId)
+    const ok = await this.manager.startAccount(resolvedId)
     if (!ok)
       throw new NotFoundException('账号已在运行中')
     return null
   }
 
-  stopAccount(id: string) {
+  async stopAccount(id: string) {
     const resolvedId = this.manager.resolveAccountId(id)
-    this.manager.stopAccount(resolvedId)
+    await this.manager.stopAccount(resolvedId)
     return null
   }
 

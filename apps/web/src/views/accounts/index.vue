@@ -51,11 +51,17 @@ async function confirmDelete() {
   }
 }
 
+const toggleRunningLoading = ref(false)
 async function toggleAccount(account: any) {
-  const ref = String(account.uin || account.id)
-  if (account.running)
-    await accountStore.stopAccount(ref)
-  else await accountStore.startAccount(ref)
+  toggleRunningLoading.value = true
+  try {
+    const ref = String(account.uin || account.id)
+    if (account.running)
+      await accountStore.stopAccount(ref)
+    else await accountStore.startAccount(ref)
+  } finally {
+    toggleRunningLoading.value = false
+  }
 }
 </script>
 
@@ -119,16 +125,16 @@ async function toggleAccount(account: any) {
 
           <!-- Actions -->
           <div class="px-3 pb-3 gap-1.5 grid grid-cols-4 text-sm">
-            <a-button color="primary" variant="filled" @click="toggleAccount(acc)">
-              <div class="" :class="acc.running ? 'i-carbon-stop-filled' : 'i-carbon-play-filled'" />
+            <a-button color="primary" :loading="toggleRunningLoading" variant="filled" @click="toggleAccount(acc)">
+              <div :class="acc.running ? 'i-carbon-stop-filled' : 'i-carbon-play-filled'" />
             </a-button>
-            <a-button color="primary" variant="filled" @click="openSettings(acc)">
+            <a-button :disabled="acc.running" color="primary" variant="filled" @click="openSettings(acc)">
               <div class="i-streamline-emojis-nut-and-bolt" />
             </a-button>
-            <a-button color="primary" variant="filled" @click="openEditModal(acc)">
+            <a-button :disabled="acc.running" color="primary" variant="filled" @click="openEditModal(acc)">
               <div class="i-streamline-emojis-clipboard" />
             </a-button>
-            <a-button color="primary" variant="filled" @click="handleDelete(acc)">
+            <a-button :disabled="acc.running" color="primary" variant="filled" @click="handleDelete(acc)">
               <div class="i-carbon-trash-can" />
             </a-button>
           </div>
