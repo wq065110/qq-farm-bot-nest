@@ -21,7 +21,6 @@ export interface AutomationConfig {
   month_card: boolean
   open_server_gift: boolean
   sell: boolean
-  fertilizer: string
 }
 
 export interface IntervalsConfig {
@@ -46,9 +45,12 @@ export interface StrategyState {
   friendQuietHours: FriendQuietHoursConfig
   stealCropBlacklist: number[]
   automation: AutomationConfig
+  fertilizer: string
+  fertilizerLandTypes: string[]
+  fertilizerMultiSeason: boolean
 }
 
-const STRATEGY_UPDATE_KEYS = ['intervals', 'plantingStrategy', 'preferredSeedId', 'friendQuietHours', 'stealCropBlacklist', 'automation'] as const
+const STRATEGY_UPDATE_KEYS = ['intervals', 'plantingStrategy', 'preferredSeedId', 'friendQuietHours', 'stealCropBlacklist', 'automation', 'fertilizer', 'fertilizerLandTypes', 'fertilizerMultiSeason'] as const
 
 function initialStrategy(): StrategyState {
   return {
@@ -57,7 +59,10 @@ function initialStrategy(): StrategyState {
     intervals: { ...DEFAULT_INTERVALS },
     friendQuietHours: { ...DEFAULT_FRIEND_QUIET_HOURS },
     stealCropBlacklist: [],
-    automation: { ...AUTOMATION_DEFAULTS }
+    automation: { ...AUTOMATION_DEFAULTS },
+    fertilizer: 'none',
+    fertilizerLandTypes: [],
+    fertilizerMultiSeason: false
   }
 }
 
@@ -95,7 +100,10 @@ export const useStrategyStore = defineStore('strategy', {
           intervals: s.intervals,
           friendQuietHours: s.friendQuietHours,
           stealCropBlacklist: s.stealCropBlacklist,
-          automation: s.automation
+          automation: s.automation,
+          fertilizer: s.fertilizer,
+          fertilizerLandTypes: s.fertilizerLandTypes,
+          fertilizerMultiSeason: s.fertilizerMultiSeason
         })
         return { ok: true }
       } catch (e: any) {

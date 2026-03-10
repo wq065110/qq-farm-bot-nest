@@ -1,11 +1,19 @@
 import type { DrizzleDB } from '../database/drizzle.provider'
-import type { AccountConfigSnapshot, AutomationConfig, FertilizerMode, FriendQuietHoursConfig, IntervalsConfig, OfflineReminderConfig, PlantingStrategy } from '../game/constants'
+import type { AccountConfigSnapshot, AutomationConfig, FertilizerLandType, FertilizerMode, FriendQuietHoursConfig, IntervalsConfig, OfflineReminderConfig, PlantingStrategy } from '../game/constants'
 import { Inject, Injectable, Logger } from '@nestjs/common'
 import { and, eq } from 'drizzle-orm'
 import { DRIZZLE_TOKEN } from '../database/drizzle.provider'
 import * as schema from '../database/schema'
-import { ALLOWED_AUTOMATION_KEYS, ALLOWED_FERTILIZER_MODES, ALLOWED_PLANTING_STRATEGIES, DEFAULT_ACCOUNT_CONFIG, DEFAULT_AUTOMATION, DEFAULT_FRIEND_QUIET_HOURS, DEFAULT_OFFLINE_REMINDER, PUSHOO_CHANNELS } from '../game/constants'
+import { ALLOWED_AUTOMATION_KEYS, ALLOWED_FERTILIZER_MODES, ALL_FERTILIZER_LAND_TYPES, ALLOWED_PLANTING_STRATEGIES, DEFAULT_ACCOUNT_CONFIG, DEFAULT_AUTOMATION, DEFAULT_FRIEND_QUIET_HOURS, DEFAULT_OFFLINE_REMINDER, PUSHOO_CHANNELS } from '../game/constants'
 import { normalizeTimeString } from '../game/utils'
+
+const ALLOWED_LAND_TYPES_SET = new Set(ALL_FERTILIZER_LAND_TYPES)
+
+function normalizeFertilizerLandTypes(input: unknown): FertilizerLandType[] {
+  const arr = Array.isArray(input) ? input : []
+  const filtered = arr.filter((v): v is FertilizerLandType => typeof v === 'string' && ALLOWED_LAND_TYPES_SET.has(v as FertilizerLandType))
+  return (filtered.length > 0 ? [...new Set(filtered)] : [...ALL_FERTILIZER_LAND_TYPES]) as FertilizerLandType[]
+}
 
 @Injectable()
 export class StoreService {
@@ -135,7 +143,10 @@ export class StoreService {
       intervals: this.normalizeIntervals(b.intervals),
       friendQuietHours: { ...(b.friendQuietHours || DEFAULT_FRIEND_QUIET_HOURS) },
       friendBlacklist: rawBlacklist.map(Number).filter(n => Number.isFinite(n) && n > 0),
-      stealCropBlacklist: rawStealBlacklist.map(Number).filter(n => Number.isFinite(n) && n >= 0)
+      stealCropBlacklist: rawStealBlacklist.map(Number).filter(n => Number.isFinite(n) && n >= 0),
+      fertilizer: (b as any).fertilizer ?? DEFAULT_ACCOUNT_CONFIG.fertilizer,
+      fertilizerLandTypes: normalizeFertilizerLandTypes((b as any).fertilizerLandTypes),
+      fertilizerMultiSeason: (b as any).fertilizerMultiSeason !== undefined ? !!(b as any).fertilizerMultiSeason : DEFAULT_ACCOUNT_CONFIG.fertilizerMultiSeason
     }
   }
 
@@ -147,12 +158,22 @@ export class StoreService {
       for (const [k, v] of Object.entries(src.automation)) {
         if (!ALLOWED_AUTOMATION_KEYS.has(k))
           continue
-        if (k === 'fertilizer') {
-          cfg.automation.fertilizer = ALLOWED_FERTILIZER_MODES.includes(v as FertilizerMode) ? (v as FertilizerMode) : cfg.automation.fertilizer
-        } else {
-          (cfg.automation as any)[k] = !!v
-        }
+        (cfg.automation as any)[k] = !!v
       }
+    }
+
+    if (src.fertilizer !== undefined) {
+      cfg.fertilizer = ALLOWED_FERTILIZER_MODES.includes(src.fertilizer as FertilizerMode)
+        ? (src.fertilizer as FertilizerMode)
+        : cfg.fertilizer
+    }
+
+    if (src.fertilizerLandTypes !== undefined) {
+      cfg.fertilizerLandTypes = normalizeFertilizerLandTypes(src.fertilizerLandTypes)
+    }
+
+    if (src.fertilizerMultiSeason !== undefined) {
+      cfg.fertilizerMultiSeason = !!src.fertilizerMultiSeason
     }
 
     if (src.plantingStrategy && ALLOWED_PLANTING_STRATEGIES.includes(src.plantingStrategy))
@@ -216,7 +237,10 @@ export class StoreService {
       intervals: row.intervals as any,
       friendQuietHours: row.friendQuietHours as any,
       friendBlacklist: row.friendBlacklist as any,
-      stealCropBlacklist: row.stealCropBlacklist as any
+      stealCropBlacklist: row.stealCropBlacklist as any,
+      fertilizer: row.fertilizer as any,
+      fertilizerLandTypes: row.fertilizerLandTypes as any,
+      fertilizerMultiSeason: row.fertilizerMultiSeason
     }, fallback)
   }
 
@@ -241,7 +265,10 @@ export class StoreService {
       intervals: merged.intervals as any,
       friendQuietHours: merged.friendQuietHours as any,
       friendBlacklist: merged.friendBlacklist as any,
-      stealCropBlacklist: merged.stealCropBlacklist as any
+      stealCropBlacklist: merged.stealCropBlacklist as any,
+      fertilizer: merged.fertilizer,
+      fertilizerLandTypes: merged.fertilizerLandTypes as any,
+      fertilizerMultiSeason: merged.fertilizerMultiSeason
     }
 
     if (existing) {
@@ -268,7 +295,6 @@ export class StoreService {
     }
     const fallback = this.getDefaultAccountConfig()
     const cfg = this.normalizeAccountConfig(fallback, DEFAULT_ACCOUNT_CONFIG)
-    cfg.automation.fertilizer = 'none'
 
     const now = Date.now()
     this.db.insert(schema.accountConfigs).values({
@@ -280,6 +306,9 @@ export class StoreService {
       friendQuietHours: cfg.friendQuietHours as any,
       friendBlacklist: cfg.friendBlacklist as any,
       stealCropBlacklist: cfg.stealCropBlacklist as any,
+      fertilizer: cfg.fertilizer,
+      fertilizerLandTypes: cfg.fertilizerLandTypes as any,
+      fertilizerMultiSeason: cfg.fertilizerMultiSeason,
       createdAt: now,
       updatedAt: now
     }).run()

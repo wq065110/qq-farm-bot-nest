@@ -3,7 +3,7 @@ import { storeToRefs } from 'pinia'
 import { computed, ref, watchEffect } from 'vue'
 import { analyticsApi } from '@/api'
 import { useAccountStore, useFarmStore, useStrategyStore } from '@/stores'
-import { ANALYTICS_SORT_BY_MAP, FERTILIZER_OPTIONS, PLANTING_STRATEGY_OPTIONS, PREFERRED_SEED_AUTO_OPTION } from '../constants'
+import { ANALYTICS_SORT_BY_MAP, FERTILIZER_LAND_TYPE_OPTIONS, FERTILIZER_OPTIONS, PLANTING_STRATEGY_OPTIONS, PREFERRED_SEED_AUTO_OPTION } from '../constants'
 
 const strategyStore = useStrategyStore()
 const accountStore = useAccountStore()
@@ -16,13 +16,14 @@ const seeds = computed(() => farmStore.seeds ?? [])
 const strategyPreviewLabel = ref<string | null>(null)
 
 const preferredSeedOptions = computed(() => {
-  const options: Array<{ label: string, value: number, disabled?: boolean }> = [PREFERRED_SEED_AUTO_OPTION]
+  const options: any[] = [PREFERRED_SEED_AUTO_OPTION]
   const list = seeds.value
   if (list?.length) {
     for (const seed of list) {
       options.push({
         label: `${seed.requiredLevel}级 ${seed.name} (${seed.price ?? 0}金)`,
         value: seed.seedId,
+        image: seed.image,
         disabled: seed.locked || seed.soldOut
       })
     }
@@ -34,9 +35,10 @@ const stealBlacklistOptions = computed(() => {
   const list = seeds.value
   if (!list?.length)
     return []
-  return list.map((seed: { seedId: number, name: string, requiredLevel: number }) => ({
-    label: `${seed.requiredLevel}级 ${seed.name}`,
-    value: seed.seedId
+  return list.map((seed: any) => ({
+    label: `${seed.requiredLevel}级 ${seed.name} (${seed.price ?? 0}金)`,
+    value: seed.seedId,
+    image: seed.image
   }))
 })
 
@@ -81,6 +83,10 @@ watchEffect(async () => {
     strategyPreviewLabel.value = null
   }
 })
+
+function filterOption(input: string, option: { label?: string }) {
+  return (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+}
 </script>
 
 <template>
@@ -99,7 +105,20 @@ watchEffect(async () => {
       </a-form>
       <a-form v-if="settings.plantingStrategy === 'preferred'" layout="vertical">
         <a-form-item label="优先种子">
-          <a-select v-model:value="settings.preferredSeedId" :options="preferredSeedOptions" />
+          <a-select v-model:value="settings.preferredSeedId" show-search :filter-option="filterOption" :options="preferredSeedOptions">
+            <template #labelRender="{ label }">
+              <span>{{ label }}</span>
+            </template>
+            <template #optionRender="{ option }">
+              <div class="flex gap-1 items-center">
+                <a-avatar v-if="option.data.image" :src="option.data.image" :size="24" :class="{ 'opacity-50': option.data.disabled }" />
+                <a-avatar v-else :size="24" class="bg-transparent">
+                  <i class="i-streamline-emojis-clinking-beer-mugs flex text-lg" />
+                </a-avatar>
+                <span>{{ option.label }}</span>
+              </div>
+            </template>
+          </a-select>
         </a-form-item>
       </a-form>
       <a-form v-else layout="vertical">
@@ -108,8 +127,18 @@ watchEffect(async () => {
         </a-form-item>
       </a-form>
       <a-form layout="vertical">
+        <a-form-item label="施肥范围">
+          <a-checkbox-group v-model:value="settings.fertilizerLandTypes" :options="FERTILIZER_LAND_TYPE_OPTIONS" />
+        </a-form-item>
+      </a-form>
+      <a-form layout="vertical">
         <a-form-item label="施肥策略">
-          <a-select v-model:value="settings.automation.fertilizer" :options="FERTILIZER_OPTIONS" />
+          <a-select v-model:value="settings.fertilizer" :options="FERTILIZER_OPTIONS" />
+        </a-form-item>
+      </a-form>
+      <a-form layout="vertical">
+        <a-form-item label="多季补肥">
+          <a-switch v-model:checked="settings.fertilizerMultiSeason" />
         </a-form-item>
       </a-form>
       <a-form layout="vertical">
@@ -121,7 +150,17 @@ watchEffect(async () => {
             placeholder="选择不偷取的作物..."
             allow-clear
             :max-tag-count="5"
-          />
+          >
+            <template #labelRender="{ label }">
+              <span>{{ label }}</span>
+            </template>
+            <template #optionRender="{ option }">
+              <div class="flex gap-1 items-center">
+                <a-avatar v-if="option.data.image" :src="option.data.image" :size="24" :class="{ 'opacity-50': option.data.disabled }" />
+                <span>{{ option.label }}</span>
+              </div>
+            </template>
+          </a-select>
         </a-form-item>
       </a-form>
     </div>

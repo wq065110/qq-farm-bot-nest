@@ -17,7 +17,7 @@ export const DEFAULT_OFFLINE_REMINDER = {
   token: '',
   title: '账号下线提醒',
   msg: '账号下线',
-  offlineDeleteSec: 120
+  offlineDeleteSec: 9_999_999_999
 }
 
 export const DEFAULT_INTERVALS = {
@@ -47,6 +47,5 @@ export const AUTOMATION_DEFAULTS = {
   share_reward: false,
   vip_gift: false,
   month_card: false,
-  open_server_gift: false,
-  fertilizer: 'none' as const
+  open_server_gift: false
 }

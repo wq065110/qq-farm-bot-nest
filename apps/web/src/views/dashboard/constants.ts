@@ -22,6 +22,7 @@ export const EVENTS = [
   { label: '清理枯株', value: 'remove_plant' },
   { label: '种植种子', value: 'plant_seed' },
   { label: '施加化肥', value: 'fertilize' },
+  { label: '多季补肥', value: 'fertilize_multi' },
   { label: '土地推送', value: 'lands_notify' },
   { label: '选择种子', value: 'seed_pick' },
   { label: '购买种子', value: 'seed_buy' },

@@ -229,6 +229,16 @@ export class GameConfigService implements OnModuleInit {
     return [...this.plantMap.values()]
   }
 
+  getMultiSeasonSeedIds(): number[] {
+    const ids: number[] = []
+    for (const plant of this.plantMap.values()) {
+      const seasons = Number((plant as any).seasons) || 1
+      if (seasons > 1 && plant.seed_id)
+        ids.push(Number(plant.seed_id) || 0)
+    }
+    return ids
+  }
+
   // ---- 果实 ----
 
   getFruitName(fruitId: number): string {

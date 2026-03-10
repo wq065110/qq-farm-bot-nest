@@ -88,8 +88,13 @@ function getLandTypeName(level: number) {
       </span>
     </div>
 
-    <div class="a-color-text-tertiary text-xs">
-      {{ getLandTypeName(land.level) }}
+    <div class="flex flex-col gap-0.5 items-center a-color-text-tertiary text-xs">
+      <span>
+        {{ getLandTypeName(land.level) }}
+      </span>
+      <span v-if="land.totalSeasons && land.totalSeasons > 1">
+        第 {{ land.currentSeason || 1 }} / {{ land.totalSeasons }} 季
+      </span>
     </div>
   </a-card>
 </template>

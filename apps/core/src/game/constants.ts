@@ -36,6 +36,27 @@ export type PlantingStrategy = typeof ALLOWED_PLANTING_STRATEGIES[number]
 export const ALLOWED_FERTILIZER_MODES = ['both', 'normal', 'organic', 'none'] as const
 export type FertilizerMode = typeof ALLOWED_FERTILIZER_MODES[number]
 
+export const ALL_FERTILIZER_LAND_TYPES = ['gold', 'black', 'red', 'normal'] as const
+export type FertilizerLandType = typeof ALL_FERTILIZER_LAND_TYPES[number]
+
+export const FERTILIZER_LAND_TYPE_LABELS: Record<FertilizerLandType, string> = {
+  gold: '金土地',
+  black: '黑土地',
+  red: '红土地',
+  normal: '普通土地'
+}
+
+export function getLandTypeByLevel(level: number): FertilizerLandType {
+  const lv = Number(level) || 0
+  if (lv >= 4)
+    return 'gold'
+  if (lv === 3)
+    return 'black'
+  if (lv === 2)
+    return 'red'
+  return 'normal'
+}
+
 export interface AutomationConfig {
   farm: boolean
   farm_push: boolean
@@ -55,7 +76,6 @@ export interface AutomationConfig {
   month_card: boolean
   open_server_gift: boolean
   sell: boolean
-  fertilizer: FertilizerMode
 }
 
 export const DEFAULT_AUTOMATION: AutomationConfig = {
@@ -76,8 +96,7 @@ export const DEFAULT_AUTOMATION: AutomationConfig = {
   vip_gift: true,
   month_card: true,
   open_server_gift: true,
-  sell: true,
-  fertilizer: 'none'
+  sell: false
 }
 
 export const ALLOWED_AUTOMATION_KEYS = new Set(Object.keys(DEFAULT_AUTOMATION))
@@ -129,7 +148,7 @@ export const DEFAULT_OFFLINE_REMINDER: OfflineReminderConfig = {
   token: '',
   title: '账号下线提醒',
   msg: '账号下线',
-  offlineDeleteSec: 120
+  offlineDeleteSec: 9_999_999_999
 }
 
 export interface AccountConfigSnapshot {
@@ -140,6 +159,9 @@ export interface AccountConfigSnapshot {
   friendQuietHours: FriendQuietHoursConfig
   friendBlacklist: number[]
   stealCropBlacklist: number[]
+  fertilizer: FertilizerMode
+  fertilizerLandTypes: FertilizerLandType[]
+  fertilizerMultiSeason: boolean
 }
 
 export const DEFAULT_ACCOUNT_CONFIG: AccountConfigSnapshot = {
@@ -149,7 +171,10 @@ export const DEFAULT_ACCOUNT_CONFIG: AccountConfigSnapshot = {
   intervals: { ...DEFAULT_INTERVALS },
   friendQuietHours: { ...DEFAULT_FRIEND_QUIET_HOURS },
   friendBlacklist: [],
-  stealCropBlacklist: []
+  stealCropBlacklist: [],
+  fertilizer: 'none',
+  fertilizerLandTypes: [...ALL_FERTILIZER_LAND_TYPES],
+  fertilizerMultiSeason: false
 }
 
 export const PUSHOO_CHANNELS = new Set([

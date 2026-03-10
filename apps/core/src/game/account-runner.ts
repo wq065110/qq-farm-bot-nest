@@ -396,11 +396,12 @@ export class AccountRunner {
 
       if (snapshot?.automation) {
         const auto = this.store.getAutomation(this.accountId)
+        const cfg = this.store.getAccountConfig(this.accountId)
         const allDailyOn = auto.email && auto.free_gifts && auto.share_reward && auto.vip_gift && auto.month_card && auto.open_server_gift
         if (allDailyOn) {
           this.scheduler.setTimeoutTask('daily_routine_immediate', 400, () => this.runDailyRoutines(true).catch(() => {}))
         }
-        const fert = String(auto.fertilizer || '').toLowerCase()
+        const fert = String(cfg.fertilizer || '').toLowerCase()
         if (fert === 'both' || fert === 'organic') {
           this.scheduler.setTimeoutTask('fertilizer_immediate', 600, async () => {
             if (this.loginReady)

@@ -5,7 +5,7 @@ import type { AnalyticsWorker } from './analytics.worker'
 import type { StatsTracker } from './stats.worker'
 import { Logger } from '@nestjs/common'
 import { Scheduler } from '@qq-farm/shared'
-import { PHASE_NAMES, PlantPhase } from '../constants'
+import { getLandTypeByLevel, PHASE_NAMES, PlantPhase } from '../constants'
 import { getServerTimeSec, sleep, toNum, toTimeSec } from '../utils'
 
 const NORMAL_FERTILIZER_ID = 1011
@@ -225,29 +225,49 @@ export class FarmWorker {
 
   // ========== Farm Operations ==========
 
-  async runFertilizerByConfig(plantedLands: number[] = []): Promise<{ normal: number, organic: number }> {
-    const fertilizerConfig = this.store.getAutomation(this.accountId).fertilizer || 'both'
-    const planted = plantedLands.filter(Boolean)
+  async runFertilizerByConfig(plantedLands: number[] = [], options?: { reason?: 'multi_season' | 'normal' }): Promise<{ normal: number, organic: number }> {
+    const cfg = this.store.getAccountConfig(this.accountId)
+    const fertilizerConfig = cfg.fertilizer || 'both'
+    const landTypes = (cfg.fertilizerLandTypes?.length ? cfg.fertilizerLandTypes : ['gold', 'black', 'red', 'normal']) as string[]
+    const allowedTypes = new Set(landTypes)
+    const eventTag = options?.reason === 'multi_season' ? 'fertilize_multi' : 'fertilize'
     let fertilizedNormal = 0
     let fertilizedOrganic = 0
 
-    if ((fertilizerConfig === 'normal' || fertilizerConfig === 'both') && planted.length > 0) {
-      fertilizedNormal = await this.fertilize(planted, NORMAL_FERTILIZER_ID)
+    let candidateIds: number[] = plantedLands.filter(Boolean)
+    try {
+      const latest = await this.getAllLands()
+      const lands = latest?.lands || []
+      const idToLevel = new Map<number, number>()
+      for (const land of lands)
+        idToLevel.set(toNum(land.id), toNum(land.level))
+      if (candidateIds.length === 0)
+        candidateIds = lands.filter((l: any) => l?.unlocked && l?.plant?.phases?.length).map((l: any) => toNum(l.id))
+      candidateIds = candidateIds.filter(id => allowedTypes.has(getLandTypeByLevel(idToLevel.get(id) ?? 0)))
+    } catch {}
+
+    if ((fertilizerConfig === 'normal' || fertilizerConfig === 'both') && candidateIds.length > 0) {
+      fertilizedNormal = await this.fertilize(candidateIds, NORMAL_FERTILIZER_ID)
       if (fertilizedNormal > 0) {
-        this.log(`已为 ${fertilizedNormal}/${planted.length} 块地施无机化肥`, 'fertilize')
+        this.log(`已为 ${fertilizedNormal}/${candidateIds.length} 块地施无机化肥`, eventTag)
         this.stats.recordOperation('fertilize', fertilizedNormal)
       }
     }
 
     if (fertilizerConfig === 'organic' || fertilizerConfig === 'both') {
-      let organicTargets = planted
+      let organicTargets: number[] = []
       try {
         const latest = await this.getAllLands()
-        organicTargets = this.getOrganicTargets(latest?.lands)
+        const lands = latest?.lands || []
+        organicTargets = this.getOrganicTargets(lands)
+        const idToLevel = new Map<number, number>()
+        for (const land of lands)
+          idToLevel.set(toNum(land.id), toNum(land.level))
+        organicTargets = organicTargets.filter(id => allowedTypes.has(getLandTypeByLevel(idToLevel.get(id) ?? 0)))
       } catch {}
       fertilizedOrganic = await this.fertilizeOrganicLoop(organicTargets)
       if (fertilizedOrganic > 0) {
-        this.log(`有机化肥循环施肥完成，共施 ${fertilizedOrganic} 次`, 'fertilize')
+        this.log(`有机化肥循环施肥完成，共施 ${fertilizedOrganic} 次`, eventTag)
         this.stats.recordOperation('fertilize', fertilizedOrganic)
       }
     }
@@ -268,6 +288,27 @@ export class FarmWorker {
         return false
       return true
     }).map((l: any) => toNum(l.id))
+  }
+
+  private getMultiSeasonGrowingLandIds(lands: any[]): number[] {
+    const multiSeasonSeeds = new Set(this.gameConfig.getMultiSeasonSeedIds?.() || [])
+    const result: number[] = []
+    for (const land of lands || []) {
+      if (!land?.unlocked)
+        continue
+      const plant = land.plant
+      if (!plant?.phases?.length)
+        continue
+      const phase = this.getCurrentPhase(plant.phases)
+      if (!phase || phase.phase === PlantPhase.MATURE || phase.phase === PlantPhase.DEAD)
+        continue
+      const plantId = toNum(plant.id)
+      const plantCfg = this.gameConfig.getPlantById(plantId)
+      const seedId = toNum(plantCfg?.seed_id)
+      if (seedId > 0 && multiSeasonSeeds.has(seedId))
+        result.push(toNum(land.id))
+    }
+    return result
   }
 
   async runFarmOperation(opType: string): Promise<{ hadWork: boolean, actions: string[] }> {
@@ -313,6 +354,16 @@ export class FarmWorker {
           harvestedIds = [...status.harvestable]
         } catch {}
       }
+    }
+
+    const cfg = this.store.getAccountConfig(this.accountId)
+    if ((opType === 'all' || opType === 'harvest') && harvestedIds.length > 0 && cfg.fertilizerMultiSeason) {
+      try {
+        const afterLands = await this.getAllLands()
+        const multiSeasonGrowing = this.getMultiSeasonGrowingLandIds(afterLands?.lands || [])
+        if (multiSeasonGrowing.length > 0)
+          await this.runFertilizerByConfig(multiSeasonGrowing, { reason: 'multi_season' })
+      } catch {}
     }
 
     if (opType === 'all' || opType === 'plant') {
@@ -523,6 +574,8 @@ export class FarmWorker {
         const plantId = toNum(plant.id)
         const plantCfg = this.gameConfig.getPlantById(plantId)
         const seedId = toNum(plantCfg?.seed_id)
+        const totalSeasons = Number((plantCfg as any)?.seasons) || 1
+        const currentSeason = Number((plant as any)?.cur_season) || 1
         const maturePhase = plant.phases.find((p: any) => toNum(p?.phase) === PlantPhase.MATURE)
         const matureBegin = maturePhase ? toTimeSec(maturePhase.begin_time) : 0
         let landStatus = 'growing'
@@ -546,7 +599,9 @@ export class FarmWorker {
           level: toNum(land.level),
           maxLevel: toNum(land.max_level),
           couldUnlock: !!land.could_unlock,
-          couldUpgrade: !!land.could_upgrade
+          couldUpgrade: !!land.could_upgrade,
+          currentSeason,
+          totalSeasons
         }
       })
       return { lands, summary: { harvestable: status.harvestable.length, growing: status.growing.length, empty: status.empty.length, dead: status.dead.length, needWater: status.needWater.length, needWeed: status.needWeed.length, needBug: status.needBug.length } }

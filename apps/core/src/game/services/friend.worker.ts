@@ -482,6 +482,8 @@ export class FriendWorker {
         const plantId = toNum(plant.id)
         const plantCfg = this.gameConfig.getPlantById(plantId)
         const seedId = toNum(plantCfg?.seed_id)
+        const totalSeasons = Number((plantCfg as any)?.seasons) || 1
+        const currentSeason = Number((plant as any)?.cur_season) || 1
         const maturePhase = plant.phases.find((p: any) => toNum(p?.phase) === PlantPhase.MATURE)
         const matureBegin = maturePhase ? toTimeSec(maturePhase.begin_time) : 0
         let status = 'growing'
@@ -501,7 +503,9 @@ export class FriendWorker {
           matureInSec: matureBegin > nowSec ? matureBegin - nowSec : 0,
           needWater: toNum(plant.dry_num) > 0,
           needWeed: plant.weed_owners?.length > 0,
-          needBug: plant.insect_owners?.length > 0
+          needBug: plant.insect_owners?.length > 0,
+          currentSeason,
+          totalSeasons
         }
       })
       return { lands: landsList, summary: analyzed }

@@ -52,6 +52,9 @@ export const drizzleProvider = {
         friend_quiet_hours TEXT DEFAULT '{}',
         friend_blacklist TEXT DEFAULT '[]',
         steal_crop_blacklist TEXT DEFAULT '[]',
+        fertilizer TEXT DEFAULT 'none',
+        fertilizer_land_types TEXT DEFAULT '["gold","black","red","normal"]',
+        fertilizer_multi_season INTEGER DEFAULT 0,
         created_at INTEGER DEFAULT 0,
         updated_at INTEGER DEFAULT 0
       );

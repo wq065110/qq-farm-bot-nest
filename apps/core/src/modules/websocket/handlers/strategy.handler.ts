@@ -16,14 +16,18 @@ export class StrategyHandler {
   query(
     @WsAccount() accountId: string
   ): unknown {
+    const cfg = this.store.getAccountConfig(accountId)
     return {
-      intervals: this.store.getIntervals(accountId),
-      plantingStrategy: this.store.getPlantingStrategy(accountId),
-      preferredSeedId: this.store.getPreferredSeed(accountId),
-      friendQuietHours: this.store.getFriendQuietHours(accountId),
-      stealCropBlacklist: this.store.getStealCropBlacklist(accountId),
-      friendBlacklist: this.store.getFriendBlacklist(accountId),
-      automation: this.store.getAutomation(accountId)
+      intervals: cfg.intervals,
+      plantingStrategy: cfg.plantingStrategy,
+      preferredSeedId: cfg.preferredSeedId,
+      friendQuietHours: cfg.friendQuietHours,
+      stealCropBlacklist: cfg.stealCropBlacklist,
+      friendBlacklist: cfg.friendBlacklist,
+      automation: cfg.automation,
+      fertilizer: cfg.fertilizer,
+      fertilizerLandTypes: cfg.fertilizerLandTypes,
+      fertilizerMultiSeason: cfg.fertilizerMultiSeason
     }
   }
 

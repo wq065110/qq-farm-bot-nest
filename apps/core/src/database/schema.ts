@@ -24,6 +24,9 @@ export const accountConfigs = sqliteTable('account_configs', {
   friendQuietHours: text('friend_quiet_hours', { mode: 'json' }).$type<Record<string, any>>().default({}),
   friendBlacklist: text('friend_blacklist', { mode: 'json' }).$type<number[]>().default([]),
   stealCropBlacklist: text('steal_crop_blacklist', { mode: 'json' }).$type<number[]>().default([]),
+  fertilizer: text('fertilizer').default('none'),
+  fertilizerLandTypes: text('fertilizer_land_types', { mode: 'json' }).$type<string[]>().default(['gold', 'black', 'red', 'normal']),
+  fertilizerMultiSeason: integer('fertilizer_multi_season', { mode: 'boolean' }).default(false),
   createdAt: integer('created_at', { mode: 'number' }).default(0),
   updatedAt: integer('updated_at', { mode: 'number' }).default(0)
 })

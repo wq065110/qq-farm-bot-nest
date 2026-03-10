@@ -294,7 +294,7 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
             record.disconnectedSince = now
           const offlineMs = now - record.disconnectedSince
           const offlineReminder = this.store.getOfflineReminder()
-          const autoDeleteMs = (offlineReminder?.offlineDeleteSec || 120) * 1000
+          const autoDeleteMs = (offlineReminder?.offlineDeleteSec || 9_999_999_999) * 1000
 
           if (!record.autoDeleteTriggered && offlineMs >= autoDeleteMs) {
             record.autoDeleteTriggered = true
