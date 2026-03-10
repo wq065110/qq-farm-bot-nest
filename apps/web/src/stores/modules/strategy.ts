@@ -41,6 +41,7 @@ export interface FriendQuietHoursConfig {
 export interface StrategyState {
   plantingStrategy: string
   preferredSeedId: number
+  bagSeedPriority: number[]
   intervals: IntervalsConfig
   friendQuietHours: FriendQuietHoursConfig
   stealCropBlacklist: number[]
@@ -50,12 +51,13 @@ export interface StrategyState {
   fertilizerMultiSeason: boolean
 }
 
-const STRATEGY_UPDATE_KEYS = ['intervals', 'plantingStrategy', 'preferredSeedId', 'friendQuietHours', 'stealCropBlacklist', 'automation', 'fertilizer', 'fertilizerLandTypes', 'fertilizerMultiSeason'] as const
+const STRATEGY_UPDATE_KEYS = ['intervals', 'plantingStrategy', 'preferredSeedId', 'bagSeedPriority', 'friendQuietHours', 'stealCropBlacklist', 'automation', 'fertilizer', 'fertilizerLandTypes', 'fertilizerMultiSeason'] as const
 
 function initialStrategy(): StrategyState {
   return {
     plantingStrategy: 'preferred',
     preferredSeedId: 0,
+    bagSeedPriority: [],
     intervals: { ...DEFAULT_INTERVALS },
     friendQuietHours: { ...DEFAULT_FRIEND_QUIET_HOURS },
     stealCropBlacklist: [],
@@ -97,6 +99,7 @@ export const useStrategyStore = defineStore('strategy', {
         await strategyApi.save({
           plantingStrategy: s.plantingStrategy,
           preferredSeedId: s.preferredSeedId,
+          bagSeedPriority: s.bagSeedPriority,
           intervals: s.intervals,
           friendQuietHours: s.friendQuietHours,
           stealCropBlacklist: s.stealCropBlacklist,

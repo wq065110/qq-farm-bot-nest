@@ -3,6 +3,7 @@ import type { GameConfigService } from '../game-config.service'
 import type { IGameTransport } from '../interfaces/game-transport.interface'
 import type { AnalyticsWorker } from './analytics.worker'
 import type { StatsTracker } from './stats.worker'
+import type { WarehouseWorker } from './warehouse.worker'
 import { Logger } from '@nestjs/common'
 import { Scheduler } from '@qq-farm/shared'
 import { getLandTypeByLevel, PHASE_NAMES, PlantPhase } from '../constants'
@@ -101,7 +102,8 @@ export class FarmWorker {
     private gameConfig: GameConfigService,
     private store: StoreService,
     private stats: StatsTracker,
-    private analytics: AnalyticsWorker
+    private analytics: AnalyticsWorker,
+    private warehouse: WarehouseWorker
   ) {
     this.logger = new Logger(`Farm:${accountId}`)
     this.scheduler = new Scheduler(`farm-${accountId}`, this.logger)
@@ -524,6 +526,13 @@ export class FarmWorker {
     if (!landsToPlant.length)
       return
 
+    const strategy = this.store.getPlantingStrategy(this.accountId)
+    if (strategy === 'bag_priority') {
+      const plantedByBag = await this.plantFromBagSeeds(landsToPlant)
+      if (plantedByBag)
+        return
+    }
+
     const bestSeed = await this.findBestSeed()
     if (!bestSeed)
       return
@@ -555,6 +564,59 @@ export class FarmWorker {
     const { planted, plantedLandIds } = await this.plantSeeds(actualSeedId, landsToPlant, { maxPlantCount: needCount })
     if (planted > 0)
       await this.runFertilizerByConfig(plantedLandIds)
+  }
+
+  private sortBagSeedsByPriority<T extends { seedId: number, requiredLevel: number }>(
+    bagSeeds: T[],
+    priority: number[]
+  ): T[] {
+    if (!priority?.length)
+      return [...bagSeeds].sort((a, b) => b.requiredLevel - a.requiredLevel)
+    const priorityMap = new Map<number, number>()
+    priority.forEach((id, idx) => priorityMap.set(id, idx))
+    return [...bagSeeds].sort((a, b) => {
+      const pa = priorityMap.has(a.seedId) ? priorityMap.get(a.seedId)! : Number.MAX_SAFE_INTEGER
+      const pb = priorityMap.has(b.seedId) ? priorityMap.get(b.seedId)! : Number.MAX_SAFE_INTEGER
+      if (pa !== pb)
+        return pa - pb
+      return b.requiredLevel - a.requiredLevel
+    })
+  }
+
+  private async plantFromBagSeeds(landsToPlant: number[]): Promise<boolean> {
+    let seeds: Array<{ seedId: number, name: string, count: number, requiredLevel: number, image: string, plantSize: number }>
+    try {
+      seeds = await this.warehouse.getBagSeeds()
+    } catch {
+      return false
+    }
+    if (!seeds?.length)
+      return false
+
+    const priority = this.store.getBagSeedPriority(this.accountId)
+    const sorted = this.sortBagSeedsByPriority(seeds, priority)
+
+    const available = sorted.find(s => s.count > 0 && (s.plantSize || 1) === 1)
+    if (!available) {
+      // 背包只有大尺寸种子或数量为 0，则不在此处自动切换策略，交给后续逻辑处理
+      return false
+    }
+
+    const needCount = Math.min(landsToPlant.length, available.count)
+    if (needCount <= 0)
+      return true
+
+    const landsToUse = landsToPlant.slice(0, needCount)
+    try {
+      const { planted, plantedLandIds } = await this.plantSeeds(available.seedId, landsToUse, { maxPlantCount: needCount })
+      if (planted > 0) {
+        await this.runFertilizerByConfig(plantedLandIds)
+        this.stats.recordOperation('plant', planted)
+      }
+      return true
+    } catch {
+      return false
+    }
   }
 
   private async findBestSeed(): Promise<{ goodsId: number, seedId: number, price: number, requiredLevel: number } | null> {

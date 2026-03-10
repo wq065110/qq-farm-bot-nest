@@ -363,6 +363,45 @@ export class WarehouseWorker {
     return { totalKinds: items.length, items }
   }
 
+  async getBagSeeds(): Promise<Array<{ seedId: number, name: string, count: number, requiredLevel: number, image: string, plantSize: number }>> {
+    const bagReply = await this.getBag()
+    const rawItems = this.getBagItems(bagReply)
+    const merged = new Map<number, {
+      seedId: number
+      name: string
+      count: number
+      requiredLevel: number
+      image: string
+      plantSize: number
+    }>()
+
+    for (const it of rawItems) {
+      const id = toNum(it.id)
+      const count = toNum(it.count)
+      if (id <= 0 || count <= 0)
+        continue
+      const plant = this.gameConfig.getPlantBySeedId(id)
+      if (!plant)
+        continue
+
+      if (!merged.has(id)) {
+        merged.set(id, {
+          seedId: id,
+          name: plant.name || `种子${id}`,
+          count: 0,
+          requiredLevel: Number((plant as any).land_level_need) || 0,
+          image: this.gameConfig.getSeedImageBySeedId(id),
+          plantSize: Math.max(1, Number((plant as any).size) || 1)
+        })
+      }
+      merged.get(id)!.count += count
+    }
+
+    const seeds = Array.from(merged.values())
+    seeds.sort((a, b) => b.requiredLevel - a.requiredLevel)
+    return seeds
+  }
+
   async getCurrentTotalsFromBag() {
     const bagReply = await this.getBag()
     const items = this.getBagItems(bagReply)

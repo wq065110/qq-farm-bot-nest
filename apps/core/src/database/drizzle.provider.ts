@@ -48,6 +48,7 @@ export const drizzleProvider = {
         automation TEXT DEFAULT '{}',
         planting_strategy TEXT DEFAULT 'preferred',
         preferred_seed_id INTEGER DEFAULT 0,
+        bag_seed_priority TEXT DEFAULT '[]',
         intervals TEXT DEFAULT '{}',
         friend_quiet_hours TEXT DEFAULT '{}',
         friend_blacklist TEXT DEFAULT '[]',

@@ -21,6 +21,7 @@ export class StrategyHandler {
       intervals: cfg.intervals,
       plantingStrategy: cfg.plantingStrategy,
       preferredSeedId: cfg.preferredSeedId,
+      bagSeedPriority: cfg.bagSeedPriority,
       friendQuietHours: cfg.friendQuietHours,
       stealCropBlacklist: cfg.stealCropBlacklist,
       friendBlacklist: cfg.friendBlacklist,

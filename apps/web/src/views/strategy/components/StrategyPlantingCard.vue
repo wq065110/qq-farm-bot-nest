@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
-import { computed, ref, watchEffect } from 'vue'
-import { analyticsApi } from '@/api'
+import { computed, ref, watch, watchEffect } from 'vue'
+import { analyticsApi, farmApi } from '@/api'
 import { useAccountStore, useFarmStore, useStrategyStore } from '@/stores'
 import { ANALYTICS_SORT_BY_MAP, FERTILIZER_LAND_TYPE_OPTIONS, FERTILIZER_OPTIONS, PLANTING_STRATEGY_OPTIONS, PREFERRED_SEED_AUTO_OPTION } from '../constants'
+import BagSeedPriorityModal from './BagSeedPriorityModal.vue'
 
 const strategyStore = useStrategyStore()
 const accountStore = useAccountStore()
@@ -14,6 +15,77 @@ const { settings } = storeToRefs(strategyStore)
 const seeds = computed(() => farmStore.seeds ?? [])
 
 const strategyPreviewLabel = ref<string | null>(null)
+
+interface BagSeedItem {
+  seedId: number
+  name: string
+  count: number
+  requiredLevel: number
+  image: string
+  plantSize: number
+}
+
+const bagSeeds = ref<BagSeedItem[]>([])
+const bagSeedsLoading = ref(false)
+const bagModalVisible = ref(false)
+/** 弹窗内可拖拽排序的列表，打开弹窗时从 sortedBagSeeds 同步 */
+const modalBagSeedsOrder = ref<BagSeedItem[]>([])
+
+async function fetchBagSeeds() {
+  if (!currentAccountId.value)
+    return
+  bagSeedsLoading.value = true
+  try {
+    const res = await farmApi.queryBagSeeds()
+    const list = Array.isArray(res) ? res : []
+    bagSeeds.value = list as BagSeedItem[]
+  } catch {
+    bagSeeds.value = []
+  } finally {
+    bagSeedsLoading.value = false
+  }
+}
+
+const sortedBagSeeds = computed<BagSeedItem[]>(() => {
+  const priority = settings.value.bagSeedPriority || []
+  const map = new Map<number, number>()
+  priority.forEach((id, idx) => map.set(id, idx))
+  return bagSeeds.value.toSorted((a, b) => {
+    const pa = map.has(a.seedId) ? map.get(a.seedId)! : Number.MAX_SAFE_INTEGER
+    const pb = map.has(b.seedId) ? map.get(b.seedId)! : Number.MAX_SAFE_INTEGER
+    if (pa !== pb)
+      return pa - pb
+    return b.requiredLevel - a.requiredLevel
+  })
+})
+
+watch(bagModalVisible, async (open) => {
+  if (open) {
+    await fetchBagSeeds()
+    modalBagSeedsOrder.value = [...sortedBagSeeds.value]
+  }
+})
+
+function resetBagSeedPriority() {
+  settings.value.bagSeedPriority = []
+  if (bagModalVisible.value)
+    modalBagSeedsOrder.value = [...sortedBagSeeds.value]
+}
+
+function onBagSeedsDragEnd() {
+  settings.value.bagSeedPriority = modalBagSeedsOrder.value.map(s => s.seedId)
+}
+
+async function refreshModalBagSeeds() {
+  await fetchBagSeeds()
+  if (bagModalVisible.value)
+    modalBagSeedsOrder.value = [...sortedBagSeeds.value]
+}
+
+function onModalSeedsChange(list: BagSeedItem[]) {
+  modalBagSeedsOrder.value = [...list]
+  onBagSeedsDragEnd()
+}
 
 const preferredSeedOptions = computed(() => {
   const options: any[] = [PREFERRED_SEED_AUTO_OPTION]
@@ -44,7 +116,7 @@ const stealBlacklistOptions = computed(() => {
 
 watchEffect(async () => {
   const strategy = settings.value.plantingStrategy
-  if (strategy === 'preferred') {
+  if (strategy === 'preferred' || strategy === 'bag_priority') {
     strategyPreviewLabel.value = null
     return
   }
@@ -121,6 +193,13 @@ function filterOption(input: string, option: { label?: string }) {
           </a-select>
         </a-form-item>
       </a-form>
+      <a-form v-else-if="settings.plantingStrategy === 'bag_priority'" layout="vertical">
+        <a-form-item label="背包种子">
+          <a-button color="default" variant="filled" @click="bagModalVisible = true">
+            配置优先级
+          </a-button>
+        </a-form-item>
+      </a-form>
       <a-form v-else layout="vertical">
         <a-form-item label="策略预览">
           <a-input :value="strategyPreviewLabel ?? '加载中...'" disabled />
@@ -164,5 +243,14 @@ function filterOption(input: string, option: { label?: string }) {
         </a-form-item>
       </a-form>
     </div>
+
+    <BagSeedPriorityModal
+      v-model:open="bagModalVisible"
+      :loading="bagSeedsLoading"
+      :seeds="modalBagSeedsOrder"
+      @refresh="refreshModalBagSeeds"
+      @reset="resetBagSeedPriority"
+      @update:seeds="onModalSeedsChange"
+    />
   </a-card>
 </template>

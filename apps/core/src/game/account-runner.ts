@@ -109,7 +109,7 @@ export class AccountRunner {
     this.transport = this.linkClient.createTransport(this.accountId)
     this.warehouse = new WarehouseWorker(this.accountId, this.transport, this.gameConfig, this.store, this.stats)
     this.warehouse.onLog = this.forwardLog
-    this.farm = new FarmWorker(this.accountId, this.transport, this.gameConfig, this.store, this.stats, this.analytics)
+    this.farm = new FarmWorker(this.accountId, this.transport, this.gameConfig, this.store, this.stats, this.analytics, this.warehouse)
     this.farm.onLog = this.forwardLog
     this.friend = new FriendWorker(this.accountId, this.transport, this.gameConfig, this.store, this.stats, this.farm, this.warehouse, config.platform)
     this.friend.onLog = this.forwardLog
@@ -598,6 +598,7 @@ export class AccountRunner {
 
   async getLands() { return this.farm.getLandsDetail() }
   async getSeeds() { return this.farm.getAvailableSeeds() }
+  async getBagSeeds() { return this.warehouse.getBagSeeds() }
   async doFarmOp(opType: string) {
     const result = await this.farm.runFarmOperation(opType)
     this.pushLandsAndBag().catch(() => {})

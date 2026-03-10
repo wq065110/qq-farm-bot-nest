@@ -15,6 +15,21 @@ function normalizeFertilizerLandTypes(input: unknown): FertilizerLandType[] {
   return (filtered.length > 0 ? [...new Set(filtered)] : [...ALL_FERTILIZER_LAND_TYPES]) as FertilizerLandType[]
 }
 
+function normalizeBagSeedPriority(input: unknown): number[] {
+  if (!Array.isArray(input))
+    return []
+  const result: number[] = []
+  for (const item of input) {
+    const v = Number.parseInt(String(item), 10)
+    if (!Number.isFinite(v) || v <= 0)
+      continue
+    if (result.includes(v))
+      continue
+    result.push(v)
+  }
+  return result
+}
+
 @Injectable()
 export class StoreService {
   private readonly logger = new Logger(StoreService.name)
@@ -140,6 +155,7 @@ export class StoreService {
         ? (String(b.plantingStrategy) as PlantingStrategy)
         : DEFAULT_ACCOUNT_CONFIG.plantingStrategy,
       preferredSeedId: Math.max(0, Number.parseInt(String(b.preferredSeedId), 10) || 0),
+      bagSeedPriority: normalizeBagSeedPriority((b as any).bagSeedPriority),
       intervals: this.normalizeIntervals(b.intervals),
       friendQuietHours: { ...(b.friendQuietHours || DEFAULT_FRIEND_QUIET_HOURS) },
       friendBlacklist: rawBlacklist.map(Number).filter(n => Number.isFinite(n) && n > 0),
@@ -181,6 +197,9 @@ export class StoreService {
 
     if (src.preferredSeedId != null)
       cfg.preferredSeedId = Math.max(0, Number.parseInt(String(src.preferredSeedId), 10) || 0)
+
+    if (src.bagSeedPriority !== undefined)
+      (cfg as any).bagSeedPriority = normalizeBagSeedPriority(src.bagSeedPriority as any)
 
     if (src.intervals && typeof src.intervals === 'object') {
       for (const [type, sec] of Object.entries(src.intervals)) {
@@ -234,6 +253,7 @@ export class StoreService {
       automation: row.automation as any,
       plantingStrategy: row.plantingStrategy as PlantingStrategy,
       preferredSeedId: row.preferredSeedId ?? 0,
+      bagSeedPriority: row.bagSeedPriority as any,
       intervals: row.intervals as any,
       friendQuietHours: row.friendQuietHours as any,
       friendBlacklist: row.friendBlacklist as any,
@@ -262,6 +282,7 @@ export class StoreService {
       automation: merged.automation as any,
       plantingStrategy: merged.plantingStrategy,
       preferredSeedId: merged.preferredSeedId,
+      bagSeedPriority: merged.bagSeedPriority as any,
       intervals: merged.intervals as any,
       friendQuietHours: merged.friendQuietHours as any,
       friendBlacklist: merged.friendBlacklist as any,
@@ -302,6 +323,7 @@ export class StoreService {
       automation: cfg.automation as any,
       plantingStrategy: cfg.plantingStrategy,
       preferredSeedId: cfg.preferredSeedId,
+      bagSeedPriority: cfg.bagSeedPriority as any,
       intervals: cfg.intervals as any,
       friendQuietHours: cfg.friendQuietHours as any,
       friendBlacklist: cfg.friendBlacklist as any,
@@ -332,6 +354,10 @@ export class StoreService {
 
   getPreferredSeed(accountId: string): number {
     return this.getAccountConfig(accountId).preferredSeedId
+  }
+
+  getBagSeedPriority(accountId: string): number[] {
+    return [...(this.getAccountConfig(accountId).bagSeedPriority || [])]
   }
 
   getPlantingStrategy(accountId: string): PlantingStrategy {

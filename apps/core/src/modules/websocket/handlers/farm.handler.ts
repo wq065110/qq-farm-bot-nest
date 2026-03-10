@@ -18,6 +18,14 @@ export class FarmHandler {
     return runner.getSeeds()
   }
 
+  @WsRoute('bagSeeds.query')
+  queryBagSeeds(
+    @WsAccount() accountId: string
+  ): unknown {
+    const runner = this.manager.getRunnerOrThrow(accountId)
+    return runner.getBagSeeds()
+  }
+
   @WsRoute('farm.execute')
   async operate(
     @WsAccount() accountId: string,

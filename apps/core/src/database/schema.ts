@@ -20,6 +20,7 @@ export const accountConfigs = sqliteTable('account_configs', {
   automation: text('automation', { mode: 'json' }).$type<Record<string, any>>().default({}),
   plantingStrategy: text('planting_strategy').default('preferred'),
   preferredSeedId: integer('preferred_seed_id').default(0),
+  bagSeedPriority: text('bag_seed_priority', { mode: 'json' }).$type<number[]>().default([]),
   intervals: text('intervals', { mode: 'json' }).$type<Record<string, number>>().default({}),
   friendQuietHours: text('friend_quiet_hours', { mode: 'json' }).$type<Record<string, any>>().default({}),
   friendBlacklist: text('friend_blacklist', { mode: 'json' }).$type<number[]>().default([]),

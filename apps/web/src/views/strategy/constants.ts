@@ -16,6 +16,7 @@ export const PREFERRED_SEED_AUTO_OPTION = { label: '自动选择', value: 0 }
 
 export const PLANTING_STRATEGY_OPTIONS = [
   { label: '优先种植种子', value: 'preferred' },
+  { label: '优先背包种子', value: 'bag_priority' },
   { label: '最高等级作物', value: 'level' },
   { label: '最大经验/时', value: 'max_exp' },
   { label: '最大普通肥经验/时', value: 'max_fert_exp' },

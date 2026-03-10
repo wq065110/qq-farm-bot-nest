@@ -29,7 +29,8 @@ export const ALLOWED_PLANTING_STRATEGIES = [
   'max_exp',
   'max_fert_exp',
   'max_profit',
-  'max_fert_profit'
+  'max_fert_profit',
+  'bag_priority'
 ] as const
 export type PlantingStrategy = typeof ALLOWED_PLANTING_STRATEGIES[number]
 
@@ -155,6 +156,7 @@ export interface AccountConfigSnapshot {
   automation: AutomationConfig
   plantingStrategy: PlantingStrategy
   preferredSeedId: number
+  bagSeedPriority: number[]
   intervals: IntervalsConfig
   friendQuietHours: FriendQuietHoursConfig
   friendBlacklist: number[]
@@ -168,6 +170,7 @@ export const DEFAULT_ACCOUNT_CONFIG: AccountConfigSnapshot = {
   automation: { ...DEFAULT_AUTOMATION },
   plantingStrategy: 'preferred',
   preferredSeedId: 0,
+  bagSeedPriority: [],
   intervals: { ...DEFAULT_INTERVALS },
   friendQuietHours: { ...DEFAULT_FRIEND_QUIET_HOURS },
   friendBlacklist: [],

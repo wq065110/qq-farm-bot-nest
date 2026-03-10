@@ -47,6 +47,8 @@ function getActionMeta(actionType: number): InteractActionMeta {
 
 function toggleCollapsed(): void {
   emit('update:collapsed', !props.collapsed)
+  if (props.collapsed)
+    emit('refresh')
 }
 
 function onRefresh(): void {
