@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import EmptyState from '@/components/EmptyState.vue'
 import LandCard from '@/components/LandCard.vue'
+import { FARM_OPERATIONS } from '../constants'
 
 defineProps<{
   lands: any[]
@@ -13,13 +14,7 @@ const emit = defineEmits<{
   operate: [opType: string]
 }>()
 
-const operations = [
-  { type: 'harvest', label: '收获', icon: 'i-streamline-emojis-cooked-rice' },
-  { type: 'clear', label: '除草', icon: 'i-streamline-emojis-herb' },
-  { type: 'plant', label: '种植', icon: 'i-streamline-emojis-seedling' },
-  { type: 'upgrade', label: '升级', icon: 'i-streamline-emojis-construction' },
-  { type: 'all', label: '全收', icon: 'i-streamline-emojis-sparkles' }
-]
+const operations = FARM_OPERATIONS
 
 function handleOperate(opType: string) {
   emit('operate', opType)

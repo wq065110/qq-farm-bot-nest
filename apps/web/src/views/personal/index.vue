@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { FarmOpType } from './constants'
 import { storeToRefs } from 'pinia'
 import { computed, ref } from 'vue'
 import ConfirmModal from '@/components/ConfirmModal.vue'
@@ -6,10 +7,12 @@ import { useAccountRefresh } from '@/composables/useAccountRefresh'
 import { useLandsWithCountdown } from '@/composables/useLandsWithCountdown'
 import { useWs } from '@/composables/useWs'
 import { useAccountStore, useBagStore, useFarmStore, useStatusStore } from '@/stores'
+import message from '@/utils/message'
 import BagPanel from './components/BagPanel.vue'
 import DailyGiftPanel from './components/DailyGiftPanel.vue'
 import FarmPanel from './components/FarmPanel.vue'
 import GrowthTaskPanel from './components/GrowthTaskPanel.vue'
+import { FARM_OP_CONFIRM_MESSAGES, FARM_OP_LABELS } from './constants'
 
 const farmStore = useFarmStore()
 const accountStore = useAccountStore()
@@ -35,7 +38,13 @@ async function executeOperate() {
   confirmVisible.value = false
   operating.value = true
   try {
-    await farmStore.operate(currentAccountId.value, confirmConfig.value.opType)
+    const opType = confirmConfig.value.opType as FarmOpType
+    await farmStore.operate(currentAccountId.value, opType)
+    message.success(`已提交${FARM_OP_LABELS[opType] || '农场'}操作`)
+  } catch (e: any) {
+    const opType = confirmConfig.value.opType as FarmOpType
+    const opLabel = FARM_OP_LABELS[opType] || '农场'
+    message.error(`${opLabel}操作失败：${e?.message || '未知错误'}`)
   } finally {
     operating.value = false
   }
@@ -44,14 +53,8 @@ async function executeOperate() {
 function handleOperate(opType: string) {
   if (!currentAccountId.value)
     return
-  const msgs: Record<string, string> = {
-    harvest: '确定要收获所有成熟作物吗？',
-    clear: '确定要一键除草/除虫吗？',
-    plant: '确定要一键种植吗？',
-    upgrade: '确定要升级所有可升级的土地吗？',
-    all: '确定要一键全收吗？'
-  }
-  confirmConfig.value = { title: '确认操作', message: msgs[opType] || '确定执行此操作吗？', opType }
+  const t = opType as FarmOpType
+  confirmConfig.value = { title: '确认操作', message: FARM_OP_CONFIRM_MESSAGES[t] || '确定执行此操作吗？', opType }
   confirmVisible.value = true
 }
 

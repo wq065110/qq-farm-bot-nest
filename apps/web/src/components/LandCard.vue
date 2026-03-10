@@ -44,16 +44,8 @@ function formatTime(sec: number) {
   return `${h > 0 ? `${h}:` : ''}${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
 }
 
-function getSafeImageUrl(url: string) {
-  if (!url)
-    return ''
-  if (url.startsWith('http://'))
-    return url.replace('http://', 'https://')
-  return url
-}
-
 function getLandTypeName(level: number) {
-  const typeMap: Record<number, string> = { 0: '普通', 1: '黄土地', 2: '红土地', 3: '黑土地', 4: '金土地' }
+  const typeMap: Record<number, string> = { 0: '空地', 1: '黄土地', 2: '红土地', 3: '黑土地', 4: '金土地' }
   return typeMap[Number(level) || 0] || ''
 }
 </script>
@@ -76,10 +68,9 @@ function getLandTypeName(level: number) {
     <div class="my-1 flex h-10 w-10 items-center justify-center">
       <img
         v-if="land.seedImage"
-        :src="getSafeImageUrl(land.seedImage)"
+        :src="land.seedImage"
         class="mb-0.5 max-h-full max-w-full object-contain"
         loading="lazy"
-        referrerpolicy="no-referrer"
       >
       <div v-else class="i-streamline-emojis-seedling a-color-text-quat text-xl" />
     </div>
