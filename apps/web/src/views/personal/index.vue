@@ -55,7 +55,7 @@ function handleOperate(opType: string) {
   confirmVisible.value = true
 }
 
-function refresh() {
+async function initPageData() {
   const firstAcc = accountStore.accounts[0]
   if (!currentAccountId.value && firstAcc)
     accountStore.selectAccount(String(firstAcc.uin))
@@ -71,14 +71,14 @@ useWs()
   .on('bag.update', bagStore.setBagFromRealtime)
   .on('dailyGifts.update', statusStore.applyDailyGifts)
 
-useAccountRefresh(refresh)
+useAccountRefresh(initPageData)
 </script>
 
 <template>
   <div class="flex flex-col gap-3 md:h-full">
     <div class="flex flex-wrap gap-2 items-center justify-between">
       <div class="font-bold flex gap-2 items-center a-color-text">
-        <div class="i-streamline-emojis-seedling text-lg"  />
+        <div class="i-streamline-emojis-seedling text-lg" />
         <span class="text-lg">我的农场</span>
       </div>
     </div>

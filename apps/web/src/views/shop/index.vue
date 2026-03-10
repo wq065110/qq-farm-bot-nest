@@ -5,7 +5,6 @@ import { shopApi } from '@/api'
 import EmptyState from '@/components/EmptyState.vue'
 import { useAccountRefresh } from '@/composables/useAccountRefresh'
 import { useImageFallback } from '@/composables/useImageFallback'
-import { useWs } from '@/composables/useWs'
 import { useAccountStore, useFarmStore } from '@/stores'
 import message from '@/utils/message'
 import BuyModal from './components/BuyModal.vue'
@@ -55,20 +54,18 @@ async function confirmBuy(count: number): Promise<void> {
   }
 }
 
-function refresh(): void {
-  const firstAcc = accountStore.accounts[0]
-  if (!currentAccountId?.value && firstAcc)
-    accountStore.selectAccount(String(firstAcc.uin))
+function initPageData() {
+  accountStore.selectAccount(currentAccountId.value)
+  farmStore.querySeeds(currentAccountId.value)
 }
 
-useWs('seeds').on('seeds.update', farmStore.applySeedsUpdate)
-useAccountRefresh(refresh)
+useAccountRefresh(initPageData)
 </script>
 
 <template>
   <div class="flex flex-col gap-3 h-full">
     <div class="font-bold flex gap-2 items-center a-color-text">
-      <div class="i-streamline-emojis-herb text-lg"  />
+      <div class="i-streamline-emojis-herb text-lg" />
       <span class="text-lg">种子商店</span>
     </div>
 
@@ -88,7 +85,7 @@ useAccountRefresh(refresh)
             aria-label="搜索种子"
           >
             <template #prefix>
-              <span class="i-streamline-emojis-magnifying-glass-tilted-left a-color-text-tertiary text-base"  />
+              <span class="i-streamline-emojis-magnifying-glass-tilted-left a-color-text-tertiary text-base" />
             </template>
           </a-input>
         </div>

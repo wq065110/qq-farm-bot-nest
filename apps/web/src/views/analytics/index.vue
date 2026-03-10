@@ -78,14 +78,15 @@ async function loadAnalytics() {
   }
 }
 
-useAccountRefresh(loadAnalytics)
 watch(sortKey, loadAnalytics)
+
+useAccountRefresh(loadAnalytics)
 </script>
 
 <template>
   <div class="flex flex-col gap-3 h-full">
     <div class="font-bold flex gap-2 items-center a-color-text">
-      <div class="i-streamline-emojis-bar-chart text-lg"  />
+      <div class="i-streamline-emojis-bar-chart text-lg" />
       <span class="text-lg">数据分析</span>
     </div>
 

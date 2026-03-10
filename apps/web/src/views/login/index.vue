@@ -52,7 +52,6 @@ async function handleLogin() {
       class="h-[32%] w-full pointer-events-none bottom-0 left-0 absolute z-1"
       viewBox="0 0 100 32"
       preserveAspectRatio="none"
-      
     >
       <defs>
         <linearGradient id="grass" x1="0" x2="0" y1="0" y2="1">
@@ -65,7 +64,7 @@ async function handleLogin() {
     </svg>
 
     <!-- Floating icons (cloud) -->
-    <div class="pointer-events-none inset-0 absolute z-2" >
+    <div class="pointer-events-none inset-0 absolute z-2">
       <span
         class="animate-float-1 i-streamline-emojis-cloud-1 absolute"
         :style="{
@@ -98,7 +97,7 @@ async function handleLogin() {
     </div>
 
     <!-- Decorations -->
-    <div class="pointer-events-none inset-0 absolute z-10" >
+    <div class="pointer-events-none inset-0 absolute z-10">
       <span
         class="i-streamline-emojis-christmas-tree bottom-[36%] left-[6%] absolute max-md:hidden"
         :style="{ fontSize: '40px', color: 'var(--ant-color-primary)', opacity: 1 }"

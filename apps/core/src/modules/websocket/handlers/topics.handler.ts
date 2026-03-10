@@ -1,7 +1,7 @@
 import type { SocketWithMeta } from '../ws-router.service'
 import { Injectable } from '@nestjs/common'
 import { WsBody } from '../decorators/ws-body.decorator'
-import { WsRoute } from '../decorators/ws-route.decorator'
+import { WsFireAndForget, WsRoute } from '../decorators/ws-route.decorator'
 import { WsTopicsService } from '../ws-topics.service'
 
 @Injectable()
@@ -10,7 +10,7 @@ export class TopicsHandler {
     private readonly topicsService: WsTopicsService
   ) {}
 
-  @WsRoute('topic.sub')
+  @WsRoute('topics.sub')
   subscribe(
     client: SocketWithMeta,
     @WsBody() data: Record<string, unknown>
@@ -18,11 +18,12 @@ export class TopicsHandler {
     return this.topicsService.handleSubscribe(client, data)
   }
 
-  @WsRoute('topic.unsub')
+  @WsRoute('topics.unsub')
+  @WsFireAndForget()
   unsubscribe(
     client: SocketWithMeta,
     @WsBody() data: Record<string, unknown>
-  ): null {
-    return this.topicsService.handleUnsubscribe(client, data)
+  ): void {
+    this.topicsService.handleUnsubscribe(client, data)
   }
 }

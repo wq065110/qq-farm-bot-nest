@@ -9,9 +9,8 @@ const statusStore = useStatusStore()
 
 useWs()
   .sub('accounts')
-  .sub('status')
   .on('accounts.update', accountStore.setAccountsFromRealtime)
-  .on('status.connection', statusStore.applyStatusConnection)
+  .on('accounts.connection', statusStore.applyStatusConnection)
 </script>
 
 <template>

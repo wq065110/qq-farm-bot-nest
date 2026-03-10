@@ -13,7 +13,7 @@ export class FriendHandler {
     private readonly store: StoreService
   ) {}
 
-  @WsRoute('friend.lands')
+  @WsRoute('friends.lands')
   async lands(
     @WsAccount() accountId: string,
     @WsBody() data: Record<string, unknown>
@@ -25,7 +25,7 @@ export class FriendHandler {
     return runner.getFriendLands(gid)
   }
 
-  @WsRoute('friend.operate')
+  @WsRoute('friends.execute')
   async operate(
     @WsAccount() accountId: string,
     @WsBody() data: Record<string, unknown>
@@ -36,7 +36,7 @@ export class FriendHandler {
     return runner.doFriendOp(gid, opType)
   }
 
-  @WsRoute('friend.blacklistToggle')
+  @WsRoute('friends.toggleBlacklist')
   blacklistToggle(
     @WsAccount() accountId: string,
     @WsBody() data: Record<string, unknown>
@@ -50,7 +50,7 @@ export class FriendHandler {
     return saved
   }
 
-  @WsRoute('friend.interactRecords')
+  @WsRoute('friends.interactRecords')
   async interactRecords(
     @WsAccount() accountId: string
   ): Promise<unknown> {

@@ -11,14 +11,22 @@ export class PanelHandler {
     private readonly manager: AccountManagerService
   ) {}
 
-  @WsRoute('panel.setTheme')
+  @WsRoute('panel.query')
+  query(): unknown {
+    return {
+      ui: this.store.getUI(),
+      offlineReminder: this.store.getOfflineReminder()
+    }
+  }
+
+  @WsRoute('panel.updateTheme')
   theme(@WsBody() data: Record<string, unknown>): unknown {
     const result = this.store.setUITheme(data?.theme as string)
     this.manager.notifyPanelUpdate()
     return result
   }
 
-  @WsRoute('panel.offlineReminder')
+  @WsRoute('panel.updateOfflineReminder')
   offlineReminder(@WsBody() data: Record<string, unknown>): unknown {
     const result = this.store.setOfflineReminder(data || {})
     this.manager.notifyPanelUpdate()

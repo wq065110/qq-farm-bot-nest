@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import { computed, ref } from 'vue'
-import { useWs } from '@/composables/useWs'
+import { useAccountRefresh } from '@/composables/useAccountRefresh'
 import { useAccountStore, useFarmStore, useStrategyStore } from '@/stores'
 import message from '@/utils/message'
 import AccountInfoCard from './components/AccountInfoCard.vue'
@@ -39,18 +39,19 @@ async function saveAccountSettings(): Promise<void> {
   }
 }
 
-useWs()
-  .sub('strategy')
-  .sub('seeds')
-  .on('strategy.update', strategyStore.applyStrategyUpdate)
-  .on('seeds.update', farmStore.applySeedsUpdate)
+function initPageData() {
+  strategyStore.querySettings()
+  farmStore.querySeeds(currentAccountId.value)
+}
+
+useAccountRefresh(initPageData)
 </script>
 
 <template>
   <div class="flex flex-col gap-3">
     <div class="flex flex-wrap gap-2 items-center justify-between">
       <div class="font-bold flex gap-2 items-center a-color-text">
-        <div class="i-streamline-emojis-clipboard text-lg"  />
+        <div class="i-streamline-emojis-clipboard text-lg" />
         <span class="text-lg">策略设置</span>
       </div>
       <a-button

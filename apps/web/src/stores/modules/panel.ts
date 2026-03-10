@@ -41,6 +41,15 @@ export const usePanelStore = defineStore('panel', {
           this.settings.offlineReminder = { ...this.settings.offlineReminder, ...data.offlineReminder }
       }
     },
+    async querySettings(): Promise<{ ok: boolean, error?: string }> {
+      try {
+        const data = await panelApi.query()
+        this.applyPanelUpdate(data)
+        return { ok: true }
+      } catch (e: any) {
+        return { ok: false, error: e?.message || '加载失败' }
+      }
+    },
     async saveOfflineConfig(): Promise<{ ok: boolean, error?: string }> {
       try {
         await panelApi.saveOfflineReminder(this.settings.offlineReminder)

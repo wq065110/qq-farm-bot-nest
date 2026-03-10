@@ -6,7 +6,7 @@ import { Injectable } from '@nestjs/common'
 import { DiscoveryService, MetadataScanner, Reflector } from '@nestjs/core'
 import { createResponse } from '@qq-farm/shared'
 import { WS_PARAMS_KEY } from './decorators/ws-body.decorator'
-import { WS_ROUTE_KEY } from './decorators/ws-route.decorator'
+import { WS_FIRE_AND_FORGET_KEY, WS_ROUTE_KEY } from './decorators/ws-route.decorator'
 import { requireAccountId } from './ws-guards'
 
 export interface SocketWithMeta extends Socket {
@@ -28,6 +28,7 @@ interface RouteHandlerDef {
   instance: any
   methodName: string
   params: WsParamMetadata[]
+  fireAndForget: boolean
 }
 
 @Injectable()
@@ -66,8 +67,10 @@ export class WsRouterService implements OnModuleInit {
 
         const params: WsParamMetadata[]
           = Reflect.getMetadata(WS_PARAMS_KEY, proto, methodName) ?? []
+        const fireAndForget: boolean
+          = this.reflector.get<boolean>(WS_FIRE_AND_FORGET_KEY, descriptor.value) ?? false
 
-        this.handlers.set(route, { instance, methodName, params })
+        this.handlers.set(route, { instance, methodName, params, fireAndForget })
       })
     }
   }
@@ -77,7 +80,7 @@ export class WsRouterService implements OnModuleInit {
     route: string,
     client: SocketWithMeta,
     data: Record<string, unknown>
-  ): Promise<WsResponse> {
+  ): Promise<WsResponse | null> {
     const def = this.handlers.get(route)
     if (!def)
       return createResponse(id, WS_CODE_NOT_FOUND, undefined, `Unknown route: ${route}`)
@@ -98,6 +101,8 @@ export class WsRouterService implements OnModuleInit {
       }
 
       const result = await handler(...args)
+      if (def.fireAndForget)
+        return null
       return createResponse(id, WS_CODE_SUCCESS, result ?? null)
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : '操作失败'

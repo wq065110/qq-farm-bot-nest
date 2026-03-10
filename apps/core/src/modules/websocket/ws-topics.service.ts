@@ -26,7 +26,7 @@ export class WsTopicsService {
         provider: () => this.manager.getAccounts()
       },
 
-      'status.connection': {
+      'accounts.connection': {
         provider: (accountId) => {
           if (!accountId)
             return undefined
@@ -38,31 +38,7 @@ export class WsTopicsService {
         }
       },
 
-      'strategy.update': {
-        provider: (accountId) => {
-          if (!accountId)
-            return undefined
-          return {
-            intervals: this.store.getIntervals(accountId),
-            plantingStrategy: this.store.getPlantingStrategy(accountId),
-            preferredSeedId: this.store.getPreferredSeed(accountId),
-            friendQuietHours: this.store.getFriendQuietHours(accountId),
-            stealCropBlacklist: this.store.getStealCropBlacklist(accountId),
-            friendBlacklist: this.store.getFriendBlacklist(accountId),
-            automation: this.store.getAutomation(accountId)
-          }
-        }
-      },
-
-      'panel.update': {
-        broadcastOnly: true,
-        provider: () => ({
-          ui: this.store.getUI(),
-          offlineReminder: this.store.getOfflineReminder()
-        })
-      },
-
-      'status.profile': {
+      'accounts.profile': {
         provider: (accountId) => {
           if (!accountId)
             return undefined
@@ -72,7 +48,7 @@ export class WsTopicsService {
         }
       },
 
-      'status.session': {
+      'accounts.session': {
         provider: (accountId) => {
           if (!accountId)
             return undefined
@@ -93,7 +69,7 @@ export class WsTopicsService {
         }
       },
 
-      'status.operations': {
+      'accounts.operations': {
         provider: (accountId) => {
           if (!accountId)
             return undefined
@@ -103,7 +79,7 @@ export class WsTopicsService {
         }
       },
 
-      'status.schedule': {
+      'accounts.schedule': {
         provider: (accountId) => {
           if (!accountId)
             return undefined
@@ -149,14 +125,6 @@ export class WsTopicsService {
           if (!accountId)
             return undefined
           return this.manager.getRunner(accountId)?.getFriends()
-        }
-      },
-
-      'seeds.update': {
-        provider: (accountId) => {
-          if (!accountId)
-            return undefined
-          return this.manager.getRunner(accountId)?.getSeeds()
         }
       }
     }

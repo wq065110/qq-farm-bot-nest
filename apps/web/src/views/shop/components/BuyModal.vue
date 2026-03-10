@@ -85,7 +85,7 @@ function handleImageError(): void {
             {{ seed.name || `种子${seed.seedId}` }}
           </h3>
           <span v-if="(seed.requiredLevel ?? 0) > 0" class="inline-flex gap-2 items-center">
-            <span class="i-streamline-emojis-seedling"  />
+            <span class="i-streamline-emojis-seedling" />
             <span>Lv.{{ seed.requiredLevel ?? 0 }}</span>
           </span>
         </div>
@@ -95,7 +95,7 @@ function handleImageError(): void {
         <div class="flex items-center justify-between text-sm">
           <span class="a-color-text-secondary">单价</span>
           <span class="flex gap-1 items-center a-color-warning">
-            <span class="i-streamline-emojis-credit-card text-sm"  />
+            <span class="i-streamline-emojis-credit-card text-sm" />
             {{ seed.price ?? 0 }} 金币
           </span>
         </div>
@@ -114,7 +114,7 @@ function handleImageError(): void {
         <div class="pt-1 flex items-center justify-between text-sm">
           <span class="a-color-text-secondary">总计</span>
           <span class="font-bold flex gap-1 items-center a-color-warning">
-            <span class="i-streamline-emojis-credit-card text-sm"  />
+            <span class="i-streamline-emojis-credit-card text-sm" />
             {{ totalPrice }} 金币
           </span>
         </div>

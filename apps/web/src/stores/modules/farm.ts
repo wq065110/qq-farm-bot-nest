@@ -26,6 +26,17 @@ export const useFarmStore = defineStore('farm', {
         return
       await farmApi.operate(opType)
     },
+    async querySeeds(accountId: string): Promise<{ ok: boolean, error?: string }> {
+      if (!accountId)
+        return { ok: false, error: '未选择账号' }
+      try {
+        const list = await farmApi.querySeeds()
+        this.setSeedsFromRealtime(Array.isArray(list) ? list : [])
+        return { ok: true }
+      } catch (e: any) {
+        return { ok: false, error: e?.message || '加载失败' }
+      }
+    },
     setLandsFromRealtime(res: any) {
       if (!res)
         return
@@ -38,9 +49,6 @@ export const useFarmStore = defineStore('farm', {
     },
     setSeedsFromRealtime(list: any[]) {
       this.seeds = Array.isArray(list) ? list : []
-    },
-    applySeedsUpdate(data: any) {
-      this.setSeedsFromRealtime(Array.isArray(data) ? data : [])
     }
   },
   persist: {

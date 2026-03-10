@@ -10,21 +10,21 @@ export function checkQR(code: string): Promise<any> {
 }
 
 export function start(id: string): Promise<any> {
-  return socket.request('account.start', { id })
+  return socket.request('accounts.start', { id })
 }
 
 export function stop(id: string): Promise<any> {
-  return socket.request('account.stop', { id })
+  return socket.request('accounts.stop', { id })
 }
 
 export function create(data: any): Promise<any> {
-  return socket.request('account.upsert', data)
+  return socket.request('accounts.upsert', data)
 }
 
 export function remove(id: string): Promise<any> {
-  return socket.request('account.delete', { id })
+  return socket.request('accounts.delete', { id })
 }
 
 export function remark(uin: string | number, name: string): Promise<any> {
-  return socket.request('account.remark', { uin, name })
+  return socket.request('accounts.remark', { uin, name })
 }

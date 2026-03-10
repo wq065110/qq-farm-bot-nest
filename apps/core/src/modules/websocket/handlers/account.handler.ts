@@ -12,7 +12,7 @@ export class AccountHandler {
     private readonly manager: AccountManagerService
   ) {}
 
-  @WsRoute('account.start')
+  @WsRoute('accounts.start')
   async start(@WsBody() data: Record<string, unknown>): Promise<null> {
     const id = requireString(data, 'id', '缺少账号 id')
     await this.accountService.startAccount(id)
@@ -20,7 +20,7 @@ export class AccountHandler {
     return null
   }
 
-  @WsRoute('account.stop')
+  @WsRoute('accounts.stop')
   async stop(@WsBody() data: Record<string, unknown>): Promise<null> {
     const id = requireString(data, 'id', '缺少账号 id')
     const resolved = this.manager.resolveAccountId(id) || id
@@ -29,14 +29,14 @@ export class AccountHandler {
     return null
   }
 
-  @WsRoute('account.upsert')
+  @WsRoute('accounts.upsert')
   async create(@WsBody() data: Record<string, unknown>): Promise<unknown> {
     const result = await this.accountService.createOrUpdateAccount(data || {})
     this.manager.notifyAccountsUpdate()
     return result
   }
 
-  @WsRoute('account.delete')
+  @WsRoute('accounts.delete')
   async delete(@WsBody() data: Record<string, unknown>): Promise<unknown> {
     const id = requireString(data, 'id', '缺少账号 id')
     const result = await this.accountService.deleteAccount(id)
@@ -44,7 +44,7 @@ export class AccountHandler {
     return result
   }
 
-  @WsRoute('account.remark')
+  @WsRoute('accounts.remark')
   async remark(@WsBody() data: Record<string, unknown>): Promise<unknown> {
     const result = this.accountService.updateRemark(data || {})
     this.manager.notifyAccountsUpdate()

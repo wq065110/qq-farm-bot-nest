@@ -1,12 +1,11 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useWs } from '@/composables/useWs'
+import { onMounted, ref } from 'vue'
 import { usePanelStore } from '@/stores'
 import message from '@/utils/message'
 import OfflineReminderCard from './components/OfflineReminderCard.vue'
 import PasswordCard from './components/PasswordCard.vue'
 
-const panelStore = usePanelStore()
+const { querySettings, changeAdminPassword, saveOfflineConfig } = usePanelStore()
 
 const passwordSaving = ref(false)
 const offlineSaving = ref(false)
@@ -33,7 +32,7 @@ async function handleChangePassword() {
 
   passwordSaving.value = true
   try {
-    const res = await panelStore.changeAdminPassword(passwordForm.value.old, passwordForm.value.new)
+    const res = await changeAdminPassword(passwordForm.value.old, passwordForm.value.new)
 
     if (res.ok) {
       message.success('密码修改成功')
@@ -49,7 +48,7 @@ async function handleChangePassword() {
 async function handleSaveOffline() {
   offlineSaving.value = true
   try {
-    const res = await panelStore.saveOfflineConfig()
+    const res = await saveOfflineConfig()
 
     if (res.ok) {
       message.success('下线提醒设置已保存')
@@ -61,15 +60,15 @@ async function handleSaveOffline() {
   }
 }
 
-useWs()
-  .sub('panel')
-  .on('panel.update', panelStore.applyPanelUpdate)
+onMounted(() => {
+  querySettings()
+})
 </script>
 
 <template>
   <div class="flex flex-col gap-3">
     <div class="font-bold flex gap-2 items-center a-color-text">
-      <div class="i-streamline-emojis-nut-and-bolt text-lg"  />
+      <div class="i-streamline-emojis-nut-and-bolt text-lg" />
       <span class="text-lg">面板设置</span>
     </div>
     <div class="flex shrink-0 flex-col gap-3">

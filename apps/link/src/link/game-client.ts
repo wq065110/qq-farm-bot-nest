@@ -221,8 +221,6 @@ export class GameClient extends EventEmitter {
         }
         this.emit('stateChanged', { ...this.userState })
       } catch {}
-      this.emit('notify', { type, body: Buffer.from(eventBody).toString('base64') })
-      return
     }
 
     if (type.includes('BasicNotify')) {
@@ -247,8 +245,6 @@ export class GameClient extends EventEmitter {
           this.emit('stateChanged', { ...this.userState })
         }
       } catch {}
-      this.emit('notify', { type, body: Buffer.from(eventBody).toString('base64') })
-      return
     }
 
     // Forward all other notifications as raw data to the core process

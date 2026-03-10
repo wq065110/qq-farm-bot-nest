@@ -12,6 +12,21 @@ export class StrategyHandler {
     private readonly manager: AccountManagerService
   ) {}
 
+  @WsRoute('strategy.query')
+  query(
+    @WsAccount() accountId: string
+  ): unknown {
+    return {
+      intervals: this.store.getIntervals(accountId),
+      plantingStrategy: this.store.getPlantingStrategy(accountId),
+      preferredSeedId: this.store.getPreferredSeed(accountId),
+      friendQuietHours: this.store.getFriendQuietHours(accountId),
+      stealCropBlacklist: this.store.getStealCropBlacklist(accountId),
+      friendBlacklist: this.store.getFriendBlacklist(accountId),
+      automation: this.store.getAutomation(accountId)
+    }
+  }
+
   @WsRoute('strategy.update')
   save(
     @WsAccount() accountId: string,

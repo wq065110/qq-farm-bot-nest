@@ -216,7 +216,7 @@ export class SocketClient {
     if (!this.socket?.connected)
       return
     this.subscribedAccountId.value = this.currentAccountId.value || ''
-    const msg = createRequest('topic.sub', {
+    const msg = createRequest('topics.sub', {
       accountId: this.currentAccountId.value,
       topics,
       events
@@ -227,7 +227,7 @@ export class SocketClient {
   private sendUnsubscribe(topics: string[], events: string[]): void {
     if (!this.socket?.connected)
       return
-    const msg = createRequest('topic.unsub', {
+    const msg = createRequest('topics.unsub', {
       accountId: this.currentAccountId.value,
       topics,
       events

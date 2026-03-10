@@ -108,7 +108,7 @@
 
 1. 客户端连接时携带 `handshake.auth.token`（JWT），鉴权失败会断开。
 2. 连接成功后服务端推送 `system.ready` 事件。
-3. 客户端通过 `topic.sub` 订阅感兴趣的事件，订阅后会收到一次初始数据推送。
+3. 客户端通过 `topics.sub` 订阅感兴趣的事件，订阅后会收到一次初始数据推送。
 4. 后续变更通过服务端推送事件实时下发。
 
 ---
@@ -119,18 +119,18 @@
 
 | route | data | 说明 |
 |-------|------|------|
-| `account.start` | `{ id: string }` | 启动账号 |
-| `account.stop` | `{ id: string }` | 停止账号 |
-| `account.upsert` | `{ code, platform, nick?, ... }` | 创建或更新账号 |
-| `account.delete` | `{ id: string }` | 删除账号 |
-| `account.remark` | `{ id: string, remark?: string }` | 修改账号备注 |
+| `accounts.start` | `{ id: string }` | 启动账号 |
+| `accounts.stop` | `{ id: string }` | 停止账号 |
+| `accounts.upsert` | `{ code, platform, nick?, ... }` | 创建或更新账号 |
+| `accounts.delete` | `{ id: string }` | 删除账号 |
+| `accounts.remark` | `{ id: string, remark?: string }` | 修改账号备注 |
 
 #### 订阅管理
 
 | route | data | 说明 |
 |-------|------|------|
-| `topic.sub` | `{ accountId?: string, topics?: string[], events?: string[] }` | 订阅事件，订阅后推送初始数据 |
-| `topic.unsub` | `{ topics?: string[], events?: string[] }` | 取消订阅 |
+| `topics.sub` | `{ accountId?: string, topics?: string[], events?: string[] }` | 订阅事件，订阅后推送初始数据 |
+| `topics.unsub` | `{ topics?: string[], events?: string[] }` | 取消订阅 |
 
 `events` 可选值见下方「推送事件」一节。`accountId` 为空或 `"all"` 时仅订阅全局事件。
 
@@ -138,25 +138,30 @@
 
 | route | data | 说明 |
 |-------|------|------|
-| `farm.operate` | `{ opType: string }` | 执行农场操作，需已选账号 |
+| `farm.execute` | `{ opType: string }` | 执行农场操作，需已选账号 |
 
 `opType` 可选值：`all`（全部）、`clear`（除草/除虫/浇水）、`harvest`（收获）、`plant`（种植）、`upgrade`（升级土地）。
+
+| route | data | 说明 |
+|-------|------|------|
+| `seeds.query` | — | 查询可用种子列表，需已选账号 |
 
 #### 好友操作
 
 | route | data | 说明 |
 |-------|------|------|
-| `friend.lands` | `{ gid: number }` | 查看好友农场详情 |
-| `friend.operate` | `{ gid: number, opType: string }` | 对好友农场执行操作 |
-| `friend.blacklistToggle` | `{ gid: number }` | 切换好友黑名单状态 |
+| `friends.lands` | `{ gid: number }` | 查看好友农场详情 |
+| `friends.execute` | `{ gid: number, opType: string }` | 对好友农场执行操作 |
+| `friends.toggleBlacklist` | `{ gid: number }` | 切换好友黑名单状态 |
 
-`friend.operate` 的 `opType` 可选值：`steal`（偷菜）、`water`（浇水）、`weed`（除草）、`bug`（除虫）、`bad`（捣乱）。
+`friends.execute` 的 `opType` 可选值：`steal`（偷菜）、`water`（浇水）、`weed`（除草）、`bug`（除虫）、`bad`（捣乱）。
 
 #### 策略配置
 
 | route | data | 说明 |
 |-------|------|------|
 | `strategy.update` | 配置快照对象 | 保存策略配置，需已选账号 |
+| `strategy.query` | — | 查询当前策略配置，需已选账号 |
 
 配置快照包含：`automation`、`plantingStrategy`、`preferredSeedId`、`intervals`、`friendQuietHours`、`friendBlacklist`、`stealCropBlacklist`（均为可选字段，只传需修改的部分）。
 
@@ -164,8 +169,9 @@
 
 | route | data | 说明 |
 |-------|------|------|
-| `panel.setTheme` | `{ theme: string }` | 设置 UI 主题 |
-| `panel.offlineReminder` | `{ enabled?, channel?, ... }` | 设置离线提醒 |
+| `panel.query` | — | 查询面板设置 |
+| `panel.updateTheme` | `{ theme: string }` | 设置 UI 主题 |
+| `panel.updateOfflineReminder` | `{ enabled?, channel?, ... }` | 设置离线提醒 |
 
 #### 日志查询
 
@@ -203,7 +209,7 @@
 
 ### 推送事件
 
-客户端通过 `topic.sub` 的 `events` 数组订阅以下事件。订阅后会立即推送一次当前数据，后续有变更时实时推送。
+客户端通过 `topics.sub` 的 `events` 数组订阅以下事件。订阅后会立即推送一次当前数据，后续有变更时实时推送。
 
 #### 全局事件（broadcastOnly）
 
@@ -213,30 +219,27 @@
 |-------|---------|
 | `system.ready` | `{ uptime, version, ts }` — 连接就绪时自动推送，无需订阅 |
 | `accounts.update` | `{ accounts, nextId }` — 账号列表变更 |
-| `panel.update` | `{ ui, offlineReminder }` — 面板设置变更 |
 
 #### 账号状态事件
 
-需在 `topic.sub` 中指定 `accountId`。
+需在 `topics.sub` 中指定 `accountId`。
 
 | route | 推送内容 |
 |-------|---------|
-| `status.connection` | `{ connected, accountName }` — 连接状态 |
-| `status.profile` | 账号资料（等级、金币、经验等） |
-| `status.session` | `{ bootAt, sessionExpGained, sessionGoldGained, sessionCouponGained, lastExpGain, lastGoldGain, levelProgress }` — 本次会话统计 |
-| `status.operations` | 操作统计数据 |
-| `status.schedule` | `{ nextFarmRunAt, nextFriendRunAt, configRevision }` — 调度信息 |
+| `accounts.connection` | `{ connected, accountName }` — 连接状态 |
+| `accounts.profile` | 账号资料（等级、金币、经验等） |
+| `accounts.session` | `{ bootAt, sessionExpGained, sessionGoldGained, sessionCouponGained, lastExpGain, lastGoldGain, levelProgress }` — 本次会话统计 |
+| `accounts.operations` | 操作统计数据 |
+| `accounts.schedule` | `{ nextFarmRunAt, nextFriendRunAt, configRevision }` — 调度信息 |
 
 #### 数据事件
 
-需在 `topic.sub` 中指定 `accountId`。
+需在 `topics.sub` 中指定 `accountId`。
 
 | route | 推送内容 |
 |-------|---------|
-| `strategy.update` | `{ intervals, plantingStrategy, preferredSeedId, friendQuietHours, stealCropBlacklist, friendBlacklist, automation }` — 策略配置 |
 | `lands.update` | 土地列表数据 |
 | `bag.update` | 背包数据 |
 | `dailyGifts.update` | 每日礼物概览 |
 | `friends.update` | 好友列表 |
-| `seeds.update` | 可用种子列表 |
-| `logs.new` | 单条日志条目 — 新日志产生时推送，需订阅 |
+| `logs.append` | 单条日志条目 — 新日志产生时推送，需订阅 |

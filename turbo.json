@@ -20,8 +20,6 @@
       "cache": false,
       "persistent": true
     },
-    "stub": {
-      "cache": true
-    }
+    "stub": {}
   }
 }

@@ -10,7 +10,15 @@ export class FarmHandler {
     private readonly manager: AccountManagerService
   ) {}
 
-  @WsRoute('farm.operate')
+  @WsRoute('seeds.query')
+  querySeeds(
+    @WsAccount() accountId: string
+  ): unknown {
+    const runner = this.manager.getRunnerOrThrow(accountId)
+    return runner.getSeeds()
+  }
+
+  @WsRoute('farm.execute')
   async operate(
     @WsAccount() accountId: string,
     @WsBody() data: Record<string, unknown>

@@ -4,9 +4,10 @@ import { storeToRefs } from 'pinia'
 import { computed, ref } from 'vue'
 import ConfirmModal from '@/components/ConfirmModal.vue'
 import EmptyState from '@/components/EmptyState.vue'
+import { useAccountRefresh } from '@/composables/useAccountRefresh'
 import { useFriendLandsWithCountdown } from '@/composables/useFriendLandsWithCountdown'
 import { useWs } from '@/composables/useWs'
-import { useAccountStore, useFriendStore, useStatusStore } from '@/stores'
+import { useAccountStore, useFriendStore, useStatusStore, useStrategyStore } from '@/stores'
 import message from '@/utils/message'
 import FriendRow from './components/FriendRow.vue'
 import FriendToolbar from './components/FriendToolbar.vue'
@@ -18,6 +19,7 @@ const OP_TYPE_LABEL: Record<string, string> = Object.fromEntries(OP_BUTTONS.map(
 const accountStore = useAccountStore()
 const friendStore = useFriendStore()
 const statusStore = useStatusStore()
+const strategyStore = useStrategyStore()
 const { currentAccountId, currentAccount } = storeToRefs(accountStore)
 const {
   friends,
@@ -140,11 +142,25 @@ function handleAvatarError(key: string) {
   avatarErrorKeys.value.add(key)
 }
 
+async function syncBlacklistFromStrategy() {
+  const ok = await strategyStore.querySettings()
+  if (ok.ok) {
+    const list = (strategyStore.settings as any)?.friendBlacklist
+    friendStore.setBlacklistFromRealtime(Array.isArray(list) ? list : [])
+  }
+}
+
+async function initPageData(): Promise<void> {
+  if (!currentAccountId.value)
+    return
+  await syncBlacklistFromStrategy()
+}
+
+useAccountRefresh(initPageData)
+
 useWs()
   .sub('friends')
-  .sub('strategy')
   .on('friends.update', friendStore.applyFriendsUpdate)
-  .on('strategy.update', friendStore.applySettingsUpdateForBlacklist)
 </script>
 
 <template>

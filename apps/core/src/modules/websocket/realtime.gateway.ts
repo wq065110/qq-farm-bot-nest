@@ -50,21 +50,20 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayConnection, OnGa
     this.pushService.setServer(server)
     this.manager.setRealtimeCallbacks({
       onStatusEvent: (accountId, event, data) => {
-        const route = `status.${event}`
+        const route = `accounts.${event}`
         this.pushService.emitToEvent(accountId, route, data)
       },
       onLog: (entry) => {
         const id = String(entry?.accountId ?? '').trim()
         if (id)
-          this.pushService.emitToEvent(id, 'logs.new', entry)
+          this.pushService.emitToEvent(id, 'logs.append', entry)
       },
       onAccountsUpdate: data => this.pushService.broadcast('accounts.update', data),
       onLandsUpdate: (accountId, data) => this.pushService.emitToEvent(accountId, 'lands.update', data),
       onBagUpdate: (accountId, data) => this.pushService.emitToEvent(accountId, 'bag.update', data),
       onDailyGiftsUpdate: (accountId, data) => this.pushService.emitToEvent(accountId, 'dailyGifts.update', data),
-      onFriendsUpdate: (accountId, data) => this.pushService.emitToEvent(accountId, 'friends.update', data),
-      onStrategyUpdate: (accountId, data) => this.pushService.emitToEvent(accountId, 'strategy.update', data),
-      onPanelUpdate: data => this.pushService.broadcast('panel.update', data)
+      onFriendsUpdate: (accountId, data) => this.pushService.emitToEvent(accountId, 'friends.update', data)
+      // strategy/panel 改为纯 req/res，不再推送事件
     })
     this.logger.log('WebSocket server (Socket.IO) started')
   }
@@ -95,7 +94,7 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayConnection, OnGa
     const route = payload.r
     const data = (payload.d ?? {}) as Record<string, unknown>
     const response = await this.router.dispatch(id, route, client, data)
-    if (id)
+    if (id && response)
       client.emit('message', response)
   }
 }

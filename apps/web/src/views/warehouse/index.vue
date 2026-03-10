@@ -3,18 +3,15 @@ import { storeToRefs } from 'pinia'
 import { computed, ref } from 'vue'
 import { warehouseApi } from '@/api'
 import EmptyState from '@/components/EmptyState.vue'
-import { useAccountRefresh } from '@/composables/useAccountRefresh'
 import { useImageFallback } from '@/composables/useImageFallback'
 import { useWs } from '@/composables/useWs'
-import { useAccountStore, useBagStore } from '@/stores'
+import { useBagStore } from '@/stores'
 import message from '@/utils/message'
 import ItemCard from './components/ItemCard.vue'
 import SellModal from './components/SellModal.vue'
 
-const accountStore = useAccountStore()
 const bagStore = useBagStore()
 const { items: bagItems } = storeToRefs(bagStore)
-const { currentAccountId } = storeToRefs(accountStore)
 const { onImageError, hasImageError } = useImageFallback()
 
 const activeTab = ref('all')
@@ -69,20 +66,15 @@ async function confirmSell(sellCount: number): Promise<void> {
   }
 }
 
-function refresh(): void {
-  const firstAcc = accountStore.accounts[0]
-  if (!currentAccountId?.value && firstAcc)
-    accountStore.selectAccount(String(firstAcc.uin))
-}
-
-useWs('bag').on('bag.update', bagStore.setBagFromRealtime)
-useAccountRefresh(refresh)
+useWs()
+  .sub('bag')
+  .on('bag.update', bagStore.setBagFromRealtime)
 </script>
 
 <template>
   <div class="flex flex-col gap-3 h-full">
     <div class="font-bold flex gap-2 items-center a-color-text">
-      <div class="i-streamline-emojis-package text-lg"  />
+      <div class="i-streamline-emojis-package text-lg" />
       <span class="text-lg">我的仓库</span>
     </div>
 
@@ -101,7 +93,7 @@ useAccountRefresh(refresh)
             :class="activeTab === t.key ? 'a-bg-primary-bg a-color-primary font-medium' : 'a-bg-layout a-color-text-secondary hover:a-bg-layout/80'"
             @click="activeTab = t.key"
           >
-            <div :class="t.icon" class="shrink-0 text-sm"  />
+            <div :class="t.icon" class="shrink-0 text-sm" />
             {{ t.label }}
           </button>
         </div>

@@ -75,6 +75,15 @@ export const useStrategyStore = defineStore('strategy', {
           (this.settings as Record<string, unknown>)[k] = payload[k]
       }
     },
+    async querySettings(): Promise<{ ok: boolean, error?: string }> {
+      try {
+        const data = await strategyApi.query()
+        this.applyStrategyUpdate(data)
+        return { ok: true }
+      } catch (e: any) {
+        return { ok: false, error: e?.message || '加载失败' }
+      }
+    },
     async saveSettings(accountId: string): Promise<{ ok: boolean, error?: string }> {
       if (!accountId)
         return { ok: false, error: '未选择账号' }
