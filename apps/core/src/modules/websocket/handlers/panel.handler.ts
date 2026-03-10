@@ -11,7 +11,7 @@ export class PanelHandler {
     private readonly manager: AccountManagerService
   ) {}
 
-  @WsRoute('panel.theme')
+  @WsRoute('panel.setTheme')
   theme(@WsBody() data: Record<string, unknown>): unknown {
     const result = this.store.setUITheme(data?.theme as string)
     this.manager.notifyPanelUpdate()

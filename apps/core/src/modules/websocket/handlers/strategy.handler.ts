@@ -12,7 +12,7 @@ export class StrategyHandler {
     private readonly manager: AccountManagerService
   ) {}
 
-  @WsRoute('strategy.save')
+  @WsRoute('strategy.update')
   save(
     @WsAccount() accountId: string,
     @WsBody() data: Record<string, unknown>

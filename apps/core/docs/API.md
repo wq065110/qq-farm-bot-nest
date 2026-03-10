@@ -121,7 +121,7 @@
 |-------|------|------|
 | `account.start` | `{ id: string }` | 启动账号 |
 | `account.stop` | `{ id: string }` | 停止账号 |
-| `account.create` | `{ code, platform, nick?, ... }` | 创建或更新账号 |
+| `account.upsert` | `{ code, platform, nick?, ... }` | 创建或更新账号 |
 | `account.delete` | `{ id: string }` | 删除账号 |
 | `account.remark` | `{ id: string, remark?: string }` | 修改账号备注 |
 
@@ -156,7 +156,7 @@
 
 | route | data | 说明 |
 |-------|------|------|
-| `strategy.save` | 配置快照对象 | 保存策略配置，需已选账号 |
+| `strategy.update` | 配置快照对象 | 保存策略配置，需已选账号 |
 
 配置快照包含：`automation`、`plantingStrategy`、`preferredSeedId`、`intervals`、`friendQuietHours`、`friendBlacklist`、`stealCropBlacklist`（均为可选字段，只传需修改的部分）。
 
@@ -164,7 +164,7 @@
 
 | route | data | 说明 |
 |-------|------|------|
-| `panel.theme` | `{ theme: string }` | 设置 UI 主题 |
+| `panel.setTheme` | `{ theme: string }` | 设置 UI 主题 |
 | `panel.offlineReminder` | `{ enabled?, channel?, ... }` | 设置离线提醒 |
 
 #### 日志查询

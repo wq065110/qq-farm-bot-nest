@@ -64,9 +64,9 @@ function refresh() {
 const landsWithCountdown = useLandsWithCountdown(lands)
 
 useWs()
-  .topic('lands')
-  .topic('bag')
-  .topic('dailyGifts')
+  .sub('lands')
+  .sub('bag')
+  .sub('dailyGifts')
   .on('lands.update', farmStore.setLandsFromRealtime)
   .on('bag.update', bagStore.setBagFromRealtime)
   .on('dailyGifts.update', statusStore.applyDailyGifts)

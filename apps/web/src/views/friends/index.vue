@@ -141,8 +141,8 @@ function handleAvatarError(key: string) {
 }
 
 useWs()
-  .topic('friends')
-  .topic('strategy')
+  .sub('friends')
+  .sub('strategy')
   .on('friends.update', friendStore.applyFriendsUpdate)
   .on('strategy.update', friendStore.applySettingsUpdateForBlacklist)
 </script>

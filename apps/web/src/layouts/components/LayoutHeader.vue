@@ -2,15 +2,14 @@
 import { MenuFoldOutlined, MenuOutlined } from '@antdv-next/icons'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
-import { useAppStore, useUserStore } from '@/stores'
+import { resetAllStores, useAppStore } from '@/stores'
 
 const appStore = useAppStore()
-const userStore = useUserStore()
 const router = useRouter()
 const { sidebarCollapsed } = storeToRefs(appStore)
 
 function logout() {
-  userStore.clearToken()
+  resetAllStores()
   router.push('/login')
 }
 </script>

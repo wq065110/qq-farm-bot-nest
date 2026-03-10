@@ -1,12 +1,5 @@
 import { defineStore } from 'pinia'
 import { accountApi } from '@/api'
-import { useAnalyticsStore } from './analytics'
-import { useBagStore } from './bag'
-import { useFarmStore } from './farm'
-import { useFriendStore } from './friend'
-import { usePanelStore } from './panel'
-import { useStatusStore } from './status'
-import { useStrategyStore } from './strategy'
 
 export interface Account {
   id: string
@@ -30,18 +23,16 @@ export const useAccountStore = defineStore('account', {
     }
   },
   actions: {
-    resetAllDataStores() {
-      useStatusStore().$reset()
-      useBagStore().$reset()
-      useFarmStore().$reset()
-      useFriendStore().$reset()
-      useStrategyStore().$reset()
-      usePanelStore().$reset()
-      useAnalyticsStore().$reset()
+    resetDataStores() {
+      const storeIds = ['status', 'bag', 'farm', 'friend', 'panel', 'analytics', 'strategy']
+      this.$all.forEach((store) => {
+        if (storeIds.includes(store.$id))
+          store.$reset()
+      })
     },
     selectAccount(id: string) {
       if (id !== this.currentAccountId) {
-        this.resetAllDataStores()
+        this.resetDataStores()
         this.currentAccountId = id
       }
     },
@@ -64,7 +55,7 @@ export const useAccountStore = defineStore('account', {
       await accountApi.remove(ref)
       if (this.currentAccountId === ref) {
         this.currentAccountId = ''
-        this.resetAllDataStores()
+        this.resetDataStores()
       }
     },
     async addAccount(payload: any) {

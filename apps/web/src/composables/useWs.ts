@@ -18,7 +18,7 @@ export function useWs(initialTopic?: string) {
   function requireTopicForEvent(event: string): void {
     const prefix = event.split('.')[0]
     if (!prefix || !topics.has(prefix)) {
-      throw new Error(`[useWs] event "${event}" requires .topic("${prefix}") to be declared first`)
+      throw new Error(`[useWs] event "${event}" requires .sub("${prefix}") to be declared first`)
     }
   }
 
@@ -38,7 +38,7 @@ export function useWs(initialTopic?: string) {
   })
 
   const builder = {
-    topic(name: string) {
+    sub(name: string) {
       topics.add(name)
       return builder
     },

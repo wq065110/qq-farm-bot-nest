@@ -29,7 +29,7 @@ export class AccountHandler {
     return null
   }
 
-  @WsRoute('account.create')
+  @WsRoute('account.upsert')
   async create(@WsBody() data: Record<string, unknown>): Promise<unknown> {
     const result = await this.accountService.createOrUpdateAccount(data || {})
     this.manager.notifyAccountsUpdate()
@@ -46,7 +46,7 @@ export class AccountHandler {
 
   @WsRoute('account.remark')
   async remark(@WsBody() data: Record<string, unknown>): Promise<unknown> {
-    const result = await this.accountService.updateRemark(data || {})
+    const result = this.accountService.updateRemark(data || {})
     this.manager.notifyAccountsUpdate()
     return result
   }

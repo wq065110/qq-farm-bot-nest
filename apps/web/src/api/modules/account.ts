@@ -18,7 +18,7 @@ export function stop(id: string): Promise<any> {
 }
 
 export function create(data: any): Promise<any> {
-  return socket.request('account.create', data)
+  return socket.request('account.upsert', data)
 }
 
 export function remove(id: string): Promise<any> {

@@ -1,3 +1,4 @@
+import type { Store } from 'pinia'
 import { createPinia } from 'pinia'
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
 
@@ -13,6 +14,28 @@ export { type AutomationConfig, type FriendQuietHoursConfig, type IntervalsConfi
 export { useUserStore } from './modules/user'
 
 const pinia = createPinia()
+
+// 持久化插件
 pinia.use(piniaPluginPersistedstate)
 
+// 每个挂在访问全部Store能力
+const stores = new Set<Store>()
+pinia.use(({ store }) => {
+  stores.add(store)
+  store.$all = stores
+  store.$resetAll = () => store.$all.forEach((s: any) => s.$reset())
+})
+
+// 重置全部
+export function resetAllStores() {
+  stores.forEach((s: any) => s.$reset())
+}
+
 export default pinia
+
+declare module 'pinia' {
+  export interface PiniaCustomProperties {
+    $all: typeof stores
+    $reset_all: () => void
+  }
+}

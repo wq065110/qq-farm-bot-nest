@@ -40,8 +40,8 @@ async function saveAccountSettings(): Promise<void> {
 }
 
 useWs()
-  .topic('strategy')
-  .topic('seeds')
+  .sub('strategy')
+  .sub('seeds')
   .on('strategy.update', strategyStore.applyStrategyUpdate)
   .on('seeds.update', farmStore.applySeedsUpdate)
 </script>

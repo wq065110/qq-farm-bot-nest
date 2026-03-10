@@ -62,7 +62,7 @@ async function handleSaveOffline() {
 }
 
 useWs()
-  .topic('panel')
+  .sub('panel')
   .on('panel.update', panelStore.applyPanelUpdate)
 </script>
 

@@ -6,9 +6,10 @@ import Sidebar from './components/Sidebar.vue'
 
 const accountStore = useAccountStore()
 const statusStore = useStatusStore()
+
 useWs()
-  .topic('accounts')
-  .topic('status')
+  .sub('accounts')
+  .sub('status')
   .on('accounts.update', accountStore.setAccountsFromRealtime)
   .on('status.connection', statusStore.applyStatusConnection)
 </script>
