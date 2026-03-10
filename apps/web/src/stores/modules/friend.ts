@@ -20,6 +20,8 @@ function buildPlantSummaryFromDetail(lands: any[], summary: any): Record<string,
     for (const land of (Array.isArray(lands) ? lands : [])) {
       if (!land || !land.unlocked)
         continue
+      if (land.occupiedByMaster)
+        continue
       if (land.status === 'stealable')
         stealNum!++
       if (land.needWater)

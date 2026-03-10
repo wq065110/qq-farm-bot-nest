@@ -186,6 +186,11 @@ export class GameConfigService implements OnModuleInit {
     return this.plantMap.get(plantId)
   }
 
+  getPlantSizeBySeedId(seedId: number): number {
+    const plant = this.seedToPlant.get(seedId)
+    return Math.max(1, Number((plant as any)?.size) || 1)
+  }
+
   getPlantBySeedId(seedId: number): PlantInfo | undefined {
     return this.seedToPlant.get(seedId)
   }

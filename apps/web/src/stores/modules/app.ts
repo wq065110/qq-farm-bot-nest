@@ -53,11 +53,8 @@ export const useAppStore = defineStore('app', {
       this.setSidebarCollapsed(!this.sidebarCollapsed)
     },
     async setTheme(t: 'light' | 'dark') {
-      try {
-        this.isDark = t === 'dark'
-      } catch (e) {
-        console.error('设置主题失败:', e)
-      }
+      this.isDark = t === 'dark'
+      document.documentElement.setAttribute('data-theme', t)
     },
     toggleDark() {
       const newTheme = this.isDark ? 'light' : 'dark'

@@ -11,6 +11,77 @@ import { getServerTimeSec, sleep, toNum, toTimeSec } from '../utils'
 const NORMAL_FERTILIZER_ID = 1011
 const ORGANIC_FERTILIZER_ID = 1012
 
+function buildLandMap(lands: any[]): Map<number, any> {
+  const map = new Map<number, any>()
+  for (const land of lands || []) {
+    const id = toNum(land?.id)
+    if (id > 0)
+      map.set(id, land)
+  }
+  return map
+}
+
+function getSlaveLandIds(land: any): number[] {
+  const ids: any[] = Array.isArray(land?.slave_land_ids) ? land.slave_land_ids : []
+  return [...new Set(ids.map(id => toNum(id)).filter(n => Number.isFinite(n) && n > 0))] as number[]
+}
+
+function hasPlantData(land: any): boolean {
+  const plant = land?.plant
+  return !!(plant && Array.isArray(plant.phases) && plant.phases.length > 0)
+}
+
+function getLinkedMasterLand(land: any, landsMap: Map<number, any>): any | null {
+  const landId = toNum(land?.id)
+  const masterLandId = toNum(land?.master_land_id)
+  if (!masterLandId || masterLandId === landId)
+    return null
+
+  const masterLand = landsMap.get(masterLandId)
+  if (!masterLand)
+    return null
+
+  const slaveIds = getSlaveLandIds(masterLand)
+  if (slaveIds.length > 0 && !slaveIds.includes(landId))
+    return null
+
+  return masterLand
+}
+
+function getDisplayLandContext(land: any, landsMap: Map<number, any>): {
+  sourceLand: any
+  occupiedByMaster: boolean
+  masterLandId: number
+  occupiedLandIds: number[]
+} {
+  const masterLand = getLinkedMasterLand(land, landsMap)
+  if (masterLand && hasPlantData(masterLand)) {
+    const masterId = toNum(masterLand.id)
+    const slaveIds = getSlaveLandIds(masterLand)
+    const occupiedIds = [masterId, ...slaveIds].filter(Boolean)
+    return {
+      sourceLand: masterLand,
+      occupiedByMaster: true,
+      masterLandId: masterId,
+      occupiedLandIds: occupiedIds.length > 0 ? occupiedIds : [masterId]
+    }
+  }
+
+  const selfId = toNum(land?.id)
+  const slaveIds = getSlaveLandIds(land)
+  const occupiedIds = [selfId, ...slaveIds].filter(Boolean)
+  return {
+    sourceLand: land,
+    occupiedByMaster: false,
+    masterLandId: selfId,
+    occupiedLandIds: occupiedIds.length > 0 ? occupiedIds : [selfId]
+  }
+}
+
+function isOccupiedSlaveLand(land: any, landsMap: Map<number, any>): boolean {
+  return getDisplayLandContext(land, landsMap).occupiedByMaster
+}
+
 export type LogCallback = (entry: { msg: string, tag?: string, meta?: Record<string, string>, isWarn?: boolean }) => void
 
 export class FarmWorker {
@@ -137,19 +208,32 @@ export class FarmWorker {
     return data
   }
 
-  async plantSeeds(seedId: number, landIds: number[]): Promise<number> {
+  async plantSeeds(seedId: number, landIds: number[], options?: { maxPlantCount?: number }): Promise<{ planted: number, plantedLandIds: number[], occupiedLandIds: number[] }> {
+    const ids = (Array.isArray(landIds) ? landIds : []).map(id => toNum(id)).filter(Boolean)
+    const maxCount = Math.max(0, toNum(options?.maxPlantCount) || Number.POSITIVE_INFINITY)
     let success = 0
-    for (const landId of landIds) {
+    const plantedLandIds: number[] = []
+    const occupiedLandIds = new Set<number>()
+    for (const rawId of ids) {
+      const landId = toNum(rawId)
+      if (!landId)
+        continue
+      if (success >= maxCount)
+        break
       try {
         await this.client.invoke('gamepb.plantpb.PlantService', 'Plant', {
           items: [{ seed_id: seedId, land_ids: [landId] }]
         })
         success++
-      } catch (e: any) { this.warn(`土地#${landId} 种植失败: ${e?.message}`, 'plant_seed') }
-      if (landIds.length > 1)
+        plantedLandIds.push(landId)
+        occupiedLandIds.add(landId)
+      } catch (e: any) {
+        this.warn(`土地#${landId} 种植失败: ${e?.message}`, 'plant_seed')
+      }
+      if (ids.length > 1)
         await sleep(50)
     }
-    return success
+    return { planted: success, plantedLandIds, occupiedLandIds: [...occupiedLandIds] }
   }
 
   // ========== Phase Analysis ==========
@@ -180,9 +264,12 @@ export class FarmWorker {
     }
     const harvestableInfo: any[] = []
     const nowSec = getServerTimeSec()
+    const landsMap = buildLandMap(lands)
 
     for (const land of lands) {
       const id = toNum(land.id)
+      if (isOccupiedSlaveLand(land, landsMap))
+        continue
       if (!land.unlocked) {
         if (land.could_unlock)
           result.unlockable.push(id)
@@ -441,25 +528,33 @@ export class FarmWorker {
     if (!bestSeed)
       return
 
-    const needCount = landsToPlant.length
+    const plantSize = this.gameConfig.getPlantSizeBySeedId(bestSeed.seedId)
+    const landFootprint = plantSize * plantSize
+    let needCount = landsToPlant.length
+    if (landFootprint > 1)
+      needCount = Math.floor(landsToPlant.length / landFootprint)
+    if (needCount <= 0)
+      return
+
     const totalCost = bestSeed.price * needCount
     if (totalCost > this.client.userState.gold) {
       const canBuy = Math.floor(this.client.userState.gold / bestSeed.price)
       if (canBuy <= 0)
         return
-      landsToPlant = landsToPlant.slice(0, canBuy)
+      needCount = canBuy
+      landsToPlant = landsToPlant.slice(0, needCount)
     }
 
     let actualSeedId = bestSeed.seedId
     try {
-      const buyReply = await this.buyGoods(bestSeed.goodsId, landsToPlant.length, bestSeed.price)
+      const buyReply = await this.buyGoods(bestSeed.goodsId, needCount, bestSeed.price)
       if (buyReply.get_items?.[0])
         actualSeedId = toNum(buyReply.get_items[0].id) || actualSeedId
     } catch { return }
 
-    const planted = await this.plantSeeds(actualSeedId, landsToPlant)
+    const { planted, plantedLandIds } = await this.plantSeeds(actualSeedId, landsToPlant, { maxPlantCount: needCount })
     if (planted > 0)
-      await this.runFertilizerByConfig(landsToPlant.slice(0, planted))
+      await this.runFertilizerByConfig(plantedLandIds)
   }
 
   private async findBestSeed(): Promise<{ goodsId: number, seedId: number, price: number, requiredLevel: number } | null> {
@@ -561,16 +656,61 @@ export class FarmWorker {
         return { lands: [], summary: {} }
       const status = this.analyzeLands(landsReply.lands)
       const nowSec = getServerTimeSec()
+      const landsMap = buildLandMap(landsReply.lands)
       const lands = landsReply.lands.map((land: any) => {
         const id = toNum(land.id)
-        if (!land.unlocked)
-          return { id, unlocked: false, status: 'locked', plantName: '', phaseName: '', level: toNum(land.level), maxLevel: toNum(land.max_level), couldUnlock: !!land.could_unlock, couldUpgrade: !!land.could_upgrade }
-        const plant = land.plant
-        if (!plant?.phases?.length)
-          return { id, unlocked: true, status: 'empty', plantName: '', phaseName: '空地', level: toNum(land.level) }
+        if (!land.unlocked) {
+          return {
+            id,
+            unlocked: false,
+            status: 'locked',
+            plantName: '',
+            phaseName: '',
+            level: toNum(land.level),
+            maxLevel: toNum(land.max_level),
+            couldUnlock: !!land.could_unlock,
+            couldUpgrade: !!land.could_upgrade,
+            occupiedByMaster: false,
+            masterLandId: id,
+            occupiedLandIds: [id],
+            plantSize: 1
+          }
+        }
+
+        const context = getDisplayLandContext(land, landsMap)
+        const sourceLand = context.sourceLand
+        const plant = sourceLand?.plant
+        if (!plant?.phases?.length) {
+          return {
+            id,
+            unlocked: true,
+            status: 'empty',
+            plantName: '',
+            phaseName: '空地',
+            level: toNum(land.level),
+            occupiedByMaster: context.occupiedByMaster,
+            masterLandId: context.masterLandId,
+            occupiedLandIds: context.occupiedLandIds,
+            plantSize: 1
+          }
+        }
+
         const phase = this.getCurrentPhase(plant.phases)
-        if (!phase)
-          return { id, unlocked: true, status: 'empty', plantName: '', phaseName: '', level: toNum(land.level) }
+        if (!phase) {
+          return {
+            id,
+            unlocked: true,
+            status: 'empty',
+            plantName: '',
+            phaseName: '',
+            level: toNum(land.level),
+            occupiedByMaster: context.occupiedByMaster,
+            masterLandId: context.masterLandId,
+            occupiedLandIds: context.occupiedLandIds,
+            plantSize: 1
+          }
+        }
+
         const plantId = toNum(plant.id)
         const plantCfg = this.gameConfig.getPlantById(plantId)
         const seedId = toNum(plantCfg?.seed_id)
@@ -578,11 +718,14 @@ export class FarmWorker {
         const currentSeason = Number((plant as any)?.cur_season) || 1
         const maturePhase = plant.phases.find((p: any) => toNum(p?.phase) === PlantPhase.MATURE)
         const matureBegin = maturePhase ? toTimeSec(maturePhase.begin_time) : 0
+        const plantSize = Math.max(1, Number((plantCfg as any)?.size) || 1)
+
         let landStatus = 'growing'
         if (phase.phase === PlantPhase.MATURE)
           landStatus = 'harvestable'
         else if (phase.phase === PlantPhase.DEAD)
           landStatus = 'dead'
+
         return {
           id,
           unlocked: true,
@@ -601,7 +744,11 @@ export class FarmWorker {
           couldUnlock: !!land.could_unlock,
           couldUpgrade: !!land.could_upgrade,
           currentSeason,
-          totalSeasons
+          totalSeasons,
+          occupiedByMaster: context.occupiedByMaster,
+          masterLandId: context.masterLandId,
+          occupiedLandIds: context.occupiedLandIds,
+          plantSize
         }
       })
       return { lands, summary: { harvestable: status.harvestable.length, growing: status.growing.length, empty: status.empty.length, dead: status.dead.length, needWater: status.needWater.length, needWeed: status.needWeed.length, needBug: status.needBug.length } }

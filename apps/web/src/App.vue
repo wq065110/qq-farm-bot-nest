@@ -2,12 +2,16 @@
 import { theme } from 'antdv-next'
 import zhCN from 'antdv-next/locale/zh_CN'
 import { storeToRefs } from 'pinia'
-import { computed } from 'vue'
+import { computed, watchEffect } from 'vue'
 import { RouterView } from 'vue-router'
 import { useAppStore } from '@/stores'
 
 const appStore = useAppStore()
 const { isDark, themeTokens } = storeToRefs(appStore)
+
+watchEffect(() => {
+  document.documentElement.setAttribute('data-theme', isDark.value ? 'dark' : 'light')
+})
 
 const themeConfig = computed(() => ({
   algorithm: isDark.value ? theme.darkAlgorithm : theme.defaultAlgorithm,

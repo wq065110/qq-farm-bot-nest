@@ -48,6 +48,17 @@ function getLandTypeName(level: number) {
   const typeMap: Record<number, string> = { 0: '空地', 1: '黄土地', 2: '红土地', 3: '黑土地', 4: '金土地' }
   return typeMap[Number(level) || 0] || ''
 }
+
+function getPlantSizeText(land: any) {
+  const size = Number(land?.plantSize) || 1
+  if (size <= 1)
+    return ''
+  return `${size}x${size}`
+}
+
+function needOperate(land: any) {
+  return land.needWater || land.needWeed || land.needBug || land.status === 'stealable'
+}
 </script>
 
 <template>
@@ -56,20 +67,34 @@ function getLandTypeName(level: number) {
     :classes="{ body: '!p-1.5 !flex !flex-col !items-center !min-h-[130px] relative' }"
     :class="getLandStatusClass(land)"
   >
-    <div class="p-1.5 flex gap-1.5 right-0 top-0 absolute">
-      <i v-if="land.needWater" class="i-streamline-emojis-droplet" title="需浇水" />
-      <i v-if="land.needWeed" class="i-streamline-emojis-herb" title="需除草" />
-      <i v-if="land.needBug" class="i-streamline-emojis-bug" title="需除虫" />
-      <i v-if="land.status === 'harvestable'" class="i-streamline-emojis-ok-hand-1" title="可偷取" />
+    <div class="p-1.5 flex flex flex-col gap-1.5 items-end right-0 top-0 absolute">
+      <div v-if="needOperate(land)" class="flex gap-1.5 scale-80 text-xs">
+        <i v-if="land.needWater" class="i-streamline-emojis-droplet" title="需浇水" />
+        <i v-if="land.needWeed" class="i-streamline-emojis-herb" title="需除草" />
+        <i v-if="land.needBug" class="i-streamline-emojis-bug" title="需除虫" />
+        <i v-if="land.status === 'harvestable'" class="i-streamline-emojis-ok-hand-1" title="可偷取" />
+      </div>
+
+      <div class="flex flex-col gap-1 items-end">
+        <div
+          v-if="land.plantSize > 1"
+          class="text-[10px] leading-none font-medium px-1.5 py-0.5 rounded-full w-fit a-color-text-tertiary shadow-sm"
+        >
+          {{ getPlantSizeText(land) }}
+        </div>
+        <div v-if="land.totalSeasons && land.totalSeasons > 1" class="text-[10px] leading-none font-medium px-1.5 py-0.5 rounded-full w-fit a-color-text-tertiary shadow-sm">
+          {{ land.currentSeason || 1 }}/{{ land.totalSeasons }} 季
+        </div>
+      </div>
     </div>
 
     <span class="font-mono self-start a-color-text-tertiary text-xs">#{{ land.id }}</span>
 
-    <div class="my-1 flex h-10 w-10 items-center justify-center">
+    <div class="my-1.5 flex h-10 w-10 items-center justify-center">
       <img
         v-if="land.seedImage"
         :src="land.seedImage"
-        class="mb-0.5 max-h-full max-w-full object-contain"
+        class="mt-1 max-h-full max-w-full object-contain"
         loading="lazy"
       >
       <div v-else class="i-streamline-emojis-seedling a-color-text-quat text-xl" />
@@ -89,12 +114,7 @@ function getLandTypeName(level: number) {
     </div>
 
     <div class="flex flex-col gap-0.5 items-center a-color-text-tertiary text-xs">
-      <span>
-        {{ getLandTypeName(land.level) }}
-      </span>
-      <span v-if="land.totalSeasons && land.totalSeasons > 1">
-        第 {{ land.currentSeason || 1 }} / {{ land.totalSeasons }} 季
-      </span>
+      {{ getLandTypeName(land.level) }}
     </div>
   </a-card>
 </template>
@@ -127,19 +147,19 @@ function getLandTypeName(level: number) {
 }
 
 /* ========== 暗色模式：边框与背景同色，更高透明度 ========== */
-:root.dark .land-yellow {
+html[data-theme='dark'] .land-yellow {
   background-color: rgb(253 230 138 / 5%);
   border-color: rgb(252 211 77 / 15%);
 }
-:root.dark .land-red {
+html[data-theme='dark'] .land-red {
   background-color: rgb(251 113 133 / 10%);
   border-color: rgb(251 113 133 / 20%);
 }
-:root.dark .land-black {
+html[data-theme='dark'] .land-black {
   background-color: rgb(148 163 184 / 10%);
   border-color: rgb(148 163 184 / 20%);
 }
-:root.dark .land-gold {
+html[data-theme='dark'] .land-gold {
   background-color: rgb(250 204 21 / 10%);
   border-color: rgb(250 204 21 / 20%);
 }
