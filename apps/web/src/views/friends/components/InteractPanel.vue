@@ -79,7 +79,6 @@ function onRefresh(): void {
               最近访客
             </h3>
             <a-tag size="small" color="orange" class="px-2 rounded-full flex gap-1 items-center">
-              <div class="i-streamline-emojis-footprints text-xs" />
               {{ records.length }}
             </a-tag>
           </div>
@@ -130,7 +129,7 @@ function onRefresh(): void {
           v-if="visibleRecords.length === 0"
           class="py-12 flex flex-col gap-2 items-center a-color-text-tertiary"
         >
-          <div class="i-streamline-emojis-desert text-3xl" />
+          <div class="i-streamline-emojis-four-leaf-clover text-3xl" />
           <span class="text-sm">最近还没有人来你农场玩～</span>
         </div>
 
