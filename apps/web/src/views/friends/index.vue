@@ -164,51 +164,59 @@ useWs()
 </script>
 
 <template>
-  <div class="flex flex-col gap-3 h-full">
-    <div class="font-bold flex gap-2 items-center a-color-text">
+  <div class="flex flex-col gap-3 h-full overflow-hidden">
+    <div class="font-bold flex shrink-0 gap-2 items-center a-color-text">
       <div class="i-streamline-emojis-man-and-woman-holding-hands-1 text-lg" />
       <span class="text-lg">好友农场</span>
     </div>
 
-    <div v-if="!currentAccountId" class="flex flex-1 items-center justify-center">
-      <EmptyState icon="i-streamline-emojis-man-and-woman-holding-hands-1 text-5xl" description="请先在侧边栏选择账号" />
-    </div>
-
-    <div v-else-if="!connected" class="flex flex-1 items-center justify-center">
-      <EmptyState icon="i-streamline-emojis-electric-plug text-5xl" description="账号未连接，请先运行账号" />
-    </div>
-
-    <div v-else-if="friends.length === 0" class="flex flex-1 items-center justify-center">
-      <EmptyState icon="i-streamline-emojis-man-shrugging-1 text-5xl" description="暂无好友数据" />
-    </div>
-
+    <!-- 互动记录面板：最大高度50%，自适应内容高度 -->
     <a-card
-      v-else
       variant="borderless"
-      class="flex-1 overflow-hidden"
+      class="flex shrink-0 flex-col max-h-[70%]"
+      :classes="{ body: '!p-0 overflow-hidden flex flex-col' }"
+    >
+      <InteractPanel
+        v-model:collapsed="interactCollapsed"
+        v-model:filter="interactFilter"
+        :records="interactRecords"
+        :loading="interactLoading"
+        :error="interactError"
+        class="flex flex-1 flex-col min-h-0"
+        @refresh="refreshInteractRecords"
+      />
+    </a-card>
+
+    <!-- 好友列表：填满剩余空间 -->
+    <a-card
+      variant="borderless"
+      class="flex flex-1 flex-col min-h-0"
       :classes="{ body: '!p-0 !h-full !flex !flex-col' }"
     >
       <FriendToolbar
         v-model:search-query="searchQuery"
         :friend-count="friends.length"
         :blacklisted-count="blacklistedCount"
+        class="shrink-0"
       />
 
-      <div class="p-4 flex-1 min-h-0 overflow-y-auto space-y-3">
-        <InteractPanel
-          v-model:collapsed="interactCollapsed"
-          v-model:filter="interactFilter"
-          :records="interactRecords"
-          :loading="interactLoading"
-          :error="interactError"
-          @refresh="refreshInteractRecords"
-        />
+      <div class="p-4 flex flex-1 flex-col min-h-0 overflow-y-auto space-y-3">
+        <div v-if="!currentAccountId" class="flex flex-1 items-center justify-center">
+          <EmptyState icon="i-streamline-emojis-man-and-woman-holding-hands-1 text-5xl" description="请先在侧边栏选择账号" />
+        </div>
+
+        <div v-else-if="!connected" class="flex flex-1 items-center justify-center">
+          <EmptyState icon="i-streamline-emojis-electric-plug text-5xl" description="账号未连接，请先运行账号" />
+        </div>
+
+        <div v-else-if="friends.length === 0" class="flex flex-1 items-center justify-center">
+          <EmptyState icon="i-streamline-emojis-man-shrugging-1 text-5xl" description="暂无好友数据" />
+        </div>
 
         <!-- 好友列表 -->
-        <div class="border-solid a-border-border-sec border rounded-lg shadow-sm">
+        <div v-else class="border-solid a-border-border-sec border rounded-lg shadow-sm">
           <!-- 正常好友分区 -->
-          <button
-            type="button"
+          <div
             class="a-bg-transparent hover:a-bg-fill-quaternary px-4 py-2.5 border-b border-b-solid flex w-full cursor-pointer transition-colors items-center justify-between a-border-b-border-sec"
             @click="normalCollapsed = !normalCollapsed"
           >
@@ -225,7 +233,7 @@ useWs()
               class="i-carbon-chevron-right transition-transform duration-200 a-color-text-tertiary text-base"
               :class="[normalCollapsed ? '' : 'rotate-90']"
             />
-          </button>
+          </div>
 
           <div v-show="!normalCollapsed">
             <div v-if="normalFriends.length === 0" class="px-4 py-6 a-color-text-tertiary text-sm">
@@ -254,9 +262,8 @@ useWs()
           </div>
 
           <!-- 黑名单分区 -->
-          <div v-if="blacklistFriends.length > 0" class="mt-2">
-            <button
-              type="button"
+          <div v-if="blacklistFriends.length > 0" class="border-t border-solid a-border-t-border-sec">
+            <div
               class="a-bg-transparent hover:a-bg-fill-quaternary px-4 py-2.5 border-b border-b-solid flex w-full cursor-pointer transition-colors items-center justify-between a-border-b-border-sec"
               @click="blacklistCollapsed = !blacklistCollapsed"
             >
@@ -273,7 +280,7 @@ useWs()
                 class="i-carbon-chevron-right transition-transform duration-200 a-color-text-tertiary text-base"
                 :class="[blacklistCollapsed ? '' : 'rotate-90']"
               />
-            </button>
+            </div>
 
             <div v-show="!blacklistCollapsed">
               <div

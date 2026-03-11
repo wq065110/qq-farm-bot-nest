@@ -91,7 +91,12 @@ export class WarehouseWorker {
       throw new Error('背包中无该物品或数量不足')
     if (remaining > 0)
       throw new Error('背包中该物品数量不足')
-    return this.sellItems(toSell)
+    const result = await this.sellItems(toSell)
+    const earned = this.getGoldFromItems(result?.get_items || [])
+    const totalCount = toSell.reduce((acc, curr) => acc + (Number(curr.count) || 0), 0)
+    const name = this.gameConfig.getItemName(itemId)
+    this.log(`出售 ${name} x${totalCount}${earned > 0 ? `，获得 ${earned} 金币` : ''}`, 'sell_success')
+    return result
   }
 
   async useItem(itemId: number, count = 1, landIds: number[] = []): Promise<any> {
@@ -236,9 +241,14 @@ export class WarehouseWorker {
       for (const item of items) {
         const id = toNum(item.id)
         const count = toNum(item.count)
-        if (this.gameConfig.getPlantByFruitId(id) && count > 0) {
+        const plant = this.gameConfig.getPlantByFruitId(id)
+        const info = this.gameConfig.getItemById(id)
+        const isFruitType = info && (Number(info.type) === 6 || Number(info.type) === 17)
+
+        if ((plant || isFruitType) && count > 0) {
           toSell.push(item)
-          names.push(`${this.gameConfig.getFruitName(id)}x${count}`)
+          const name = plant ? this.gameConfig.getFruitName(id) : (info?.name || `果实${id}`)
+          names.push(`${name}x${count}`)
         }
       }
       if (!toSell.length)
@@ -297,8 +307,9 @@ export class WarehouseWorker {
       } else if (id === 1101) {
         name = '经验'
         category = 'exp'
-      } else if (this.gameConfig.getPlantByFruitId(id)) {
-        name = name || `${this.gameConfig.getFruitName(id)}果实`
+      } else if (this.gameConfig.getPlantByFruitId(id) || (info && (Number(info.type) === 6 || Number(info.type) === 17))) {
+        const plantName = this.gameConfig.getPlantByFruitId(id)?.name
+        name = name || (plantName ? `${plantName}果实` : `果实${id}`)
         category = 'fruit'
       } else if (this.gameConfig.getPlantBySeedId(id)) {
         const p = this.gameConfig.getPlantBySeedId(id)

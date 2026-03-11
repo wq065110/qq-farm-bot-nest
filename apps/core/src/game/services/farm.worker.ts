@@ -557,6 +557,10 @@ export class FarmWorker {
     let actualSeedId = bestSeed.seedId
     try {
       const buyReply = await this.buyGoods(bestSeed.goodsId, needCount, bestSeed.price)
+      const seedName = this.gameConfig.getPlantNameBySeedId(bestSeed.seedId)
+      const totalCost = bestSeed.price * needCount
+      this.log(`购买 ${seedName} x${needCount}，花费 ${totalCost} 金币`, 'buy_seed')
+
       if (buyReply.get_items?.[0])
         actualSeedId = toNum(buyReply.get_items[0].id) || actualSeedId
     } catch { return }
@@ -571,10 +575,10 @@ export class FarmWorker {
     priority: number[]
   ): T[] {
     if (!priority?.length)
-      return [...bagSeeds].sort((a, b) => b.requiredLevel - a.requiredLevel)
+      return bagSeeds.toSorted((a, b) => b.requiredLevel - a.requiredLevel)
     const priorityMap = new Map<number, number>()
     priority.forEach((id, idx) => priorityMap.set(id, idx))
-    return [...bagSeeds].sort((a, b) => {
+    return bagSeeds.toSorted((a, b) => {
       const pa = priorityMap.has(a.seedId) ? priorityMap.get(a.seedId)! : Number.MAX_SAFE_INTEGER
       const pb = priorityMap.has(b.seedId) ? priorityMap.get(b.seedId)! : Number.MAX_SAFE_INTEGER
       if (pa !== pb)

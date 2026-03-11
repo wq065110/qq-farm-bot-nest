@@ -26,6 +26,7 @@ export const EVENTS = [
   { label: '土地推送', value: 'lands_notify' },
   { label: '选择种子', value: 'seed_pick' },
   { label: '购买种子', value: 'seed_buy' },
+  { label: '手动购买', value: 'buy_manual' },
   { label: '购买化肥', value: 'fertilizer_buy' },
   { label: '开启礼包', value: 'fertilizer_gift_open' },
   { label: '获取任务', value: 'task_scan' },

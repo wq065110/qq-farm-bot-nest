@@ -57,10 +57,10 @@ function onRefresh(): void {
 </script>
 
 <template>
-  <div class="border-solid border-solid overflow-hidden a-border-border-sec border rounded-xl shadow-sm">
+  <div class="flex flex-col h-full">
     <!-- Header -->
     <div
-      class="px-4 py-3 flex flex-col gap-3 cursor-pointer lg:flex-row lg:items-center lg:justify-between hover:a-bg-layout"
+      class="px-4 py-3 flex shrink-0 flex-col gap-3 cursor-pointer lg:flex-row lg:items-center lg:justify-between hover:a-bg-layout"
       @click="toggleCollapsed"
     >
       <div class="flex gap-3 items-center">
@@ -124,7 +124,7 @@ function onRefresh(): void {
     </div>
 
     <!-- Body -->
-    <div v-show="!collapsed" class="border-t border-solid a-border-t-border-sec">
+    <div v-show="!collapsed" class="border-t border-solid flex-1 min-h-0 overflow-y-auto a-border-t-border-sec">
       <a-spin :spinning="loading">
         <div
           v-if="visibleRecords.length === 0"

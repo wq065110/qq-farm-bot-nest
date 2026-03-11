@@ -628,6 +628,12 @@ export class AccountRunner {
 
   async buySeed(goodsId: number, count: number, price: number) {
     const result = await this.farm.buyGoods(goodsId, count, price)
+    const items = result?.get_items || []
+    if (items.length > 0) {
+      const seedId = Number(items[0].id)
+      const name = this.gameConfig.getPlantNameBySeedId(seedId) || `商品${goodsId}`
+      this.log(`手动购买 ${name} x${count}，花费 ${price * count} 金币`, 'buy_manual')
+    }
     this.pushLandsAndBag().catch(() => {})
     return result
   }
