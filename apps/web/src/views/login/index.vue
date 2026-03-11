@@ -166,7 +166,7 @@ async function handleLogin() {
                     <span
                       class="mr-2 transition-all duration-300 text-lg dark-text-white/80"
                       :class="[
-                        focused ? 'i-streamline-emojis-key' : 'i-streamline-emojis-locked-with-key',
+                        focused ? 'i-streamline-emojis-palm-tree' : 'i-streamline-emojis-locked-with-key',
                         focused ? 'scale-110 rotate-12' : 'opacity-60'
                       ]"
                     />

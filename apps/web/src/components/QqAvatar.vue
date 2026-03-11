@@ -54,10 +54,15 @@ const avatarClass = computed(() => {
         <div class="i-streamline-emojis-man-farmer-1" :class="size >= 40 ? 'text-xl' : ''" />
       </template>
     </a-avatar>
+
     <div
       v-if="iconClass && platform"
-      class="text-[13px] text-primary shrink-0 absolute -bottom-0.7 -right-1"
-      :class="iconClass"
-    />
+      class="flex items-center justify-center absolute bg-layout rounded-md -bottom-0.7 -right-1"
+    >
+      <i
+        class="text-primary text-xs"
+        :class="iconClass"
+      />
+    </div>
   </div>
 </template>

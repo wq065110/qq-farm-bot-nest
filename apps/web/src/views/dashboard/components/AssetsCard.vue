@@ -31,8 +31,8 @@ function formatDuration(seconds: number): string {
     <div class="flex-1 gap-3 grid grid-cols-2 min-h-0">
       <div class="p-2 flex flex-col gap-0.5 items-center justify-center a-bg-layout rounded-lg">
         <div class="flex gap-1.5 items-center a-color-text-secondary">
-          <div class="i-streamline-emojis-credit-card" />
-          金币
+          <div class="i-streamline-emojis-money-bag" />
+          <span class="top-0.2 relative">金币</span>
         </div>
         <div class="font-bold a-color-text text-xl">
           {{ gold || 0 }}
@@ -46,10 +46,10 @@ function formatDuration(seconds: number): string {
           <span>{{ Math.abs(sessionGoldGained) }}</span>
         </div>
       </div>
-      <div class="p-2 flex flex-col gap-0.5 items-center justify-center a-bg-layout rounded-lg">
+      <div class="p-2 flex flex-col gap-0.6 items-center justify-center a-bg-layout rounded-lg">
         <div class="flex gap-1.5 items-center a-color-text-secondary">
-          <div class="i-carbon-ticket" />
-          点券
+          <div class="i-streamline-emojis-money-with-wings" />
+          <span class="top-0.2 relative">点券</span>
         </div>
         <div class="font-bold a-color-text text-xl">
           {{ coupon || 0 }}
@@ -64,7 +64,7 @@ function formatDuration(seconds: number): string {
         </div>
       </div>
       <div class="px-3 py-1.5 flex gap-2 col-span-2 items-center justify-center a-bg-layout rounded-lg">
-        <div class="i-streamline-emojis-watch text-lg" />
+        <div class="i-twemoji-eight-oclock" />
         <span class="a-color-text-secondary">挂机时长</span>
         <span class="font-bold font-mono a-color-primary">{{ formatDuration(uptime) }}</span>
       </div>

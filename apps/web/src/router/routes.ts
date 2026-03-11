@@ -58,7 +58,7 @@ const routes: RouteRecordRaw[] = [
         path: 'panel',
         name: 'panel',
         component: () => import('@/views/panel/index.vue'),
-        meta: { label: '面板设置', icon: 'i-streamline-emojis-nut-and-bolt' }
+        meta: { label: '面板设置', icon: 'i-streamline-emojis-woman-mechanic-2' }
       }
     ]
   },

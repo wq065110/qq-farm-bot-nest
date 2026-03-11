@@ -23,7 +23,7 @@ defineProps<{
     <template v-else>
       <div class="flex items-center justify-between">
         <div class="flex gap-1.5 items-center a-color-text-tertiary text-sm">
-          <div class="i-streamline-emojis-watch" />
+          <div class="i-twemoji-timer-clock" />
           <span>{{ uptime }}</span>
         </div>
         <ThemeToggle />

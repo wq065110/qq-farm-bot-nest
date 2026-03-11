@@ -10,7 +10,7 @@ const { settings } = storeToRefs(strategyStore)
   <a-card variant="borderless" class="shrink-0" :classes="{ body: '!p-4', header: '!min-h-11 !px-4' }">
     <template #title>
       <div class="font-bold flex gap-2 items-center">
-        <div class="i-streamline-emojis-watch" />
+        <div class="i-twemoji-seven-oclock" />
         巡查间隔
       </div>
     </template>
