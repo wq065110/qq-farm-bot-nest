@@ -124,59 +124,87 @@ async function handleLogin() {
     <div class="p-5 flex items-center inset-0 justify-center absolute z-20">
       <a-card
         variant="borderless"
-        class="login-card max-w-[380px] w-full relative overflow-hidden rounded-2xl"
+        class="login-card max-w-[380px] w-full relative overflow-hidden rounded-2xl !border-white/30 !bg-white/30 !shadow-[0_8px_32px_0_rgba(31,38,135,0.15)] !backdrop-blur-xl !border dark:!bg-black/30"
         :classes="{ body: '!p-0' }"
-        :style="{ boxShadow: '0 8px 40px var(-ant-color-bg-layout-secondary), 0 0 0 1px var(--ant-color-border-secondary)' }"
       >
-        <span class="brand-plus right-2 top-2 absolute">PLUS</span>
+        <span class="text-[9px] text-white tracking-[0.15em] font-bold px-[5px] bg-[var(--ant-color-primary)] inline-flex h-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.25)] items-center right-2 top-2 absolute rounded">PLUS</span>
 
         <!-- Brand -->
         <div
-          class="px-6 pb-5 pt-8 flex flex-col items-center"
-          :style="{
-            background: `linear-gradient(to bottom, var(--ant-color-primary-bg), var(--ant-color-bg-container))`
-          }"
+          class="px-6 pb-5 pt-8 flex flex-col items-center from-white/40 to-transparent bg-gradient-to-b"
         >
           <img src="/icon.ico" alt="" class="mb-2 h-20 w-20">
           <h1 class="tracking-tight font-bold flex items-center a-color-text text-xl">
-            <span class="brand-title mr-2">农场の助手</span>
+            <span class="text-transparent mr-2 from-[var(--ant-color-primary-text)] to-[var(--ant-color-primary-text)] via-[var(--ant-color-primary)] bg-gradient-to-br bg-clip-text">农场の助手</span>
           </h1>
         </div>
 
         <!-- Form -->
-        <div class="px-7 pb-7">
+        <div class="px-8 pb-8 pt-2 relative z-10">
           <a-form layout="vertical" @submit.prevent="handleLogin">
-            <a-form-item :validate-status="error ? 'error' : ''" :help="error || undefined">
-              <a-input-password
-                v-model:value="password"
-                placeholder="管理密码"
-                size="large"
-                autocomplete="current-password"
-                :disabled="loading"
-                @focus="focused = true"
-                @blur="focused = false"
-              >
-                <template #prefix>
-                  <span
-                    class="transition-colors duration-200"
-                    :class="focused ? 'i-streamline-emojis-right-anger-bubble' : 'i-streamline-emojis-thought-balloon'"
-                    :style="{ color: focused ? 'var(--ant-color-primary)' : 'var(--ant-color-text-tertiary)' }"
-                  />
-                </template>
-              </a-input-password>
+            <a-form-item :validate-status="error ? 'error' : ''" :help="error || undefined" class="mb-6">
+              <div class="group relative">
+                <!-- Decorative Sprout on Focus -->
+                <span
+                  class="pointer-events-none transition-all duration-500 ease-out absolute z-0 text-2xl -left-1 -top-4"
+                  :class="focused ? 'translate-y-0 opacity-100 rotate-[-10deg]' : 'translate-y-4 opacity-0 rotate-0'"
+                >
+                  <span class="i-streamline-emojis-seedling block" />
+                </span>
+
+                <a-input-password
+                  v-model:value="password"
+                  placeholder="请输入农场密钥"
+                  size="large"
+                  autocomplete="current-password"
+                  :disabled="loading"
+                  class="transition-all duration-300 !py-3.5 !border-0 !bg-layout/60 !backdrop-blur-md !text-base !rounded-2xl"
+                  @focus="focused = true"
+                  @blur="focused = false"
+                >
+                  <template #prefix>
+                    <span
+                      class="mr-2 transition-all duration-300 text-lg dark-text-white/80"
+                      :class="[
+                        focused ? 'i-streamline-emojis-key' : 'i-streamline-emojis-locked-with-key',
+                        focused ? 'scale-110 rotate-12' : 'opacity-60'
+                      ]"
+                    />
+                  </template>
+                </a-input-password>
+
+                <!-- Custom Focus Ring -->
+                <div
+                  class="border-2 pointer-events-none transition-all duration-300 inset-0 absolute z-10 rounded-2xl"
+                  :class="focused ? 'border-green-5/50 scale-[1.02]' : 'border-transparent scale-100'"
+                />
+              </div>
             </a-form-item>
 
-            <a-button html-type="submit" type="primary" block size="large" :loading="loading" class="mt-1">
+            <a-button
+              html-type="submit"
+              type="primary"
+              block
+              size="large"
+              :loading="loading"
+              class="group transition-all duration-300 relative overflow-hidden !font-bold !border-none !bg-opacity-90 !h-12 !backdrop-blur-sm !text-lg !rounded-2xl !shadow-lg active:!scale-[0.98] hover:!scale-[1.02] hover:!shadow-xl"
+              :style="{ background: 'linear-gradient(135deg, var(--ant-color-primary) 0%, #34d399 100%)' }"
+            >
               <template v-if="!loading" #icon>
-                <span class="i-streamline-emojis-seedling" />
+                <span class="i-streamline-emojis-tractor mr-1 transition-transform text-xl group-hover:translate-x-1" />
               </template>
-              进入农场
+              <span class="text-white [text-shadow:0_1px_2px_rgba(0,0,0,0.1)] relative z-10">进入农场</span>
+
+              <!-- Shine Effect -->
+              <div class="transition-transform duration-1000 inset-0 absolute z-0 from-transparent to-transparent via-white/20 bg-gradient-to-r -translate-x-full group-hover:translate-x-full" />
             </a-button>
           </a-form>
 
-          <div class="mt-4 flex gap-1.5 select-none items-center justify-center a-color-text-tertiary text-xs">
-            <span class="i-carbon-security text-sm" />
-            <span>数据经加密传输，仅管理员可访问</span>
+          <div class="mt-6 flex justify-center">
+            <div class="text-gray-500 px-4 py-1.5 border-white/30 rounded-full bg-white/30 flex gap-2 select-none transition-colors items-center backdrop-blur-lg border text-xs shadow-sm dark:text-gray-400 dark:bg-black/30 hover:bg-white/50 dark:hover:bg-black/40">
+              <span class="text-green-600 dark:text-green-400 i-carbon-security text-sm" />
+              <span>安全加密连接</span>
+            </div>
           </div>
         </div>
       </a-card>
@@ -239,33 +267,5 @@ async function handleLogin() {
 
 .animate-sway {
   animation: sway 3s ease-in-out infinite;
-}
-
-/* Brand title: uses primary token */
-.brand-title {
-  background: linear-gradient(
-    135deg,
-    var(--ant-color-primary-text) 0%,
-    var(--ant-color-primary) 50%,
-    var(--ant-color-primary-text) 100%
-  );
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-/* PLUS badge */
-.brand-plus {
-  display: inline-flex;
-  align-items: center;
-  padding: 0 5px;
-  height: 16px;
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.15em;
-  border-radius: 4px;
-  background: var(--ant-color-primary);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
-  color: #fff;
 }
 </style>
