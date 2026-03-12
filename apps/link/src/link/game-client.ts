@@ -457,6 +457,7 @@ export class GameClient extends EventEmitter {
     this.cleanup()
     if (this.ws) {
       this.ws.removeAllListeners()
+      this.ws.on('error', () => {}) // 防止关闭时触发未处理错误
       try {
         this.ws.close()
       } catch {}

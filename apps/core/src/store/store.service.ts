@@ -465,9 +465,10 @@ export class StoreService {
 
     const { nextId } = this.getAccounts()
     const id = String(acc.id || nextId)
+    const defaultName = `小农夫-${String(id).padStart(2, '0')}`
     this.db.insert(schema.accounts).values({
       id,
-      name: acc.name || `账号${id}`,
+      name: acc.name || defaultName,
       code: acc.code || '',
       platform: acc.platform || 'qq',
       uin: acc.uin ? String(acc.uin) : '',

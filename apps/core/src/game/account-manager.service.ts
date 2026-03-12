@@ -316,6 +316,29 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
     return await this.startAccount(accountId)
   }
 
+  /**
+   * 通过 code 连接 link 服务，获取用户信息（用于导入账号前的身份验证）
+   */
+  async probeAccountByCode(code: string, platform: string): Promise<{ openId: string, name: string, level: number } | null> {
+    const tempId = `probe_${Date.now()}`
+    try {
+      const userState = await this.linkClient.connectAccount(tempId, code, platform)
+      if (!userState?.openId) {
+        return null
+      }
+      return {
+        openId: userState.openId,
+        name: userState.name || '',
+        level: Number(userState.level) || 0
+      }
+    } catch (e) {
+      this.logger.warn(`probeAccountByCode 失败: ${e}`)
+      return null
+    } finally {
+      await this.linkClient.disconnectAccount(tempId).catch(() => {})
+    }
+  }
+
   isAccountRunning(accountId: string): boolean {
     return this.runners.has(accountId) && !!this.runners.get(accountId)?.runner.isActive()
   }

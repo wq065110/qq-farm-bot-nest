@@ -95,7 +95,11 @@ export class ConnectionManagerService {
     this.logger.log(`断开账号连接: ${accountId}`)
     const client = this.clients.get(accountId)
     if (client) {
-      client.destroy()
+      try {
+        client.destroy()
+      } catch (e) {
+        this.logger.warn(`断开账号 ${accountId} 时出错: ${e}`)
+      }
       this.clients.delete(accountId)
     }
   }

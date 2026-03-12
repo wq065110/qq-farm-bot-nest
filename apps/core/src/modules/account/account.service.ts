@@ -1,10 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common'
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
 import { AccountManagerService } from '../../game/account-manager.service'
 import { GameLogService } from '../../game/game-log.service'
 import { StoreService } from '../../store/store.service'
 
 @Injectable()
 export class AccountService {
+  private importLocks = new Map<string, Promise<any>>()
+
   constructor(
     private manager: AccountManagerService,
     private store: StoreService,
@@ -59,6 +61,9 @@ export class AccountService {
 
     const effectiveIsUpdate = !!targetBefore
 
+    const loginType = String(payload?.loginType || '').trim()
+    const hasLoginCodeUpdate = payload?.code !== undefined && String(payload.code || '').trim() !== ''
+
     this.manager.addAccountLog(
       effectiveIsUpdate ? 'update' : 'add',
       effectiveIsUpdate
@@ -67,6 +72,16 @@ export class AccountService {
       accountId,
       (targetAfter && (targetAfter.name || targetAfter.nick)) || body.name || ''
     )
+
+    // 手动填码登录：写入农场日志（运行日志），便于统一查看
+    if (loginType === 'manual' && hasLoginCodeUpdate) {
+      const accName = (targetAfter && (targetAfter.name || targetAfter.nick)) || body.name || ''
+      this.gameLog.appendLog(accountId, accName, {
+        msg: `手动填码更新登录信息${effectiveIsUpdate ? '' : '并添加账号'}${accName ? `: ${accName}` : ''}`,
+        tag: '系统',
+        meta: { module: 'system', event: 'login_manual' }
+      })
+    }
 
     if (!effectiveIsUpdate) {
       const newAcc = afterAccounts.find((a: any) => String(a.id) === accountId) || afterAccounts.at(-1)
@@ -150,5 +165,99 @@ export class AccountService {
 
   getAccountLogs(limit: number) {
     return this.manager.getAccountLogs(limit)
+  }
+
+  /**
+   * 从 WS 连接 URL 解析 code/platform，先通过 link 获取真实 openid，再添加或更新账号并自动启动
+   */
+  async importFromUrl(url: string) {
+    const raw = typeof url === 'string' ? url.trim() : ''
+    if (!raw)
+      throw new BadRequestException('缺少 url 参数')
+
+    let parsed: URL
+    try {
+      parsed = new URL(raw)
+    } catch {
+      throw new BadRequestException('无效的 URL')
+    }
+
+    const code = parsed.searchParams.get('code')?.trim()
+    const platform = parsed.searchParams.get('platform')?.trim() || 'qq'
+
+    if (!code)
+      throw new BadRequestException('URL 中缺少 code 参数')
+
+    // 防重入：同一时间只允许一个导入在执行（code 每次不同，用全局锁避免短时间多请求重复执行）
+    const lockKey = '__import__'
+    if (this.importLocks.has(lockKey)) {
+      throw new BadRequestException('已有账号正在导入中，请稍后再试')
+    }
+
+    const lockPromise = this.doImport(code, platform)
+    this.importLocks.set(lockKey, lockPromise)
+    try {
+      return await lockPromise
+    } finally {
+      this.importLocks.delete(lockKey)
+    }
+  }
+
+  private async doImport(code: string, platform: string) {
+    // 先通过 link 获取真实 openId
+    const userInfo = await this.manager.probeAccountByCode(code, platform)
+    if (!userInfo?.openId) {
+      throw new BadRequestException('无法获取账号信息，请检查 code 是否有效')
+    }
+
+    // 查找现有账号（按 uin + platform 匹配）
+    const accounts = this.manager.getAccounts().accounts || []
+    const existing = accounts.find((a: any) =>
+      String(a.uin) === userInfo.openId && String(a.platform || 'qq') === platform
+    )
+
+    const payload: Record<string, string> = {
+      code,
+      platform,
+      uin: userInfo.openId
+    }
+
+    // 如果已有账号且用户设置了自定义备注则保留，否则使用 link 返回的昵称存到 nick
+    if (existing) {
+      payload.id = String(existing.id)
+      // 用户未设置自定义备注时，用 link 返回的昵称
+      const hasCustomName = existing.name && existing.name !== `小农夫-${String(existing.id).padStart(2, '0')}`
+      if (!hasCustomName && userInfo.name) {
+        payload.nick = userInfo.name
+      }
+    } else if (userInfo.name) {
+      payload.nick = userInfo.name
+    }
+
+    const result = await this.createOrUpdateAccount(payload)
+    const updatedAccounts = result.accounts || []
+    const target = updatedAccounts.find((a: any) => String(a.uin) === userInfo.openId)
+      ?? updatedAccounts.find((a: any) => String(a.code) === code)
+      ?? updatedAccounts.at(-1)
+
+    if (target) {
+      const name = target.name || target.nick || target.id || ''
+      // 远程链接导入：写入农场日志（运行日志）
+      this.gameLog.appendLog(String(target.id), name, {
+        msg: `远程链接导入并启动: ${name}`,
+        tag: '系统',
+        meta: { module: 'system', event: 'login_remote' }
+      })
+      this.manager.addAccountLog(
+        'import_url',
+        `通过链接导入并启动: ${name}`,
+        String(target.id),
+        name
+      )
+      await this.manager.startAccount(String(target.id))
+      this.manager.notifyAccountsUpdate()
+    }
+
+    return this.manager.getAccounts()
   }
 }
