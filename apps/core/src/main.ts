@@ -1,5 +1,5 @@
-import process from 'node:process'
 import { ValidationPipe } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
 import { NestFactory } from '@nestjs/core'
 import { IoAdapter } from '@nestjs/platform-socket.io'
 import { AppModule } from './app.module'
@@ -15,7 +15,8 @@ async function bootstrap() {
   app.useGlobalInterceptors(new ResponseInterceptor())
   app.useGlobalFilters(new ApiExceptionFilter())
 
-  const port = Number(process.env.ADMIN_PORT) || 3000
+  const configService = app.get(ConfigService)
+  const port = configService.get<number>('app.port')
   await app.listen(port, '0.0.0.0')
   console.warn(`[NestJS] Admin panel started on http://localhost:${port}`)
 }

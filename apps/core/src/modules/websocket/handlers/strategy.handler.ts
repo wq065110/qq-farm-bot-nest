@@ -28,7 +28,8 @@ export class StrategyHandler {
       automation: cfg.automation,
       fertilizer: cfg.fertilizer,
       fertilizerLandTypes: cfg.fertilizerLandTypes,
-      fertilizerMultiSeason: cfg.fertilizerMultiSeason
+      fertilizerMultiSeason: cfg.fertilizerMultiSeason,
+      fertilizerBuy: cfg.fertilizerBuy
     }
   }
 

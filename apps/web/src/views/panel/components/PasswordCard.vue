@@ -29,15 +29,29 @@ const passwordForm = defineModel<{ old: string, new: string, confirm: string }>(
       </div>
     </template>
     <a-form layout="vertical">
-      <a-form-item label="当前密码">
-        <a-input-password v-model:value="passwordForm.old" placeholder="当前管理密码" />
-      </a-form-item>
-      <a-form-item label="新密码">
-        <a-input-password v-model:value="passwordForm.new" placeholder="至少 4 位" />
-      </a-form-item>
-      <a-form-item label="确认新密码">
-        <a-input-password v-model:value="passwordForm.confirm" placeholder="再次输入" />
-      </a-form-item>
+      <div class="gap-x-3 grid grid-cols-1 md:grid-cols-3">
+        <a-form-item label="当前密码">
+          <a-input-password
+            v-model:value="passwordForm.old"
+            placeholder="当前管理密码…"
+            autocomplete="current-password"
+          />
+        </a-form-item>
+        <a-form-item label="新密码">
+          <a-input-password
+            v-model:value="passwordForm.new"
+            placeholder="至少 4 位…"
+            autocomplete="new-password"
+          />
+        </a-form-item>
+        <a-form-item label="确认新密码">
+          <a-input-password
+            v-model:value="passwordForm.confirm"
+            placeholder="再次输入…"
+            autocomplete="new-password"
+          />
+        </a-form-item>
+      </div>
     </a-form>
   </a-card>
 </template>

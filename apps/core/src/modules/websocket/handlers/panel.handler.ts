@@ -16,7 +16,8 @@ export class PanelHandler {
     return {
       ui: this.store.getUI(),
       offlineReminder: this.store.getOfflineReminder(),
-      remoteLoginKey: this.store.getRemoteLoginKey()
+      remoteLoginKey: this.store.getRemoteLoginKey(),
+      runtimeClient: this.store.getRuntimeClient()
     }
   }
 
@@ -39,5 +40,13 @@ export class PanelHandler {
     const result = this.store.setRemoteLoginKey(String(data?.key ?? ''))
     this.manager.notifyPanelUpdate()
     return { remoteLoginKey: result }
+  }
+
+  @WsRoute('panel.updateRuntimeClient')
+  runtimeClient(@WsBody() data: Record<string, unknown>): unknown {
+    const result = this.store.setRuntimeClient(data || {})
+    this.manager.notifyPanelUpdate()
+    this.manager.reconnectAllRunningAccounts().catch(() => {})
+    return result
   }
 }

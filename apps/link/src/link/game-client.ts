@@ -1,6 +1,7 @@
+import type { ClientConfig } from './protocol'
 import { Buffer } from 'node:buffer'
 import { EventEmitter } from 'node:events'
-import { CLIENT_VERSION, GAME_SERVER_URL, HEARTBEAT_INTERVAL_MS, Scheduler, syncServerTime, toLong, toNum } from '@qq-farm/shared'
+import { CLIENT_VERSION, DEFAULT_DEVICE_ID, DEFAULT_DEVICE_MEMORY, DEFAULT_DEVICE_NETWORK, DEFAULT_DEVICE_SYS_SOFTWARE, DEFAULT_OS, GAME_SERVER_URL, HEARTBEAT_INTERVAL_MS, Scheduler, syncServerTime, toLong, toNum } from '@qq-farm/shared'
 import WebSocket from 'ws'
 import * as cryptoWasm from './crypto-wasm'
 
@@ -39,14 +40,29 @@ export class GameClient extends EventEmitter {
   private static readonly MAX_RECONNECT_ATTEMPTS = 3
 
   private _accountId: string
+  private cfg: Required<Pick<ClientConfig, 'serverUrl' | 'clientVersion' | 'os'>> & { deviceInfo: { sysSoftware: string, network: string, memory: string, deviceId: string } }
 
   constructor(
     accountId: string,
-    private readonly protoTypes: Record<string, any>
+    private readonly protoTypes: Record<string, any>,
+    clientConfig?: ClientConfig
   ) {
     super()
     this._accountId = accountId
     this.scheduler = new Scheduler(`gc-${accountId}`)
+    const c = clientConfig || {}
+    const d = c.deviceInfo || {}
+    this.cfg = {
+      serverUrl: c.serverUrl || GAME_SERVER_URL,
+      clientVersion: c.clientVersion || CLIENT_VERSION,
+      os: c.os || DEFAULT_OS,
+      deviceInfo: {
+        sysSoftware: d.sysSoftware || DEFAULT_DEVICE_SYS_SOFTWARE,
+        network: d.network || DEFAULT_DEVICE_NETWORK,
+        memory: d.memory || DEFAULT_DEVICE_MEMORY,
+        deviceId: d.deviceId || `${DEFAULT_DEVICE_ID}<iPhone18,3>`,
+      },
+    }
   }
 
   get accountId(): string {
@@ -269,11 +285,11 @@ export class GameClient extends EventEmitter {
         sharer_id: toLong(0),
         sharer_open_id: '',
         device_info: {
-          client_version: CLIENT_VERSION,
-          sys_software: 'iOS 26.2.1',
-          network: 'wifi',
-          memory: '7672',
-          device_id: 'iPhone X<iPhone18,3>'
+          client_version: this.cfg.clientVersion,
+          sys_software: this.cfg.deviceInfo.sysSoftware,
+          network: this.cfg.deviceInfo.network,
+          memory: this.cfg.deviceInfo.memory,
+          device_id: this.cfg.deviceInfo.deviceId,
         },
         share_cfg_id: toLong(0),
         scene_id: '1256',
@@ -357,7 +373,7 @@ export class GameClient extends EventEmitter {
 
       const body = Buffer.from(t.HeartbeatRequest.encode(t.HeartbeatRequest.create({
         gid: toLong(this.userState.gid),
-        client_version: CLIENT_VERSION
+        client_version: this.cfg.clientVersion
       })).finish())
 
       this.sendMsg('gamepb.userpb.UserService', 'Heartbeat', body, (err, replyBody) => {
@@ -380,7 +396,7 @@ export class GameClient extends EventEmitter {
     this.savedCode = code
     this.platform = platform
     this._loginFailed = false
-    const url = `${GAME_SERVER_URL}?platform=${platform}&os=iOS&ver=${CLIENT_VERSION}&code=${code}&openID=`
+    const url = `${this.cfg.serverUrl}?platform=${platform}&os=${this.cfg.os}&ver=${this.cfg.clientVersion}&code=${code}&openID=`
 
     return new Promise((resolve, reject) => {
       this.ws = new WebSocket(url, {

@@ -400,6 +400,35 @@ export class FarmWorker {
     return result
   }
 
+  private buildClearOps(status: Record<string, number[]>, actions: string[]): Promise<any>[] {
+    const cfg = this.store.getAccountConfig(this.accountId)
+    const auto = cfg.automation as any
+    const ops: Promise<any>[] = []
+
+    if (auto.farm_manage) {
+      if (auto.farm_weed && status.needWeed.length) {
+        ops.push(this.weedOut(status.needWeed).then(() => {
+          actions.push(`除草${status.needWeed.length}`)
+          this.stats.recordOperation('weed', status.needWeed.length)
+        }).catch(() => {}))
+      }
+      if (auto.farm_bug && status.needBug.length) {
+        ops.push(this.insecticide(status.needBug).then(() => {
+          actions.push(`除虫${status.needBug.length}`)
+          this.stats.recordOperation('bug', status.needBug.length)
+        }).catch(() => {}))
+      }
+      if (auto.farm_water && status.needWater.length) {
+        ops.push(this.waterLand(status.needWater).then(() => {
+          actions.push(`浇水${status.needWater.length}`)
+          this.stats.recordOperation('water', status.needWater.length)
+        }).catch(() => {}))
+      }
+    }
+
+    return ops
+  }
+
   async runFarmOperation(opType: string): Promise<{ hadWork: boolean, actions: string[] }> {
     const landsReply = await this.getAllLands()
     if (!landsReply.lands?.length)
@@ -407,27 +436,9 @@ export class FarmWorker {
 
     const status = this.analyzeLands(landsReply.lands)
     const actions: string[] = []
-    const batchOps: Promise<any>[] = []
 
     if (opType === 'all' || opType === 'clear') {
-      if (status.needWeed.length) {
-        batchOps.push(this.weedOut(status.needWeed).then(() => {
-          actions.push(`除草${status.needWeed.length}`)
-          this.stats.recordOperation('weed', status.needWeed.length)
-        }).catch(() => {}))
-      }
-      if (status.needBug.length) {
-        batchOps.push(this.insecticide(status.needBug).then(() => {
-          actions.push(`除虫${status.needBug.length}`)
-          this.stats.recordOperation('bug', status.needBug.length)
-        }).catch(() => {}))
-      }
-      if (status.needWater.length) {
-        batchOps.push(this.waterLand(status.needWater).then(() => {
-          actions.push(`浇水${status.needWater.length}`)
-          this.stats.recordOperation('water', status.needWater.length)
-        }).catch(() => {}))
-      }
+      const batchOps = this.buildClearOps(status, actions)
       if (batchOps.length)
         await Promise.all(batchOps)
     }

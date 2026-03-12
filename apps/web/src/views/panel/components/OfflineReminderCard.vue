@@ -47,44 +47,56 @@ function openChannelDocs() {
         </a-button>
       </div>
     </template>
+
     <a-form layout="vertical">
-      <div class="gap-x-3 grid grid-cols-2">
+      <!-- 推送渠道 -->
+      <div class="gap-x-3 grid grid-cols-1 md:grid-cols-2">
         <a-form-item label="推送渠道">
           <div class="flex gap-2 items-center">
             <a-select v-model:value="settings.offlineReminder.channel" :options="CHANNEL_OPTIONS" class="flex-1" />
             <a-tooltip v-if="currentChannelDocUrl" title="查看渠道文档" placement="top">
-              <a-button size="small" @click="openChannelDocs">
-                <div class="i-streamline-emojis-open-book" />
+              <a-button size="small" aria-label="查看渠道文档" @click="openChannelDocs">
+                <div class="i-streamline-emojis-open-book" aria-hidden="true" />
               </a-button>
             </a-tooltip>
           </div>
+        </a-form-item>
+        <a-form-item label="接口地址">
+          <a-input
+            v-model:value="settings.offlineReminder.endpoint"
+            :disabled="settings.offlineReminder.channel !== 'webhook'"
+            placeholder="推送接口 URL…"
+            autocomplete="off"
+          />
+        </a-form-item>
+        <a-form-item label="Token">
+          <a-input
+            v-model:value="settings.offlineReminder.token"
+            placeholder="接收端 Token…"
+            autocomplete="off"
+            :spellcheck="false"
+          />
         </a-form-item>
         <a-form-item label="重登录链接">
           <a-select v-model:value="settings.offlineReminder.reloginUrlMode" :options="RELOGIN_URL_MODE_OPTIONS" />
         </a-form-item>
       </div>
-      <div class="gap-x-3 grid grid-cols-2">
-        <a-form-item label="接口地址">
-          <a-input v-model:value="settings.offlineReminder.endpoint" :disabled="settings.offlineReminder.channel !== 'webhook'" />
-        </a-form-item>
-        <a-form-item label="Token">
-          <a-input v-model:value="settings.offlineReminder.token" placeholder="接收端 token" />
-        </a-form-item>
-      </div>
-      <div class="gap-x-3 grid grid-cols-3">
+
+      <!-- 提醒内容 -->
+      <div class="gap-x-3 grid grid-cols-1 md:grid-cols-3">
         <a-form-item label="标题">
-          <a-input v-model:value="settings.offlineReminder.title" placeholder="提醒标题" />
+          <a-input v-model:value="settings.offlineReminder.title" placeholder="提醒标题…" />
         </a-form-item>
-        <a-form-item label="离线删除(秒)">
+        <a-form-item label="内容">
+          <a-input v-model:value="settings.offlineReminder.msg" placeholder="提醒内容…" />
+        </a-form-item>
+        <a-form-item label="离线删除 (秒)">
           <a-input-number
             v-model:value="settings.offlineReminder.offlineDeleteSec"
             :min="1"
-            placeholder="120"
+            placeholder="如 120…"
             style="width: 100%"
           />
-        </a-form-item>
-        <a-form-item label="内容">
-          <a-input v-model:value="settings.offlineReminder.msg" placeholder="提醒内容" />
         </a-form-item>
       </div>
     </a-form>

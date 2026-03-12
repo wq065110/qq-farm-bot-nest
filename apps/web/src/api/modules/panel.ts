@@ -15,3 +15,7 @@ export function saveRemoteLoginKey(key: string): Promise<unknown> {
 export function query(): Promise<Record<string, unknown>> {
   return socket.request('panel.query')
 }
+
+export function saveRuntimeClient(data: Record<string, unknown>): Promise<unknown> {
+  return socket.request('panel.updateRuntimeClient', data)
+}

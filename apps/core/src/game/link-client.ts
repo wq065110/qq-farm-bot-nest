@@ -174,8 +174,8 @@ export class LinkClient extends EventEmitter {
 
   // ========== High-level API ==========
 
-  async connectAccount(accountId: string, code: string, platform: string): Promise<any> {
-    const res = await this.sendRequest({ type: 'connect', accountId, code, platform }, 30000)
+  async connectAccount(accountId: string, code: string, platform: string, clientConfig?: Record<string, any>): Promise<any> {
+    const res = await this.sendRequest({ type: 'connect', accountId, code, platform, clientConfig }, 30000)
     return res.userState
   }
 

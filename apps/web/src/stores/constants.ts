@@ -31,6 +31,10 @@ export const DEFAULT_INTERVALS = {
 
 export const AUTOMATION_DEFAULTS = {
   farm: false,
+  farm_manage: true,
+  farm_water: true,
+  farm_weed: true,
+  farm_bug: true,
   task: false,
   sell: false,
   friend: false,

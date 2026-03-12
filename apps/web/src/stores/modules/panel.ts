@@ -16,17 +16,43 @@ export interface UIConfig {
   theme?: string
 }
 
+export interface RuntimeClientDeviceInfo {
+  sysSoftware: string
+  network: string
+  memory: string
+  deviceId: string
+}
+
+export interface RuntimeClientConfig {
+  serverUrl: string
+  clientVersion: string
+  os: string
+  deviceInfo: RuntimeClientDeviceInfo
+}
+
 export interface PanelState {
   ui: UIConfig
   offlineReminder: OfflineReminderConfig
   remoteLoginKey: string
+  runtimeClient: RuntimeClientConfig
 }
 
 function initialPanel(): PanelState {
   return {
     ui: {},
     offlineReminder: { ...DEFAULT_OFFLINE_REMINDER },
-    remoteLoginKey: ''
+    remoteLoginKey: '',
+    runtimeClient: {
+      serverUrl: '',
+      clientVersion: '',
+      os: '',
+      deviceInfo: {
+        sysSoftware: '',
+        network: '',
+        memory: '',
+        deviceId: ''
+      }
+    }
   }
 }
 
@@ -43,6 +69,18 @@ export const usePanelStore = defineStore('panel', {
           this.settings.offlineReminder = { ...this.settings.offlineReminder, ...data.offlineReminder }
         if (data.remoteLoginKey !== undefined)
           this.settings.remoteLoginKey = String(data.remoteLoginKey || '')
+        if (data.runtimeClient !== undefined) {
+          const incoming = data.runtimeClient
+          const prev = this.settings.runtimeClient
+          this.settings.runtimeClient = {
+            ...prev,
+            ...incoming,
+            deviceInfo: {
+              ...prev.deviceInfo,
+              ...(incoming.deviceInfo && typeof incoming.deviceInfo === 'object' ? incoming.deviceInfo : {})
+            }
+          }
+        }
       }
     },
     async querySettings(): Promise<{ ok: boolean, error?: string }> {
@@ -65,6 +103,14 @@ export const usePanelStore = defineStore('panel', {
     async saveRemoteLoginKey(): Promise<{ ok: boolean, error?: string }> {
       try {
         await panelApi.saveRemoteLoginKey(this.settings.remoteLoginKey)
+        return { ok: true }
+      } catch (e: any) {
+        return { ok: false, error: e.message || '保存失败' }
+      }
+    },
+    async saveRuntimeClientConfig(): Promise<{ ok: boolean, error?: string }> {
+      try {
+        await panelApi.saveRuntimeClient(this.settings.runtimeClient as any)
         return { ok: true }
       } catch (e: any) {
         return { ok: false, error: e.message || '保存失败' }

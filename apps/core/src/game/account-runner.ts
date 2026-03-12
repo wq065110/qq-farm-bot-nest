@@ -134,7 +134,8 @@ export class AccountRunner {
         }
       } catch {}
       if (!us) {
-        us = await this.linkClient.connectAccount(this.accountId, config.code, config.platform)
+        const runtimeCfg = this.store.getRuntimeClient()
+        us = await this.linkClient.connectAccount(this.accountId, config.code, config.platform, runtimeCfg)
       }
       if (!this.isRunning)
         return
@@ -235,8 +236,10 @@ export class AccountRunner {
         await this.dailyRewards.checkAndClaimEmails()
       if (auto.fertilizer_gift)
         await this.warehouse.autoOpenFertilizerGiftPacks()
-      if (auto.fertilizer_buy)
-        await this.dailyRewards.autoBuyOrganicFertilizer()
+      if (auto.fertilizer_buy) {
+        const cfg = this.store.getAccountConfig(this.accountId).fertilizerBuy
+        await this.dailyRewards.autoBuyFertilizer(cfg)
+      }
       await this.warehouse.sellAllFruits()
     } catch (e: any) {
       this.warn(`农场调度执行失败: ${e?.message}`, 'schedule_error')

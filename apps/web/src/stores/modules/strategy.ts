@@ -4,6 +4,10 @@ import { AUTOMATION_DEFAULTS, DEFAULT_FRIEND_QUIET_HOURS, DEFAULT_INTERVALS } fr
 
 export interface AutomationConfig {
   farm: boolean
+  farm_manage: boolean
+  farm_water: boolean
+  farm_weed: boolean
+  farm_bug: boolean
   farm_push: boolean
   land_upgrade: boolean
   friend: boolean
@@ -38,6 +42,13 @@ export interface FriendQuietHoursConfig {
   end: string
 }
 
+export interface FertilizerBuyConfig {
+  type: 'organic' | 'normal' | 'both'
+  mode: 'threshold' | 'unlimited'
+  max: number
+  threshold: number
+}
+
 export interface StrategyState {
   plantingStrategy: string
   preferredSeedId: number
@@ -49,9 +60,10 @@ export interface StrategyState {
   fertilizer: string
   fertilizerLandTypes: string[]
   fertilizerMultiSeason: boolean
+  fertilizerBuy: FertilizerBuyConfig
 }
 
-const STRATEGY_UPDATE_KEYS = ['intervals', 'plantingStrategy', 'preferredSeedId', 'bagSeedPriority', 'friendQuietHours', 'stealCropBlacklist', 'automation', 'fertilizer', 'fertilizerLandTypes', 'fertilizerMultiSeason'] as const
+const STRATEGY_UPDATE_KEYS = ['intervals', 'plantingStrategy', 'preferredSeedId', 'bagSeedPriority', 'friendQuietHours', 'stealCropBlacklist', 'automation', 'fertilizer', 'fertilizerLandTypes', 'fertilizerMultiSeason', 'fertilizerBuy'] as const
 
 function initialStrategy(): StrategyState {
   return {
@@ -64,7 +76,13 @@ function initialStrategy(): StrategyState {
     automation: { ...AUTOMATION_DEFAULTS },
     fertilizer: 'none',
     fertilizerLandTypes: [],
-    fertilizerMultiSeason: false
+    fertilizerMultiSeason: false,
+    fertilizerBuy: {
+      type: 'organic',
+      mode: 'threshold',
+      max: 10,
+      threshold: 100
+    }
   }
 }
 
@@ -106,7 +124,8 @@ export const useStrategyStore = defineStore('strategy', {
           automation: s.automation,
           fertilizer: s.fertilizer,
           fertilizerLandTypes: s.fertilizerLandTypes,
-          fertilizerMultiSeason: s.fertilizerMultiSeason
+          fertilizerMultiSeason: s.fertilizerMultiSeason,
+          fertilizerBuy: s.fertilizerBuy
         })
         return { ok: true }
       } catch (e: any) {

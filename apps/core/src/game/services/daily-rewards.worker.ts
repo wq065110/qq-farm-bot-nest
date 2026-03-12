@@ -348,15 +348,16 @@ export class DailyRewardsWorker {
     }
   }
 
-  // ========== Organic Fertilizer Buy ==========
+  // ========== Fertilizer Buy ==========
 
   private static readonly BUY_COOLDOWN_MS = 60_000
   private static readonly ORGANIC_FERTILIZER_MALL_GOODS_ID = 10001
+  private static readonly NORMAL_FERTILIZER_MALL_GOODS_ID = 10002
   private static readonly MAX_ROUNDS = 20
   private static readonly BUY_PER_ROUND = 10
   private lastBuyAt = 0
 
-  async autoBuyOrganicFertilizer(force = false): Promise<number> {
+  async autoBuyFertilizer(config: import('../constants').FertilizerBuyConfig, force = false): Promise<number> {
     const now = Date.now()
     if (!force && now - this.lastBuyAt < DailyRewardsWorker.BUY_COOLDOWN_MS)
       return 0
@@ -364,23 +365,41 @@ export class DailyRewardsWorker {
     try {
       const { data: mall } = await this.client.invoke<any>('gamepb.mallpb.MallService', 'GetMallListBySlotType', { slot_type: 1 })
       const goods = (mall as any)?.goods_list || []
-      const target = goods.find((g: any) => Number(g?.goods_id || 0) === DailyRewardsWorker.ORGANIC_FERTILIZER_MALL_GOODS_ID)
-      if (!target)
+      const types: Array<{ id: number, label: string }> = []
+      if (config.type === 'organic' || config.type === 'both')
+        types.push({ id: DailyRewardsWorker.ORGANIC_FERTILIZER_MALL_GOODS_ID, label: '有机化肥' })
+      if (config.type === 'normal' || config.type === 'both')
+        types.push({ id: DailyRewardsWorker.NORMAL_FERTILIZER_MALL_GOODS_ID, label: '普通化肥' })
+      if (!types.length)
         return 0
 
+      // 无限模式下不允许 both
+      if (config.mode === 'unlimited' && config.type === 'both')
+        types.splice(1) // 保留第一个
+
       let totalBought = 0
-      for (let i = 0; i < DailyRewardsWorker.MAX_ROUNDS; i++) {
-        try {
-          await this.client.invoke('gamepb.mallpb.MallService', 'Purchase', { goods_id: DailyRewardsWorker.ORGANIC_FERTILIZER_MALL_GOODS_ID, count: DailyRewardsWorker.BUY_PER_ROUND })
-          totalBought += DailyRewardsWorker.BUY_PER_ROUND
-        } catch { break }
-        await sleep(120)
+      for (const { id, label } of types) {
+        const target = goods.find((g: any) => Number(g?.goods_id || 0) === id)
+        if (!target)
+          continue
+        let rounds = 0
+        while (rounds < config.max) {
+          try {
+            await this.client.invoke('gamepb.mallpb.MallService', 'Purchase', { goods_id: id, count: DailyRewardsWorker.BUY_PER_ROUND })
+            totalBought += DailyRewardsWorker.BUY_PER_ROUND
+          } catch {
+            break
+          }
+          rounds++
+          await sleep(120)
+        }
+        if (totalBought > 0)
+          this.log(`自动购买${label} x${totalBought}`, 'fertilizer_buy')
       }
 
       if (totalBought > 0) {
         this.fertBuyDone = getDateKey()
         this.fertBuyLastSuccess = Date.now()
-        this.log(`自动购买有机化肥 x${totalBought}`, 'fertilizer_buy')
       }
       return totalBought
     } catch { return 0 }

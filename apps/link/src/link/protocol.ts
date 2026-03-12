@@ -1,5 +1,18 @@
 import { Buffer } from 'node:buffer'
 
+/** 运行时连接参数（由 core 面板设置传入，可选） */
+export interface ClientConfig {
+  serverUrl?: string
+  clientVersion?: string
+  os?: string
+  deviceInfo?: {
+    sysSoftware?: string
+    network?: string
+    memory?: string
+    deviceId?: string
+  }
+}
+
 /** Core -> Link requests */
 export interface ConnectRequest {
   type: 'connect'
@@ -7,6 +20,7 @@ export interface ConnectRequest {
   accountId: string
   code: string
   platform: string
+  clientConfig?: ClientConfig
 }
 
 export interface RebindRequest {

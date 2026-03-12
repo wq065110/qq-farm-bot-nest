@@ -169,80 +169,111 @@ function filterOption(input: string, option: { label?: string }) {
         种植策略
       </div>
     </template>
-    <div class="gap-x-3 grid grid-cols-1 md:grid-cols-2">
-      <a-form layout="vertical">
-        <a-form-item label="种植策略">
-          <a-select v-model:value="settings.plantingStrategy" :options="PLANTING_STRATEGY_OPTIONS" />
-        </a-form-item>
-      </a-form>
-      <a-form v-if="settings.plantingStrategy === 'preferred'" layout="vertical">
-        <a-form-item label="优先种子">
-          <a-select v-model:value="settings.preferredSeedId" show-search :filter-option="filterOption" :options="preferredSeedOptions">
-            <template #labelRender="{ label }">
-              <span>{{ label }}</span>
-            </template>
-            <template #optionRender="{ option }">
-              <div class="flex gap-1 items-center">
-                <a-avatar v-if="option.data.image" :src="option.data.image" :size="24" :class="{ 'opacity-50': option.data.disabled }" />
-                <a-avatar v-else :size="24" class="bg-transparent">
-                  <i class="i-streamline-emojis-clinking-beer-mugs flex text-lg" />
-                </a-avatar>
-                <span>{{ option.label }}</span>
-              </div>
-            </template>
-          </a-select>
-        </a-form-item>
-      </a-form>
-      <a-form v-else-if="settings.plantingStrategy === 'bag_priority'" layout="vertical">
-        <a-form-item label="背包种子">
-          <a-button color="default" variant="filled" @click="bagModalVisible = true">
-            配置优先级
-          </a-button>
-        </a-form-item>
-      </a-form>
-      <a-form v-else layout="vertical">
-        <a-form-item label="策略预览">
-          <a-input :value="strategyPreviewLabel ?? '加载中...'" disabled />
-        </a-form-item>
-      </a-form>
-      <a-form layout="vertical">
-        <a-form-item label="施肥范围">
-          <a-checkbox-group v-model:value="settings.fertilizerLandTypes" :options="FERTILIZER_LAND_TYPE_OPTIONS" />
-        </a-form-item>
-      </a-form>
-      <a-form layout="vertical">
-        <a-form-item label="施肥策略">
-          <a-select v-model:value="settings.fertilizer" :options="FERTILIZER_OPTIONS" />
-        </a-form-item>
-      </a-form>
-      <a-form layout="vertical">
-        <a-form-item label="多季补肥">
-          <a-switch v-model:checked="settings.fertilizerMultiSeason" />
-        </a-form-item>
-      </a-form>
-      <a-form layout="vertical">
-        <a-form-item label="偷取作物黑名单">
-          <a-select
-            v-model:value="settings.stealCropBlacklist"
-            mode="multiple"
-            :options="stealBlacklistOptions"
-            placeholder="选择不偷取的作物..."
-            allow-clear
-            :max-tag-count="5"
-          >
-            <template #labelRender="{ label }">
-              <span>{{ label }}</span>
-            </template>
-            <template #optionRender="{ option }">
-              <div class="flex gap-1 items-center">
-                <a-avatar v-if="option.data.image" :src="option.data.image" :size="24" :class="{ 'opacity-50': option.data.disabled }" />
-                <span>{{ option.label }}</span>
-              </div>
-            </template>
-          </a-select>
-        </a-form-item>
-      </a-form>
-    </div>
+
+    <!-- 种植策略选择 -->
+    <fieldset>
+      <legend class="tracking-wide font-medium mb-2 op-50 uppercase text-xs">
+        种植策略选择
+      </legend>
+      <div class="gap-x-3 gap-y-3 grid grid-cols-1 md:grid-cols-2">
+        <a-form layout="vertical">
+          <a-form-item label="种植策略">
+            <a-select v-model:value="settings.plantingStrategy" :options="PLANTING_STRATEGY_OPTIONS" />
+          </a-form-item>
+        </a-form>
+
+        <a-form v-if="settings.plantingStrategy === 'preferred'" layout="vertical">
+          <a-form-item label="优先种子">
+            <a-select
+              v-model:value="settings.preferredSeedId"
+              show-search
+              :filter-option="filterOption"
+              :options="preferredSeedOptions"
+            >
+              <template #labelRender="{ label }">
+                <span>{{ label }}</span>
+              </template>
+              <template #optionRender="{ option }">
+                <div class="flex gap-1 items-center">
+                  <a-avatar
+                    v-if="option.data.image"
+                    :src="option.data.image"
+                    :size="24"
+                    :class="{ 'opacity-50': option.data.disabled }"
+                  />
+                  <a-avatar v-else :size="24" class="bg-transparent">
+                    <i class="i-streamline-emojis-clinking-beer-mugs flex text-lg" />
+                  </a-avatar>
+                  <span>{{ option.label }}</span>
+                </div>
+              </template>
+            </a-select>
+          </a-form-item>
+        </a-form>
+
+        <a-form v-else-if="settings.plantingStrategy === 'bag_priority'" layout="vertical">
+          <a-form-item label="背包种子优先级">
+            <a-button color="default" variant="filled" @click="bagModalVisible = true">
+              配置优先级
+            </a-button>
+          </a-form-item>
+        </a-form>
+
+        <a-form v-else layout="vertical">
+          <a-form-item label="策略预览">
+            <a-input :value="strategyPreviewLabel ?? '加载中…'" disabled />
+          </a-form-item>
+        </a-form>
+      </div>
+    </fieldset>
+
+    <!-- 施肥与偷菜策略 -->
+    <fieldset>
+      <legend class="tracking-wide font-medium mb-2 op-50 uppercase text-xs">
+        施肥与偷菜策略
+      </legend>
+      <div class="gap-x-3 gap-y-3 grid grid-cols-1 md:grid-cols-2">
+        <a-form layout="vertical">
+          <a-form-item label="施肥范围">
+            <a-checkbox-group v-model:value="settings.fertilizerLandTypes" :options="FERTILIZER_LAND_TYPE_OPTIONS" />
+          </a-form-item>
+        </a-form>
+        <div class="flex gap-10">
+          <a-form layout="vertical" class="flex-[80%]">
+            <a-form-item label="施肥策略">
+              <a-select v-model:value="settings.fertilizer" :options="FERTILIZER_OPTIONS" />
+            </a-form-item>
+          </a-form>
+          <a-form layout="vertical" class="flex-[20%]">
+            <a-form-item label="多季补肥">
+              <a-switch v-model:checked="settings.fertilizerMultiSeason" />
+            </a-form-item>
+          </a-form>
+        </div>
+        <a-form layout="vertical">
+          <a-form-item label="偷取作物黑名单">
+            <a-select
+              v-model:value="settings.stealCropBlacklist"
+              mode="multiple"
+              :options="stealBlacklistOptions"
+              placeholder="选择不偷取的作物…"
+              allow-clear
+              :max-tag-count="5"
+            >
+              <template #labelRender="{ label }">
+                <span>{{ label }}</span>
+              </template>
+              <template #optionRender="{ option }">
+                <div class="flex gap-1 items-center">
+                  <a-avatar v-if="option.data.image" :src="option.data.image" :size="24" />
+                  <span>{{ option.label }}</span>
+                </div>
+              </template>
+            </a-select>
+          </a-form-item>
+        </a-form>
+      </div>
+    </fieldset>
 
     <BagSeedPriorityModal
       v-model:open="bagModalVisible"

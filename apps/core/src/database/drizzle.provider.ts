@@ -57,6 +57,7 @@ export const drizzleProvider = {
         fertilizer TEXT DEFAULT 'none',
         fertilizer_land_types TEXT DEFAULT '["gold","black","red","normal"]',
         fertilizer_multi_season INTEGER DEFAULT 0,
+        fertilizer_buy TEXT DEFAULT '{}',
         created_at INTEGER DEFAULT 0,
         updated_at INTEGER DEFAULT 0
       );

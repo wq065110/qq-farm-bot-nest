@@ -5,6 +5,17 @@ export const FERTILIZER_OPTIONS = [
   { label: '仅有机化肥', value: 'organic' }
 ]
 
+export const FERTILIZER_BUY_TYPE_OPTIONS = [
+  { label: '仅有机化肥', value: 'organic' },
+  { label: '仅普通化肥', value: 'normal' },
+  { label: '两者都买', value: 'both' }
+]
+
+export const FERTILIZER_BUY_MODE_OPTIONS = [
+  { label: '容器不足时购买', value: 'threshold' },
+  { label: '无限购买', value: 'unlimited' }
+]
+
 export const FERTILIZER_LAND_TYPE_OPTIONS = [
   { label: '金土地', value: 'gold' },
   { label: '黑土地', value: 'black' },

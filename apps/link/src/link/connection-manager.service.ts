@@ -1,3 +1,4 @@
+import type { ClientConfig } from './protocol'
 import { Injectable, Logger } from '@nestjs/common'
 import { GameClient, UserState } from './game-client'
 import { GameInvokeService } from './game-invoke.service'
@@ -28,7 +29,7 @@ export class ConnectionManagerService {
     this.eventHandler?.(accountId, event, data)
   }
 
-  async connect(accountId: string, code: string, platform: string): Promise<UserState> {
+  async connect(accountId: string, code: string, platform: string, clientConfig?: ClientConfig): Promise<UserState> {
     this.logger.log(`连接账号: ${accountId}, platform=${platform}`)
     const existing = this.clients.get(accountId)
     if (existing) {
@@ -42,7 +43,7 @@ export class ConnectionManagerService {
     }
 
     const protoTypes = this.protoLoader.getProtoTypes()
-    const client = new GameClient(accountId, protoTypes)
+    const client = new GameClient(accountId, protoTypes, clientConfig)
 
     client.on('login', (state: UserState) => {
       this.logger.log(`账号 ${client.accountId} 登录成功`)

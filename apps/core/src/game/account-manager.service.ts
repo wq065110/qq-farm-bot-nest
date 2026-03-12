@@ -94,9 +94,21 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
   notifyPanelUpdate() {
     const data = {
       ui: this.store.getUI(),
-      offlineReminder: this.store.getOfflineReminder()
+      offlineReminder: this.store.getOfflineReminder(),
+      runtimeClient: this.store.getRuntimeClient()
     }
     this.onPanelUpdateCallback?.(data)
+  }
+
+  async reconnectAllRunningAccounts(): Promise<void> {
+    const runningIds = [...this.runners.keys()].filter(id => this.isAccountRunning(id))
+    for (const id of runningIds) {
+      try {
+        await this.restartAccount(id)
+      } catch (e: any) {
+        this.logger.warn(`重启账号 ${id} 失败: ${e?.message}`)
+      }
+    }
   }
 
   async onModuleInit() {
@@ -341,7 +353,8 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
   async probeAccountByCode(code: string, platform: string): Promise<{ openId: string, name: string, level: number } | null> {
     const tempId = `probe_${Date.now()}`
     try {
-      const userState = await this.linkClient.connectAccount(tempId, code, platform)
+      const runtimeCfg = this.store.getRuntimeClient()
+      const userState = await this.linkClient.connectAccount(tempId, code, platform, runtimeCfg)
       if (!userState?.openId) {
         return null
       }

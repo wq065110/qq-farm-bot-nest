@@ -65,7 +65,7 @@ export class TcpServerService implements OnModuleInit, OnModuleDestroy {
     try {
       switch (req.type) {
         case 'connect': {
-          const userState = await this.connMgr.connect(req.accountId, req.code, req.platform)
+          const userState = await this.connMgr.connect(req.accountId, req.code, req.platform, req.clientConfig)
           respond({ rid: req.rid, ok: true, userState })
           break
         }

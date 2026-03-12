@@ -36,7 +36,7 @@ function handleRegen() {
     <template #title>
       <div class="flex gap-2 items-center justify-between">
         <div class="font-bold flex gap-2 items-center">
-          <div class="i-carbon-key" />
+          <div class="i-streamline-emojis-vertical-traffic-light" />
           远程账户登陆密钥
         </div>
         <a-button type="primary" size="small" :loading="saving" @click="handleSave">
@@ -50,13 +50,14 @@ function handleRegen() {
         <a-input
           v-model:value="settings.remoteLoginKey"
           :type="visible ? 'text' : 'password'"
-          placeholder="用于远程账户登录接口校验"
+          placeholder="用于远程账户登录接口校验…"
+          :spellcheck="false"
           autocomplete="off"
         >
           <template #suffix>
             <a-tooltip :title="visible ? '隐藏' : '显示'">
-              <a-button type="text" size="small" @click="toggleVisible">
-                <div :class="visible ? 'i-carbon-view-off' : 'i-carbon-view'" />
+              <a-button type="text" size="small" :aria-label="visible ? '隐藏密钥' : '显示密钥'" @click="toggleVisible">
+                <div :class="visible ? 'i-carbon-view-off' : 'i-carbon-view'" aria-hidden="true" />
               </a-button>
             </a-tooltip>
           </template>

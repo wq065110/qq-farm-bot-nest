@@ -1,11 +1,4 @@
-export {
-  CLIENT_VERSION,
-  DEFAULT_OS,
-  GAME_SERVER_URL,
-  HEARTBEAT_INTERVAL_MS,
-  TCP_HOST,
-  TCP_PORT
-} from '@qq-farm/shared'
+import { CLIENT_VERSION, DEFAULT_DEVICE_ID, DEFAULT_DEVICE_MEMORY, DEFAULT_DEVICE_NETWORK, DEFAULT_DEVICE_SYS_SOFTWARE, DEFAULT_OS, GAME_SERVER_URL } from '@qq-farm/shared'
 
 export const DEFAULT_FARM_INTERVAL_MS = 2_000
 export const DEFAULT_FRIEND_INTERVAL_MS = 10_000
@@ -60,6 +53,10 @@ export function getLandTypeByLevel(level: number): FertilizerLandType {
 
 export interface AutomationConfig {
   farm: boolean
+  farm_manage: boolean
+  farm_water: boolean
+  farm_weed: boolean
+  farm_bug: boolean
   farm_push: boolean
   land_upgrade: boolean
   friend: boolean
@@ -81,6 +78,10 @@ export interface AutomationConfig {
 
 export const DEFAULT_AUTOMATION: AutomationConfig = {
   farm: true,
+  farm_manage: true,
+  farm_water: true,
+  farm_weed: true,
+  farm_bug: true,
   farm_push: true,
   land_upgrade: true,
   friend: true,
@@ -132,6 +133,30 @@ export const DEFAULT_FRIEND_QUIET_HOURS: FriendQuietHoursConfig = {
   end: '07:00'
 }
 
+export interface RuntimeClientConfig {
+  serverUrl: string
+  clientVersion: string
+  os: string
+  deviceInfo: {
+    sysSoftware: string
+    network: string
+    memory: string
+    deviceId: string
+  }
+}
+
+export const DEFAULT_RUNTIME_CLIENT: RuntimeClientConfig = {
+  serverUrl: String(GAME_SERVER_URL),
+  clientVersion: String(CLIENT_VERSION),
+  os: String(DEFAULT_OS),
+  deviceInfo: {
+    sysSoftware: DEFAULT_DEVICE_SYS_SOFTWARE,
+    network: DEFAULT_DEVICE_NETWORK,
+    memory: DEFAULT_DEVICE_MEMORY,
+    deviceId: DEFAULT_DEVICE_ID
+  }
+}
+
 export interface OfflineReminderConfig {
   channel: string
   reloginUrlMode: string
@@ -152,6 +177,20 @@ export const DEFAULT_OFFLINE_REMINDER: OfflineReminderConfig = {
   offlineDeleteSec: 9_999_999_999
 }
 
+export interface FertilizerBuyConfig {
+  type: 'organic' | 'normal' | 'both'
+  mode: 'threshold' | 'unlimited'
+  max: number
+  threshold: number
+}
+
+export const DEFAULT_FERTILIZER_BUY: FertilizerBuyConfig = {
+  type: 'organic',
+  mode: 'threshold',
+  max: 10,
+  threshold: 100
+}
+
 export interface AccountConfigSnapshot {
   automation: AutomationConfig
   plantingStrategy: PlantingStrategy
@@ -164,6 +203,7 @@ export interface AccountConfigSnapshot {
   fertilizer: FertilizerMode
   fertilizerLandTypes: FertilizerLandType[]
   fertilizerMultiSeason: boolean
+  fertilizerBuy: FertilizerBuyConfig
 }
 
 export const DEFAULT_ACCOUNT_CONFIG: AccountConfigSnapshot = {
@@ -177,7 +217,8 @@ export const DEFAULT_ACCOUNT_CONFIG: AccountConfigSnapshot = {
   stealCropBlacklist: [],
   fertilizer: 'none',
   fertilizerLandTypes: [...ALL_FERTILIZER_LAND_TYPES],
-  fertilizerMultiSeason: false
+  fertilizerMultiSeason: false,
+  fertilizerBuy: { ...DEFAULT_FERTILIZER_BUY }
 }
 
 export const PUSHOO_CHANNELS = new Set([

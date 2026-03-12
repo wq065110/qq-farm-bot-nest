@@ -28,6 +28,7 @@ export const accountConfigs = sqliteTable('account_configs', {
   fertilizer: text('fertilizer').default('none'),
   fertilizerLandTypes: text('fertilizer_land_types', { mode: 'json' }).$type<string[]>().default(['gold', 'black', 'red', 'normal']),
   fertilizerMultiSeason: integer('fertilizer_multi_season', { mode: 'boolean' }).default(false),
+  fertilizerBuy: text('fertilizer_buy', { mode: 'json' }).$type<Record<string, any>>().default({}),
   createdAt: integer('created_at', { mode: 'number' }).default(0),
   updatedAt: integer('updated_at', { mode: 'number' }).default(0)
 })
