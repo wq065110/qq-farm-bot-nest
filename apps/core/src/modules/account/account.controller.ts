@@ -29,6 +29,7 @@ export class AccountController {
     if (!provided || provided !== configured)
       throw new UnauthorizedException('远程登陆密钥无效')
 
-    return this.accountService.importFromUrl(url)
+    await this.accountService.importFromUrl(url)
+    return null
   }
 }

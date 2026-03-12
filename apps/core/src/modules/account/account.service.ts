@@ -197,7 +197,8 @@ export class AccountService {
     const lockPromise = this.doImport(code, platform)
     this.importLocks.set(lockKey, lockPromise)
     try {
-      return await lockPromise
+      await lockPromise
+      return null
     } finally {
       this.importLocks.delete(lockKey)
     }
@@ -257,7 +258,6 @@ export class AccountService {
       await this.manager.startAccount(String(target.id))
       this.manager.notifyAccountsUpdate()
     }
-
-    return this.manager.getAccounts()
+    return null
   }
 }
