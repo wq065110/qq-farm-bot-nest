@@ -70,6 +70,12 @@ export class TcpServerService implements OnModuleInit, OnModuleDestroy {
           break
         }
 
+        case 'rebind': {
+          await this.connMgr.rebind(req.fromAccountId, req.toAccountId)
+          respond({ rid: req.rid, ok: true })
+          break
+        }
+
         case 'disconnect': {
           await this.connMgr.disconnect(req.accountId)
           respond({ rid: req.rid, ok: true })

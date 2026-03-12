@@ -179,6 +179,10 @@ export class LinkClient extends EventEmitter {
     return res.userState
   }
 
+  async rebindAccount(fromAccountId: string, toAccountId: string): Promise<void> {
+    await this.sendRequest({ type: 'rebind', fromAccountId, toAccountId })
+  }
+
   async disconnectAccount(accountId: string): Promise<void> {
     await this.sendRequest({ type: 'disconnect', accountId })
   }

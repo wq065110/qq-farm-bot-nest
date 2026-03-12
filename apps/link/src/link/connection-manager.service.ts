@@ -45,50 +45,72 @@ export class ConnectionManagerService {
     const client = new GameClient(accountId, protoTypes)
 
     client.on('login', (state: UserState) => {
-      this.logger.log(`账号 ${accountId} 登录成功`)
-      this.emitEvent(accountId, 'connected', state)
+      this.logger.log(`账号 ${client.accountId} 登录成功`)
+      this.emitEvent(client.accountId, 'connected', state)
     })
 
     client.on('reconnecting', (info: any) => {
-      this.logger.log(`账号 ${accountId} 正在重连 (${info.attempt}/${info.maxAttempts})`)
-      this.emitEvent(accountId, 'reconnecting', info)
+      this.logger.log(`账号 ${client.accountId} 正在重连 (${info.attempt}/${info.maxAttempts})`)
+      this.emitEvent(client.accountId, 'reconnecting', info)
     })
 
     client.on('close', (_code: number) => {
-      this.logger.log(`账号 ${accountId} 连接关闭, code=${_code}`)
+      this.logger.log(`账号 ${client.accountId} 连接关闭, code=${_code}`)
       client.destroy()
-      this.clients.delete(accountId)
-      this.emitEvent(accountId, 'disconnected', { code: _code })
+      this.clients.delete(client.accountId)
+      this.emitEvent(client.accountId, 'disconnected', { code: _code })
     })
 
     client.on('kickout', (info: any) => {
-      this.logger.warn(`账号 ${accountId} 被踢下线: ${JSON.stringify(info)}`)
-      this.emitEvent(accountId, 'kicked', info)
+      this.logger.warn(`账号 ${client.accountId} 被踢下线: ${JSON.stringify(info)}`)
+      this.emitEvent(client.accountId, 'kicked', info)
       client.destroy()
-      this.clients.delete(accountId)
+      this.clients.delete(client.accountId)
     })
 
     client.on('loginFailed', (err: Error) => {
-      this.logger.warn(`账号 ${accountId} 登录失败: ${err.message}`)
-      this.emitEvent(accountId, 'login_failed', { error: err.message })
+      this.logger.warn(`账号 ${client.accountId} 登录失败: ${err.message}`)
+      this.emitEvent(client.accountId, 'login_failed', { error: err.message })
     })
 
     client.on('ws_error', (info: any) => {
-      this.logger.warn(`账号 ${accountId} WebSocket 错误: ${JSON.stringify(info)}`)
-      this.emitEvent(accountId, 'ws_error', info)
+      this.logger.warn(`账号 ${client.accountId} WebSocket 错误: ${JSON.stringify(info)}`)
+      this.emitEvent(client.accountId, 'ws_error', info)
     })
 
     client.on('notify', (data: any) => {
-      this.emitEvent(accountId, 'notify', data)
+      this.emitEvent(client.accountId, 'notify', data)
     })
 
     client.on('stateChanged', (userState: UserState) => {
-      this.emitEvent(accountId, 'state_update', userState)
+      this.emitEvent(client.accountId, 'state_update', userState)
     })
 
     this.clients.set(accountId, client)
     await client.connect(code, platform)
     return { ...client.userState }
+  }
+
+  async rebind(fromId: string, toId: string): Promise<void> {
+    const from = this.clients.get(fromId)
+    if (!from)
+      throw new Error(`待改绑账号不存在: ${fromId}`)
+
+    const existingTo = this.clients.get(toId)
+    if (existingTo) {
+      this.logger.log(`改绑前断开已有目标账号连接: ${toId}`)
+      try {
+        existingTo.destroy()
+      } catch (e) {
+        this.logger.warn(`销毁目标账号 ${toId} 连接时出错: ${e}`)
+      }
+      this.clients.delete(toId)
+    }
+
+    this.logger.log(`改绑连接: ${fromId} -> ${toId}`)
+    this.clients.delete(fromId)
+    from.accountId = toId
+    this.clients.set(toId, from)
   }
 
   async disconnect(accountId: string): Promise<void> {

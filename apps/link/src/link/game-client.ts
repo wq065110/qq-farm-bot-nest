@@ -38,12 +38,23 @@ export class GameClient extends EventEmitter {
   private _loginFailed = false
   private static readonly MAX_RECONNECT_ATTEMPTS = 3
 
+  private _accountId: string
+
   constructor(
-    readonly accountId: string,
+    accountId: string,
     private readonly protoTypes: Record<string, any>
   ) {
     super()
+    this._accountId = accountId
     this.scheduler = new Scheduler(`gc-${accountId}`)
+  }
+
+  get accountId(): string {
+    return this._accountId
+  }
+
+  set accountId(id: string) {
+    this._accountId = id
   }
 
   get connected(): boolean { return this._connected }

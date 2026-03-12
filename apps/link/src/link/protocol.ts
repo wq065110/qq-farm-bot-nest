@@ -9,6 +9,13 @@ export interface ConnectRequest {
   platform: string
 }
 
+export interface RebindRequest {
+  type: 'rebind'
+  rid: string
+  fromAccountId: string
+  toAccountId: string
+}
+
 export interface DisconnectRequest {
   type: 'disconnect'
   rid: string
@@ -37,7 +44,7 @@ export interface InvokeRequest {
   params: Record<string, unknown>
 }
 
-export type Request = ConnectRequest | DisconnectRequest | StatusRequest | ListRequest | InvokeRequest
+export type Request = ConnectRequest | RebindRequest | DisconnectRequest | StatusRequest | ListRequest | InvokeRequest
 
 /** Link -> Core responses */
 export interface ResponseMessage {

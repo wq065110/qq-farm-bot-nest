@@ -1,8 +1,8 @@
 import fs from 'node:fs'
 import path from 'node:path'
+import { DEFAULT_REMOTE_LOGIN_KEY } from '@qq-farm/shared'
 import Database from 'better-sqlite3'
 import { drizzle } from 'drizzle-orm/better-sqlite3'
-import { DEFAULT_REMOTE_LOGIN_KEY } from '@qq-farm/shared'
 import * as schema from './schema'
 
 export const DRIZZLE_TOKEN = 'DRIZZLE_DB'

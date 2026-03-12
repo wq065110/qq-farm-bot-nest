@@ -18,6 +18,7 @@ export class AccountService {
   }
 
   async createOrUpdateAccount(payload: any) {
+    const skipAutoStart = payload?.skipAutoStart === true
     const isUpdateById = !!payload.id
     const resolvedUpdateId = isUpdateById ? this.manager.resolveAccountId(payload.id) : ''
     const body = isUpdateById ? { ...payload, id: resolvedUpdateId || String(payload.id) } : payload
@@ -83,7 +84,7 @@ export class AccountService {
       })
     }
 
-    if (!effectiveIsUpdate) {
+    if (!effectiveIsUpdate && !skipAutoStart) {
       const newAcc = afterAccounts.find((a: any) => String(a.id) === accountId) || afterAccounts.at(-1)
       if (newAcc)
         await this.manager.startAccount(String(newAcc.id))
@@ -168,7 +169,8 @@ export class AccountService {
   }
 
   /**
-   * 从 WS 连接 URL 解析 code/platform，先通过 link 获取真实 openid，再添加或更新账号并自动启动
+   * 从 WS 连接 URL 解析 code/platform，临时连接游戏获取 openId，
+   * 再合并/创建真实账号并改绑连接，最后启动账号。
    */
   async importFromUrl(url: string) {
     const raw = typeof url === 'string' ? url.trim() : ''
@@ -205,59 +207,77 @@ export class AccountService {
   }
 
   private async doImport(code: string, platform: string) {
-    // 先通过 link 获取真实 openId
-    const userInfo = await this.manager.probeAccountByCode(code, platform)
-    if (!userInfo?.openId) {
-      throw new BadRequestException('无法获取账号信息，请检查 code 是否有效')
-    }
+    const normalizedPlatform = (platform || 'qq').trim() || 'qq'
+    const tempId = `import_${Date.now()}`
 
-    // 查找现有账号（按 uin + platform 匹配）
-    const accounts = this.manager.getAccounts().accounts || []
-    const existing = accounts.find((a: any) =>
-      String(a.uin) === userInfo.openId && String(a.platform || 'qq') === platform
+    // 仅建立一次连接：使用临时账号 ID 连接游戏，获取 openId / 昵称等
+    const userState = await (this.manager as any).linkClient.connectAccount(tempId, code, normalizedPlatform).catch((e: any) => {
+      throw new BadRequestException(`无法连接游戏服务器，请检查 code 是否有效: ${e?.message || e}`)
+    })
+
+    const openId = String(userState?.openId || '').trim()
+    if (!openId)
+      throw new BadRequestException('无法获取账号信息，请检查 code 是否有效')
+
+    const nameFromGame = String(userState?.name || '').trim()
+    const avatarFromGame = String(userState?.avatarUrl || '').trim()
+
+    // 查找是否已有相同 uin + platform 的账号
+    const all = this.manager.getAccounts().accounts || []
+    const existing = all.find((a: any) =>
+      String(a.uin || '').trim() === openId && String(a.platform || 'qq') === normalizedPlatform
     )
 
-    const payload: Record<string, string> = {
+    const payload: Record<string, any> = {
       code,
-      platform,
-      uin: userInfo.openId
+      platform: normalizedPlatform,
+      uin: openId,
+      skipAutoStart: true
     }
 
-    // 如果已有账号且用户设置了自定义备注则保留，否则使用 link 返回的昵称存到 nick
+    let targetId: string
     if (existing) {
       payload.id = String(existing.id)
-      // 用户未设置自定义备注时，用 link 返回的昵称
-      const hasCustomName = existing.name && existing.name !== `小农夫-${String(existing.id).padStart(2, '0')}`
-      if (!hasCustomName && userInfo.name) {
-        payload.nick = userInfo.name
-      }
-    } else if (userInfo.name) {
-      payload.nick = userInfo.name
+      if (!existing.name || existing.name === `小小农夫-${String(existing.id).padStart(2, '0')}`)
+        payload.nick = nameFromGame || existing.nick || ''
+      if (avatarFromGame)
+        payload.avatar = avatarFromGame
+      const result = await this.createOrUpdateAccount(payload)
+      const updated = result.accounts || []
+      const target = updated.find((a: any) => String(a.id) === String(existing.id))
+      targetId = String((target || existing).id)
+    } else {
+      if (nameFromGame)
+        payload.nick = nameFromGame
+      if (avatarFromGame)
+        payload.avatar = avatarFromGame
+      const result = await this.createOrUpdateAccount(payload)
+      const updated = result.accounts || []
+      const target = updated.find((a: any) =>
+        String(a.uin || '').trim() === openId && String(a.platform || 'qq') === normalizedPlatform
+      ) ?? updated.at(-1)
+      if (!target)
+        throw new BadRequestException('导入账号失败：未能创建账号记录')
+      targetId = String(target.id)
     }
 
-    const result = await this.createOrUpdateAccount(payload)
-    const updatedAccounts = result.accounts || []
-    const target = updatedAccounts.find((a: any) => String(a.uin) === userInfo.openId)
-      ?? updatedAccounts.find((a: any) => String(a.code) === code)
-      ?? updatedAccounts.at(-1)
+    // 将临时连接改绑到真实账号 ID
+    await this.manager.rebindLinkConnection(tempId, targetId)
 
-    if (target) {
-      const name = target.name || target.nick || target.id || ''
-      // 远程链接导入：写入农场日志（运行日志）
-      this.gameLog.appendLog(String(target.id), name, {
-        msg: `远程链接导入并启动: ${name}`,
-        tag: '系统',
-        meta: { module: 'system', event: 'login_remote' }
-      })
-      this.manager.addAccountLog(
-        'import_url',
-        `通过链接导入并启动: ${name}`,
-        String(target.id),
-        name
-      )
-      await this.manager.startAccount(String(target.id))
-      this.manager.notifyAccountsUpdate()
-    }
+    const name = nameFromGame || ''
+    this.gameLog.appendLog(targetId, name, {
+      msg: `远程链接导入并启动: ${name || targetId}`,
+      tag: '系统',
+      meta: { module: 'system', event: 'login_remote' }
+    })
+    this.manager.addAccountLog(
+      'import_url',
+      `通过链接导入并启动: ${name || targetId}`,
+      targetId,
+      name || ''
+    )
+    await this.manager.startAccount(targetId)
+    this.manager.notifyAccountsUpdate()
     return null
   }
 }

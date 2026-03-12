@@ -482,7 +482,7 @@ export class StoreService {
 
     const { nextId } = this.getAccounts()
     const id = String(acc.id || nextId)
-    const defaultName = `小农夫-${String(id).padStart(2, '0')}`
+    const defaultName = `小小农夫-${String(id).padStart(2, '0')}`
     this.db.insert(schema.accounts).values({
       id,
       name: acc.name || defaultName,

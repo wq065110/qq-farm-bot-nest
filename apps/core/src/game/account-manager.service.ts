@@ -180,10 +180,15 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
       const list = await this.linkClient.listConnections()
       const storeIds = new Set(this.store.getAllAccounts().map(a => String(a.id)))
       for (const conn of list || []) {
-        const aid = (conn as any)?.accountId
-        if (aid && !storeIds.has(String(aid))) {
+        const aid = String((conn as any)?.accountId ?? '').trim()
+        if (!aid)
+          continue
+        // 跳过导入/探测使用的临时连接，由各自流程管理生命周期
+        if (aid.startsWith('import_') || aid.startsWith('probe_'))
+          continue
+        if (!storeIds.has(aid)) {
           this.logger.log(`清理幽灵连接: ${aid}（账号已不在 store 中）`)
-          await this.disconnectFromLink(String(aid))
+          await this.disconnectFromLink(aid)
         }
       }
     } catch (e: any) {
@@ -311,6 +316,20 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
     this.lastCodeUsedForConnection.delete(accountId)
   }
 
+  /** 将已存在的 link 连接从 fromId 改绑到 toId，并迁移最近使用的 code 记录 */
+  async rebindLinkConnection(fromId: string, toId: string): Promise<void> {
+    const from = String(fromId || '').trim()
+    const to = String(toId || '').trim()
+    if (!from || !to || from === to)
+      return
+    await this.linkClient.rebindAccount(from, to)
+    const last = this.lastCodeUsedForConnection.get(from)
+    if (last !== undefined) {
+      this.lastCodeUsedForConnection.set(to, last)
+      this.lastCodeUsedForConnection.delete(from)
+    }
+  }
+
   async restartAccount(accountId: string): Promise<boolean> {
     await this.stopAccount(accountId)
     return await this.startAccount(accountId)
@@ -418,9 +437,51 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
           if (!existing?.uin || String(existing.uin).trim() === '') {
             this.store.addOrUpdateAccount({ id: accountId, uin: openId })
           }
+          // 登录后：按 uin + platform 去重，避免同一账号因多次导入产生多条记录
+          this.mergeDuplicateAccountsByUinPlatform(accountId, openId).catch(() => {})
         }
       }
     }
+  }
+
+  /**
+   * 按 uin + platform 合并重复账号：
+   * - 以当前登录账号 accountId 为主
+   * - 删除其它拥有相同 uin + platform 的账号记录（包括其配置）
+   */
+  private async mergeDuplicateAccountsByUinPlatform(accountId: string, openId: string): Promise<void> {
+    const uin = String(openId || '').trim()
+    const id = String(accountId || '').trim()
+    if (!uin || !id)
+      return
+
+    const current = this.store.getAccountById(id)
+    if (!current)
+      return
+    const platform = String(current.platform || 'qq')
+
+    const all = this.store.getAllAccounts()
+    const duplicates = all.filter(a =>
+      String(a.uin || '').trim() === uin
+      && String(a.platform || 'qq') === platform
+    )
+
+    if (duplicates.length <= 1)
+      return
+
+    for (const acc of duplicates) {
+      const dupId = String(acc.id)
+      if (dupId === id)
+        continue
+      this.logger.log(`合并重复账号: ${dupId} -> ${id} (uin=${uin}, platform=${platform})`)
+      await this.stopAccount(dupId).catch(() => {})
+      await this.disconnectFromLink(dupId).catch(() => {})
+      this.store.deleteAccount(dupId)
+      this.gameLog.deleteAccountLogs(dupId)
+    }
+
+    this.notifyAccountsUpdate()
+    await this.syncGhostConnections().catch(() => {})
   }
 
   private handleStatusEvent(accountId: string, event: StatusEventName, data: any, _name: string) {
