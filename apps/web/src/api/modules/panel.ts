@@ -8,6 +8,10 @@ export function saveOfflineReminder(data: Record<string, unknown>): Promise<unkn
   return socket.request('panel.updateOfflineReminder', data)
 }
 
+export function saveRemoteLoginKey(key: string): Promise<unknown> {
+  return socket.request('panel.updateRemoteLoginKey', { key })
+}
+
 export function query(): Promise<Record<string, unknown>> {
   return socket.request('panel.query')
 }

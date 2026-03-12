@@ -2,6 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import Database from 'better-sqlite3'
 import { drizzle } from 'drizzle-orm/better-sqlite3'
+import { DEFAULT_REMOTE_LOGIN_KEY } from '@qq-farm/shared'
 import * as schema from './schema'
 
 export const DRIZZLE_TOKEN = 'DRIZZLE_DB'
@@ -99,6 +100,19 @@ export const drizzleProvider = {
       CREATE INDEX IF NOT EXISTS idx_account_logs_created_at ON account_logs(created_at);
       CREATE INDEX IF NOT EXISTS idx_account_logs_account_created_at ON account_logs(account_id, created_at DESC);
     `)
+
+    // 初始化默认远程登录密钥（若不存在）
+    const now = Date.now()
+    sqlite.prepare(`
+      INSERT INTO global_configs(key, value, created_at, updated_at)
+      SELECT @key, @value, @createdAt, @updatedAt
+      WHERE NOT EXISTS (SELECT 1 FROM global_configs WHERE key = @key);
+    `).run({
+      key: 'remoteLoginKey',
+      value: JSON.stringify(DEFAULT_REMOTE_LOGIN_KEY),
+      createdAt: now,
+      updatedAt: now
+    })
 
     return db
   }

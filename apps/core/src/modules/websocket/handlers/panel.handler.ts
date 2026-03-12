@@ -15,7 +15,8 @@ export class PanelHandler {
   query(): unknown {
     return {
       ui: this.store.getUI(),
-      offlineReminder: this.store.getOfflineReminder()
+      offlineReminder: this.store.getOfflineReminder(),
+      remoteLoginKey: this.store.getRemoteLoginKey()
     }
   }
 
@@ -31,5 +32,12 @@ export class PanelHandler {
     const result = this.store.setOfflineReminder(data || {})
     this.manager.notifyPanelUpdate()
     return result
+  }
+
+  @WsRoute('panel.updateRemoteLoginKey')
+  remoteLoginKey(@WsBody() data: Record<string, unknown>): unknown {
+    const result = this.store.setRemoteLoginKey(String(data?.key ?? ''))
+    this.manager.notifyPanelUpdate()
+    return { remoteLoginKey: result }
   }
 }

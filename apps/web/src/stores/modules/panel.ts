@@ -19,12 +19,14 @@ export interface UIConfig {
 export interface PanelState {
   ui: UIConfig
   offlineReminder: OfflineReminderConfig
+  remoteLoginKey: string
 }
 
 function initialPanel(): PanelState {
   return {
     ui: {},
-    offlineReminder: { ...DEFAULT_OFFLINE_REMINDER }
+    offlineReminder: { ...DEFAULT_OFFLINE_REMINDER },
+    remoteLoginKey: ''
   }
 }
 
@@ -39,6 +41,8 @@ export const usePanelStore = defineStore('panel', {
           this.settings.ui = { ...this.settings.ui, ...data.ui }
         if (data.offlineReminder !== undefined)
           this.settings.offlineReminder = { ...this.settings.offlineReminder, ...data.offlineReminder }
+        if (data.remoteLoginKey !== undefined)
+          this.settings.remoteLoginKey = String(data.remoteLoginKey || '')
       }
     },
     async querySettings(): Promise<{ ok: boolean, error?: string }> {
@@ -53,6 +57,14 @@ export const usePanelStore = defineStore('panel', {
     async saveOfflineConfig(): Promise<{ ok: boolean, error?: string }> {
       try {
         await panelApi.saveOfflineReminder(this.settings.offlineReminder)
+        return { ok: true }
+      } catch (e: any) {
+        return { ok: false, error: e.message || '保存失败' }
+      }
+    },
+    async saveRemoteLoginKey(): Promise<{ ok: boolean, error?: string }> {
+      try {
+        await panelApi.saveRemoteLoginKey(this.settings.remoteLoginKey)
         return { ok: true }
       } catch (e: any) {
         return { ok: false, error: e.message || '保存失败' }

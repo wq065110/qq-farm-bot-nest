@@ -1,6 +1,7 @@
 import type { DrizzleDB } from '../database/drizzle.provider'
 import type { AccountConfigSnapshot, AutomationConfig, FertilizerLandType, FertilizerMode, FriendQuietHoursConfig, IntervalsConfig, OfflineReminderConfig, PlantingStrategy } from '../game/constants'
 import { Inject, Injectable, Logger } from '@nestjs/common'
+import { DEFAULT_REMOTE_LOGIN_KEY } from '@qq-farm/shared'
 import { and, eq } from 'drizzle-orm'
 import { DRIZZLE_TOKEN } from '../database/drizzle.provider'
 import * as schema from '../database/schema'
@@ -77,6 +78,22 @@ export class StoreService {
     const next = String(theme || 'dark').trim().slice(0, 64)
     this.setGlobalValue('ui', { theme: next })
     return { theme: next }
+  }
+
+  // ========== Remote Login Key ==========
+
+  getRemoteLoginKey(): string {
+    const saved = String(this.getGlobalValue('remoteLoginKey', '') || '').trim()
+    if (saved)
+      return saved
+    this.setGlobalValue('remoteLoginKey', DEFAULT_REMOTE_LOGIN_KEY)
+    return DEFAULT_REMOTE_LOGIN_KEY
+  }
+
+  setRemoteLoginKey(key: string): string {
+    const next = String(key || '').trim()
+    this.setGlobalValue('remoteLoginKey', next)
+    return next
   }
 
   // ========== Offline Reminder ==========

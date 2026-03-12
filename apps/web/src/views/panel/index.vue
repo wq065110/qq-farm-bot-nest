@@ -4,11 +4,14 @@ import { usePanelStore } from '@/stores'
 import message from '@/utils/message'
 import OfflineReminderCard from './components/OfflineReminderCard.vue'
 import PasswordCard from './components/PasswordCard.vue'
+import RemoteLoginKeyCard from './components/RemoteLoginKeyCard.vue'
 
-const { querySettings, changeAdminPassword, saveOfflineConfig } = usePanelStore()
+const panelStore = usePanelStore()
+const { querySettings, changeAdminPassword, saveOfflineConfig, saveRemoteLoginKey } = panelStore
 
 const passwordSaving = ref(false)
 const offlineSaving = ref(false)
+const remoteSaving = ref(false)
 
 const passwordForm = ref({
   old: '',
@@ -60,6 +63,24 @@ async function handleSaveOffline() {
   }
 }
 
+async function handleSaveRemoteKey() {
+  remoteSaving.value = true
+  try {
+    const res = await saveRemoteLoginKey()
+    if (res.ok)
+      message.success('远程登陆密钥已保存')
+    else
+      message.error(`保存失败: ${res.error || '未知错误'}`)
+  } finally {
+    remoteSaving.value = false
+  }
+}
+
+function handleRegenRemoteKey() {
+  // 生成一个新的随机值（前端展示用），最终以保存为准
+  panelStore.settings.remoteLoginKey = (globalThis.crypto?.randomUUID?.() || String(Date.now()))
+}
+
 onMounted(() => {
   querySettings()
 })
@@ -80,6 +101,11 @@ onMounted(() => {
       <OfflineReminderCard
         :saving="offlineSaving"
         @save="handleSaveOffline"
+      />
+      <RemoteLoginKeyCard
+        :saving="remoteSaving"
+        @save="handleSaveRemoteKey"
+        @regen="handleRegenRemoteKey"
       />
     </div>
   </div>
