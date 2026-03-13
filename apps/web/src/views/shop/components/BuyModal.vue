@@ -107,7 +107,6 @@ function handleImageError(): void {
             :precision="0"
             size="small"
             class="w-24"
-            aria-label="购买数量"
           />
         </div>
         <a-divider size="small" />

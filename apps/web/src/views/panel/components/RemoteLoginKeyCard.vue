@@ -56,7 +56,7 @@ function handleRegen() {
         >
           <template #suffix>
             <a-tooltip :title="visible ? '隐藏' : '显示'">
-              <a-button type="text" size="small" :aria-label="visible ? '隐藏密钥' : '显示密钥'" @click="toggleVisible">
+              <a-button type="text" size="small" @click="toggleVisible">
                 <div :class="visible ? 'i-carbon-view-off' : 'i-carbon-view'" aria-hidden="true" />
               </a-button>
             </a-tooltip>

@@ -114,11 +114,9 @@ function setMax(): void {
               :precision="0"
               size="small"
               class="w-24"
-              aria-label="售卖数量"
             />
             <a-button
               size="small"
-              aria-label="设为最大数量"
               @click="setMax"
             >
               MAX

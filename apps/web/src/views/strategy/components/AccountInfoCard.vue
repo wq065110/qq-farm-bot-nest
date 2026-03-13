@@ -14,16 +14,14 @@ defineProps<{
     <div v-if="accountId" class="flex gap-4 items-center">
       <QqAvatar :src="accountAvatar" :uin="accountUin" :size="44" ring />
       <div class="flex-1 min-w-0">
-        <div class="flex gap-2 items-center">
-          <span class="font-bold truncate a-color-text">{{ accountName }}</span>
-        </div>
+        <span class="font-bold truncate a-color-text">{{ accountName }}</span>
         <div class="mt-0.5 a-color-text-tertiary text-sm">
           UIN: {{ accountUin || '-' }}
         </div>
       </div>
     </div>
     <div v-else class="py-1 flex gap-3 items-center">
-      <div class="i-streamline-emojis-nut-and-bolt opacity-40 text-2xl" />
+      <div class="i-streamline-emojis-woman-mechanic-2 opacity-40 text-2xl" />
       <div>
         <div class="a-color-text-secondary">
           未选择账号

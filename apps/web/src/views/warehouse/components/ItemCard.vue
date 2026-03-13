@@ -54,7 +54,6 @@ function handleImageError(): void {
       class="flex shrink-0 p-1.5!"
       type="text"
       :disabled="selling"
-      aria-label="售卖"
       @click="emit('sell')"
     >
       <span class="i-streamline-emojis-dollar-banknote text-lg" />

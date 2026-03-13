@@ -55,7 +55,7 @@ function openChannelDocs() {
           <div class="flex gap-2 items-center">
             <a-select v-model:value="settings.offlineReminder.channel" :options="CHANNEL_OPTIONS" class="flex-1" />
             <a-tooltip v-if="currentChannelDocUrl" title="查看渠道文档" placement="top">
-              <a-button size="small" aria-label="查看渠道文档" @click="openChannelDocs">
+              <a-button size="small" @click="openChannelDocs">
                 <div class="i-streamline-emojis-open-book" aria-hidden="true" />
               </a-button>
             </a-tooltip>

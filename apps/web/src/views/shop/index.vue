@@ -82,7 +82,6 @@ useAccountRefresh(initPageData)
             allow-clear
             autocomplete="off"
             class="mb-3 w-60!"
-            aria-label="搜索种子"
           >
             <template #prefix>
               <span class="i-streamline-emojis-magnifying-glass-tilted-left a-color-text-tertiary text-base" />

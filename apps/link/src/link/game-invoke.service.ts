@@ -105,10 +105,19 @@ function buildPrefixMap(): Map<string, string> {
   return map
 }
 
+/**
+ * 响应中 repeated bytes 字段需要二次解码的映射。
+ * key = "service::method"，value = { field: 字段名, type: proto 类型短名 }
+ */
+const NESTED_BYTES_FIELDS: Record<string, { field: string, type: string }> = {
+  'gamepb.mallpb.MallService::GetMallListBySlotType': { field: 'goods_list', type: 'MallGoods' }
+}
+
 @Injectable()
 export class GameInvokeService implements OnModuleInit {
   private readonly logger = new Logger(GameInvokeService.name)
   private fullTypes: Record<string, protobuf.Type> = {}
+  private nestedTypes: Record<string, protobuf.Type> = {}
   private ready = false
 
   async onModuleInit() {
@@ -158,6 +167,19 @@ export class GameInvokeService implements OnModuleInit {
     }
 
     this.fullTypes = types
+
+    const nestedTypes: Record<string, protobuf.Type> = {}
+    for (const [key, { type: typeName }] of Object.entries(NESTED_BYTES_FIELDS)) {
+      const service = key.split('::')[0]
+      const pkg = service.substring(0, service.lastIndexOf('.'))
+      try {
+        nestedTypes[typeName] = root.lookupType(`${pkg}.${typeName}`)
+      } catch {
+        this.logger.warn(`Proto 嵌套类型未找到: ${pkg}.${typeName}`)
+      }
+    }
+    this.nestedTypes = nestedTypes
+
     this.ready = true
     this.logger.log('完整 proto（invoke）加载完成')
   }
@@ -202,9 +224,35 @@ export class GameInvokeService implements OnModuleInit {
       return null
     try {
       const decoded = types.ReplyType.decode(body)
-      return types.ReplyType.toObject(decoded, { longs: String, enums: String })
+      const obj = types.ReplyType.toObject(decoded, { longs: String, enums: String }) as Record<string, any>
+      return this.decodeNestedBytes(service, method, obj)
     } catch {
       return null
     }
+  }
+
+  /**
+   * 对含有 repeated bytes 嵌套消息的响应做二次解码。
+   * 例如 GetMallListBySlotType 的 goods_list 是 repeated bytes（序列化的 MallGoods），
+   * 需要逐个 decode 才能在 JSON 传输后正确读取 goods_id / is_free 等字段。
+   */
+  private decodeNestedBytes(service: string, method: string, obj: Record<string, any>): Record<string, any> {
+    const spec = NESTED_BYTES_FIELDS[`${service}::${method}`]
+    if (!spec)
+      return obj
+    const ProtoType = this.nestedTypes[spec.type]
+    if (!ProtoType || !Array.isArray(obj[spec.field]))
+      return obj
+    const toObj = { longs: String, enums: String } as protobuf.IConversionOptions
+    obj[spec.field] = obj[spec.field]
+      .map((raw: Uint8Array | Buffer) => {
+        try {
+          return ProtoType.toObject(ProtoType.decode(raw), toObj)
+        } catch {
+          return null
+        }
+      })
+      .filter(Boolean)
+    return obj
   }
 }

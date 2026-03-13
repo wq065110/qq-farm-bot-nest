@@ -33,10 +33,7 @@ async function handleLogin() {
 </script>
 
 <template>
-  <div
-    class="h-[100dvh] w-screen relative overflow-hidden"
-    :style="{ backgroundColor: 'var(--ant-color-bg-container)' }"
-  >
+  <div class="h-[100dvh] w-screen relative overflow-hidden a-bg-container">
     <ThemeToggle class="right-3 top-3 absolute z-30" />
 
     <!-- Sky gradient -->
@@ -158,13 +155,13 @@ async function handleLogin() {
                   size="large"
                   autocomplete="current-password"
                   :disabled="loading"
-                  class="transition-all duration-300 !py-3 !border-0 !bg-layout/60 !backdrop-blur-md !text-base !rounded-2xl"
+                  class="transition-all duration-300 !py-3 !border-0 !a-bg-layout/60 !backdrop-blur-md !text-base !rounded-2xl"
                   @focus="focused = true"
                   @blur="focused = false"
                 >
                   <template #prefix>
                     <span
-                      class="mr-2 transition-all duration-300 text-lg dark-text-white/80"
+                      class="mr-2 transition-all duration-300 text-lg dark:text-white/80"
                       :class="[
                         focused ? 'i-streamline-emojis-palm-tree' : 'i-streamline-emojis-locked-with-key',
                         focused ? 'scale-110 rotate-12' : 'opacity-60'

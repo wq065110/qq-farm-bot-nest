@@ -11,7 +11,10 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <nav class="px-3 flex-1 space-y-1.5" :class="collapsed ? 'px-2' : ''">
+  <nav
+    class="px-3 pb-3 flex-1 min-h-0 overflow-y-auto space-y-1.5"
+    :class="collapsed ? 'px-2' : ''"
+  >
     <div
       v-for="item in items"
       :key="item.key"

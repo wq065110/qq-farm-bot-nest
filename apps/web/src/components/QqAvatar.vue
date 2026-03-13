@@ -48,11 +48,11 @@ const iconClass = computed(() => getPlatformIcon(props.platform))
 
     <div
       v-if="iconClass && platform"
-      class="p-0.5 flex scale-80 items-center justify-center absolute bg-primary-bg rounded-md -bottom-0 -right-0.5"
+      class="rounded-[3px] flex scale-70 items-center bottom-0 right-0 justify-center absolute a-bg-white"
       :style="{ transform: `scale(${(size || 36) / 36})`, transformOrigin: 'bottom right' }"
     >
       <i
-        class="text-primary text-sm"
+        class="flex a-color-primary text-sm"
         :class="iconClass"
       />
     </div>

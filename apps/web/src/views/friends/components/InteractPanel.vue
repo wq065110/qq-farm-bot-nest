@@ -110,7 +110,6 @@ function onRefresh(): void {
           size="small"
           type="text"
           :loading="loading"
-          aria-label="刷新访客记录"
           class="flex items-center"
           @click="onRefresh"
         >
@@ -123,7 +122,7 @@ function onRefresh(): void {
     </div>
 
     <!-- Body -->
-    <div v-show="!collapsed" class="border-t border-solid flex-1 min-h-0 overflow-y-auto a-border-t-border-sec">
+    <div v-show="!collapsed" class="border-t flex-1 min-h-0 overflow-y-auto a-border-t-border-sec">
       <a-spin :spinning="loading">
         <div
           v-if="visibleRecords.length === 0"
@@ -141,13 +140,13 @@ function onRefresh(): void {
             :class="[idx > 0 ? 'border-t border-t-solid a-border-t-border-sec' : '']"
           >
             <!-- Action icon -->
-            <QqAvatar
-              :src="record.avatarUrl"
-              :size="38"
-              ring
-              custom-class="shadow-sm"
-              :custom-style="{ '--un-ring-color': 'var(--ant-color-bg-container)' }"
-            />
+            <div class="shadow-sm" :style="{ '--un-ring-color': 'var(--ant-color-bg-container)' }">
+              <QqAvatar
+                :src="record.avatarUrl"
+                :size="38"
+                ring
+              />
+            </div>
 
             <!-- Content -->
             <div class="flex-1 min-w-0">

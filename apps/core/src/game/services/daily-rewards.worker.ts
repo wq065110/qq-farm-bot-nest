@@ -351,8 +351,8 @@ export class DailyRewardsWorker {
   // ========== Fertilizer Buy ==========
 
   private static readonly BUY_COOLDOWN_MS = 60_000
-  private static readonly ORGANIC_FERTILIZER_MALL_GOODS_ID = 10001
-  private static readonly NORMAL_FERTILIZER_MALL_GOODS_ID = 10002
+  private static readonly ORGANIC_FERTILIZER_MALL_GOODS_ID = 1002
+  private static readonly NORMAL_FERTILIZER_MALL_GOODS_ID = 1003
   private static readonly MAX_ROUNDS = 20
   private static readonly BUY_PER_ROUND = 10
   private lastBuyAt = 0

@@ -84,21 +84,21 @@ function handleToggleBlacklist(e: Event) {
 </script>
 
 <template>
-  <div class="transition-colors" :class="blacklisted ? 'opacity-50' : 'opacity-100'">
+  <div class="transition-colors" :class="blacklisted ? 'opacity-50' : ''">
     <!-- Friend Row -->
     <div
       class="px-4 py-3 flex gap-3 cursor-pointer transition-colors items-center"
       :class="expanded ? 'a-bg-primary-bg' : 'bg-transparent hover:a-bg-layout'"
       @click="handleToggle"
     >
-      <QqAvatar
-        :src="avatarSrc"
-        :size="38"
-        ring
-        custom-class="shadow-sm"
-        :custom-style="{ '--un-ring-color': 'var(--ant-color-bg-container)' }"
-        @error="handleAvatarError"
-      />
+      <div class="shadow-sm" :style="{ '--un-ring-color': 'var(--ant-color-bg-container)' }">
+        <QqAvatar
+          :src="avatarSrc"
+          :size="38"
+          ring
+          @error="handleAvatarError"
+        />
+      </div>
 
       <div class="flex-1 min-w-0">
         <div class="flex gap-2 items-center">
@@ -133,7 +133,7 @@ function handleToggleBlacklist(e: Event) {
       <div class="gap-1 hidden items-center sm:flex">
         <a-tooltip v-for="op in OP_BUTTONS" :key="op.type" :title="op.label" placement="top">
           <a-button
-            class="p-1.5 border-solid flex transition-all items-center justify-center a-bg-container a-border-border border rounded-lg active:scale-95 hover:shadow-sm"
+            class="p-1.5 flex transition-all items-center justify-center a-bg-container a-border-border border rounded-lg active:scale-95 hover:shadow-sm"
             :disabled="disabled"
             :class="disabled ? 'opacity-40 pointer-events-none' : ''"
             @click="handleOperate(op.type, $event)"
@@ -147,8 +147,8 @@ function handleToggleBlacklist(e: Event) {
             :disabled="disabled"
             :class="
               (blacklisted
-                ? 'border border-solid a-border-success a-bg-primary-bg'
-                : 'border border-solid a-border-border a-bg-container')
+                ? 'border a-border-success a-bg-primary-bg'
+                : 'border a-border-border a-bg-container')
                 + (disabled ? ' opacity-40 pointer-events-none' : '')
             "
             @click="handleToggleBlacklist($event)"
@@ -171,12 +171,12 @@ function handleToggleBlacklist(e: Event) {
       <a-button
         v-for="op in OP_BUTTONS"
         :key="op.type"
-        class="px-2 py-1 border-solid flex gap-1 transition-all items-center a-bg-container a-border-border border text-sm rounded-lg active:scale-95"
+        class="px-2 py-1 flex gap-1 transition-all items-center a-bg-container a-border-border border text-sm rounded-lg active:scale-95"
         :disabled="disabled"
         :class="disabled ? 'opacity-40 pointer-events-none' : ''"
         @click="handleOperate(op.type, $event)"
       >
-        <div class="" :class="op.icon" />
+        <div :class="op.icon" />
         {{ op.label }}
       </a-button>
       <a-button
@@ -184,13 +184,13 @@ function handleToggleBlacklist(e: Event) {
         :disabled="disabled"
         :class="
           (blacklisted
-            ? 'border border-solid a-border-success a-bg-primary-bg'
-            : 'border border-solid a-border-border a-bg-container')
+            ? 'border a-border-success a-bg-primary-bg'
+            : 'border a-border-border a-bg-container')
             + (disabled ? ' opacity-40 pointer-events-none' : '')
         "
         @click="handleToggleBlacklist($event)"
       >
-        <div class="" :class="blacklisted ? 'i-streamline-emojis-ballot-box-with-check' : 'i-streamline-emojis-cross-mark'" />
+        <div :class="blacklisted ? 'i-streamline-emojis-ballot-box-with-check' : 'i-streamline-emojis-cross-mark'" />
         {{ blacklisted ? '取消屏蔽' : '屏蔽' }}
       </a-button>
     </div>

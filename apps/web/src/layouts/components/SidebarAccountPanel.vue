@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import QqAvatar from '@/components/QqAvatar.vue'
-import { getPlatformIcon } from '@/utils/platform'
 
 defineProps<{
   collapsed?: boolean
@@ -21,7 +20,7 @@ const selectedAccountId = defineModel<any>('selectedAccountId', { required: true
 <template>
   <!-- Expanded -->
   <div v-if="!collapsed" class="px-3 py-3">
-    <div class="border-solid overflow-hidden a-border-border-sec border rounded-xl shadow-sm">
+    <div class="overflow-hidden a-border-border-sec border rounded-xl shadow-sm">
       <div class="px-3 py-2.5 flex gap-3 items-center a-bg-primary-bg">
         <QqAvatar :src="currentAccount?.avatar" :uin="currentAccount?.uin" :size="40" ring :platform="currentAccount?.platform" />
 

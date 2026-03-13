@@ -112,7 +112,6 @@ onMounted(() => {
           <div
             class="overscroll-contain flex flex-col gap-3 min-w-36"
             role="group"
-            aria-label="日志筛选"
           >
             <div class="flex flex-col gap-1.5">
               <label class="a-color-text-secondary text-xs">模块</label>
@@ -163,7 +162,6 @@ onMounted(() => {
               <a-button
                 size="small"
                 class="flex-1"
-                aria-label="重置"
                 @click="resetFilter"
               >
                 重置
@@ -172,7 +170,6 @@ onMounted(() => {
                 type="primary"
                 size="small"
                 class="flex-1"
-                aria-label="查询"
                 @click="applyQuery"
               >
                 查询
@@ -184,7 +181,6 @@ onMounted(() => {
           <a-button
             type="text"
             size="small"
-            aria-label="筛选日志"
           >
             <div class="i-carbon-filter text-base" />
           </a-button>

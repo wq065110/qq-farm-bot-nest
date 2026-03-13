@@ -146,7 +146,6 @@ function clearLevelFilter() {
         <div
           v-if="levelFilter != null"
           class="i-carbon-close cursor-pointer right-0 right-1.5 top-1/2 absolute z-999 -translate-y-1/2"
-          aria-label="清除等级上限"
           @click.stop.prevent="clearLevelFilter"
         />
       </div>

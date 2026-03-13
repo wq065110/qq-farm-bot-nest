@@ -67,7 +67,6 @@ function handleCardClick(): void {
       v-if="!seed.locked && !seed.soldOut && seed.goodsId"
       class="flex p-1.5!"
       type="text"
-      aria-label="购买"
       @click="handleCardClick"
     >
       <span class="i-streamline-emojis-handbag text-lg" />

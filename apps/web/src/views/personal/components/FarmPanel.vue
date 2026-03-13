@@ -29,21 +29,21 @@ function handleOperate(opType: string) {
       <div class="flex shrink flex-wrap gap-2 min-w-0 items-center">
         <div class="px-2.5 py-1 flex gap-1.5 items-center a-bg-layout rounded-lg">
           <div class="i-streamline-emojis-cooked-rice" />
-          <span class="a-color-text-secondary text-sm">可收</span>
+          <span class="hidden a-color-text-secondary text-sm xl:inline">可收</span>
           <span class="font-bold a-color-text">{{ summary?.harvestable || 0 }}</span>
         </div>
         <div class="px-2.5 py-1 flex gap-1.5 items-center a-bg-layout rounded-lg">
           <div class="i-streamline-emojis-seedling" />
-          <span class="a-color-text-secondary text-sm">生长</span>
+          <span class="hidden a-color-text-secondary text-sm xl:inline">生长</span>
           <span class="font-bold a-color-text">{{ summary?.growing || 0 }}</span>
         </div>
         <div class="px-2.5 py-1 flex gap-1.5 items-center a-bg-layout rounded-lg">
           <div class="i-streamline-emojis-custard" />
-          <span class="a-color-text-secondary text-sm">空闲</span>
+          <span class="hidden a-color-text-secondary text-sm xl:inline">空闲</span>
           <span class="font-bold a-color-text">{{ summary?.empty || 0 }}</span>
         </div>
         <div v-if="(summary?.dead || 0) > 0" class="px-2.5 py-1 flex gap-1.5 items-center a-bg-layout rounded-lg">
-          <span class="a-color-text-secondary text-sm">枯萎</span>
+          <span class="hidden a-color-text-secondary text-sm xl:inline">枯萎</span>
           <span class="font-bold a-color-error">{{ summary?.dead || 0 }}</span>
         </div>
       </div>

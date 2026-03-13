@@ -24,8 +24,8 @@ export default defineConfig({
       collections: {
         'twemoji': () => import('@iconify-json/twemoji/icons.json').then(m => m.default as any),
         'streamline-emojis': () => import('@iconify-json/streamline-emojis/icons.json').then(m => m.default as any),
-        'carbon': () => import('@iconify-json/carbon/icons.json').then(m => m.default as any),
-        'iconParkSolid': () => import('@iconify-json/icon-park-solid/icons.json').then(m => m.default as any)
+        'streamline-logos': () => import('@iconify-json/streamline-logos/icons.json').then(m => m.default as any),
+        'carbon': () => import('@iconify-json/carbon/icons.json').then(m => m.default as any)
       }
     }),
     presetWebFonts({

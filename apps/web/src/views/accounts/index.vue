@@ -91,7 +91,7 @@ async function toggleAccount(account: any) {
         <div
           v-for="acc in accounts"
           :key="acc.uin"
-          class="group border-solid transition-all overflow-hidden a-bg-container a-border-border-sec border rounded-xl hover:shadow-md"
+          class="group transition-all overflow-hidden a-bg-container a-border-border-sec border rounded-xl hover:shadow-md"
         >
           <!-- Status banner -->
           <div
@@ -129,7 +129,7 @@ async function toggleAccount(account: any) {
               <div :class="acc.running ? 'i-carbon-stop-filled' : 'i-carbon-play-filled'" />
             </a-button>
             <a-button :disabled="acc.running" color="primary" variant="filled" @click="openSettings(acc)">
-              <div class="i-streamline-emojis-nut-and-bolt" />
+              <div class="i-streamline-emojis-woman-mechanic-2" />
             </a-button>
             <a-button :disabled="acc.running" color="primary" variant="filled" @click="openEditModal(acc)">
               <div class="i-streamline-emojis-clipboard" />

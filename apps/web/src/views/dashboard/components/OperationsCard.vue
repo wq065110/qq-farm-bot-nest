@@ -32,7 +32,7 @@ function getOpIcon(key: string | number): string {
         class="px-2.5 py-2 flex items-center justify-between a-bg-layout rounded-lg"
       >
         <div class="flex gap-1.5 items-center">
-          <div class="" :class="getOpIcon(key)" />
+          <div :class="getOpIcon(key)" />
           <span class="a-color-text-secondary text-sm">{{ getOpName(key) }}</span>
         </div>
         <span class="font-bold a-color-text">{{ val }}</span>
