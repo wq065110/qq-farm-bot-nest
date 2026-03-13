@@ -9,8 +9,6 @@ const props = withDefaults(
     size?: number
     ring?: boolean
     platform?: string
-    customClass?: string
-    customStyle?: string | Record<string, string>
   }>(),
   {
     size: 36,
@@ -33,21 +31,14 @@ const avatarSrc = computed(() => {
 })
 
 const iconClass = computed(() => getPlatformIcon(props.platform))
-
-const avatarClass = computed(() => {
-  const base = 'shrink-0 bg-green-2'
-  const withRing = props.ring ? `${base} ring-2` : base
-  return props.customClass ? `${withRing} ${props.customClass}` : withRing
-})
 </script>
 
 <template>
-  <div class="flex relative">
+  <div class="relative">
     <a-avatar
       :size="size"
       :src="avatarSrc"
-      :class="avatarClass"
-      :style="customStyle"
+      :class="[props.ring ? 'shadow-md' : '']"
       @error="handleAvatarError"
     >
       <template #icon>
@@ -57,10 +48,11 @@ const avatarClass = computed(() => {
 
     <div
       v-if="iconClass && platform"
-      class="flex items-center justify-center absolute bg-layout rounded-md -bottom-0.7 -right-1"
+      class="p-0.5 flex scale-80 items-center justify-center absolute bg-primary-bg rounded-md -bottom-0 -right-0.5"
+      :style="{ transform: `scale(${(size || 36) / 36})`, transformOrigin: 'bottom right' }"
     >
       <i
-        class="text-primary text-xs"
+        class="text-primary text-sm"
         :class="iconClass"
       />
     </div>

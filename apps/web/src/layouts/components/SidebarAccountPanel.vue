@@ -25,7 +25,7 @@ const selectedAccountId = defineModel<any>('selectedAccountId', { required: true
       <div class="px-3 py-2.5 flex gap-3 items-center a-bg-primary-bg">
         <QqAvatar :src="currentAccount?.avatar" :uin="currentAccount?.uin" :size="40" ring :platform="currentAccount?.platform" />
 
-        <div class="flex flex-1 flex-col gap-0.5 min-w-0">
+        <div class="flex flex-1 flex-col gap-1 min-w-0">
           <div class="leading-snug font-semibold truncate a-color-text">
             {{ displayInfo.primary }}
           </div>
@@ -46,9 +46,8 @@ const selectedAccountId = defineModel<any>('selectedAccountId', { required: true
           :show-search="false"
         >
           <template #optionRender="{ option }">
-            <div class="flex gap-1 items-center">
-              <i class="text-primary" :class="getPlatformIcon(option.data?.platform)" />
-              <QqAvatar :src="option.data?.avatar" :uin="option.data?.uin" :size="18" />
+            <div class="flex gap-2 items-center">
+              <QqAvatar :src="option.data?.avatar" :uin="option.data?.uin" :platform="option.data?.platform" :size="22" />
               <span>{{ option.data?.label }}</span>
             </div>
           </template>

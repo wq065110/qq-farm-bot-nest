@@ -1,5 +1,5 @@
 import api from '@/api/services/request'
-import { useUserStore } from '@/stores'
+import { resetAllStores, useUserStore } from '@/stores'
 
 let validatedToken = ''
 let validatingPromise: Promise<boolean> | null = null
@@ -30,6 +30,5 @@ export async function ensureTokenValid(): Promise<boolean> {
 }
 
 export function clearValidation(): void {
-  validatedToken = ''
-  useUserStore().clearToken()
+  resetAllStores()
 }

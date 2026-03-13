@@ -118,7 +118,7 @@ export function useSidebarData() {
   const accountOptions = computed(() => {
     return (accounts.value || []).map((acc: any) => ({
       ...acc,
-      label: acc.name || acc.nick || acc.uin,
+      label: acc.nick || acc.uin,
       value: String(acc.uin)
     }))
   })
