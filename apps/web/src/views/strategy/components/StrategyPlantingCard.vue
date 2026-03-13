@@ -239,12 +239,12 @@ function filterOption(input: string, option: { label?: string }) {
           </a-form-item>
         </a-form>
         <div class="flex gap-10">
-          <a-form layout="vertical" class="flex-[80%]">
+          <a-form layout="vertical" class="flex-[70%]">
             <a-form-item label="施肥策略">
               <a-select v-model:value="settings.fertilizer" :options="FERTILIZER_OPTIONS" />
             </a-form-item>
           </a-form>
-          <a-form layout="vertical" class="flex-[20%]">
+          <a-form layout="vertical" class="flex-[30%]">
             <a-form-item label="多季补肥">
               <a-switch v-model:checked="settings.fertilizerMultiSeason" />
             </a-form-item>

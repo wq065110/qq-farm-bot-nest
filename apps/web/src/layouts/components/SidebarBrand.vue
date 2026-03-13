@@ -12,7 +12,7 @@ defineProps<{
     :class="collapsed ? 'justify-center px-2' : 'gap-2 px-4'"
   >
     <div class="brand-icon shrink-0">
-      <img src="/icon.ico" alt="" class="h-8 w-8">
+      <img src="/icon.ico" alt="" class="h-7 w-7">
     </div>
     <template v-if="!collapsed">
       <span class="brand-title tracking-wide font-bold font-serif whitespace-nowrap text-lg">{{ BRAND_TITLE }}</span>
