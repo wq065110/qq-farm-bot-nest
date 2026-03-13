@@ -83,7 +83,7 @@ function needOperate(land: any) {
           {{ getPlantSizeText(land) }}
         </div>
         <div v-if="land.totalSeasons && land.totalSeasons > 1" class="text-[10px] leading-none font-medium px-1.5 py-0.5 rounded-full w-fit a-color-text-tertiary shadow-sm">
-          {{ land.currentSeason || 1 }}/{{ land.totalSeasons }} 季
+          {{ land.currentSeason || 1 }}/{{ land.totalSeasons }}季
         </div>
       </div>
     </div>

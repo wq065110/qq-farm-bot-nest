@@ -217,7 +217,7 @@ useWs()
         <div v-else class="a-border-border-sec border rounded-lg shadow-sm">
           <!-- 正常好友分区 -->
           <div
-            class="a-bg-transparent hover:a-bg-fill-quaternary px-4 py-2.5 border-b border-b-solid flex w-full cursor-pointer transition-colors items-center justify-between a-border-b-border-sec"
+            class="a-bg-transparent px-4 py-2.5 border-b border-b-solid flex w-full cursor-pointer transition-colors items-center justify-between a-border-b-border-sec hover:a-bg-layout"
             @click="normalCollapsed = !normalCollapsed"
           >
             <div class="flex gap-2 items-center">
@@ -264,7 +264,7 @@ useWs()
           <!-- 黑名单分区 -->
           <div v-if="blacklistFriends.length > 0" class="border-t a-border-t-border-sec">
             <div
-              class="a-bg-transparent hover:a-bg-fill-quaternary px-4 py-2.5 border-b border-b-solid flex w-full cursor-pointer transition-colors items-center justify-between a-border-b-border-sec"
+              class="a-bg-transparent px-4 py-2.5 border-b border-b-solid flex w-full cursor-pointer transition-colors items-center justify-between a-border-b-border-sec hover:a-bg-layout"
               @click="blacklistCollapsed = !blacklistCollapsed"
             >
               <div class="flex gap-2 items-center">

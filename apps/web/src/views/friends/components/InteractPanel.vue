@@ -90,7 +90,7 @@ function onRefresh(): void {
       </div>
 
       <div class="flex flex-wrap gap-2 items-center" @click.stop>
-        <div class="a-bg-fill-quaternary px-1 py-1 rounded-full flex gap-1">
+        <div class="px-1 py-1 rounded-full flex gap-1 a-bg-layout">
           <button
             v-for="opt in INTERACT_FILTER_OPTIONS"
             :key="opt.key"

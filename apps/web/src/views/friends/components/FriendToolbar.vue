@@ -13,7 +13,7 @@ const searchQuery = defineModel<string>('searchQuery', { required: true })
   >
     <div class="flex gap-1.5 items-center a-color-text-tertiary text-xs">
       <span class="text-[10px] px-1.5 py-px a-color-primary a-bg-primary-bg rounded">{{ friendCount }} 好友</span>
-      <span v-if="blacklistedCount" class="a-bg-fill-secondary text-[10px] px-1.5 py-px a-color-text-secondary rounded">
+      <span v-if="blacklistedCount" class="text-[10px] px-1.5 py-px a-color-text-secondary a-bg-layout rounded">
         {{ blacklistedCount }} 屏蔽
       </span>
     </div>

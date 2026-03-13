@@ -610,6 +610,12 @@ export class AccountRunner {
     return result
   }
 
+  async doSingleLandOp(payload: { action: string, landId: number, seedId: number }) {
+    const result = await this.farm.runSingleLandOperation(payload)
+    this.pushLandsAndBag().catch(() => {})
+    return result
+  }
+
   async getFriends() { return this.friend.getFriendsList() }
   async getFriendLands(gid: number) { return this.friend.getFriendLandsDetail(gid) }
   async doFriendOp(gid: number, opType: string) {

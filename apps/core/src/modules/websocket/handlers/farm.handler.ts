@@ -34,4 +34,17 @@ export class FarmHandler {
     const runner = this.manager.getRunnerOrThrow(accountId)
     return runner.doFarmOp(data?.opType as string)
   }
+
+  @WsRoute('farm.singleLandOp')
+  async singleLandOp(
+    @WsAccount() accountId: string,
+    @WsBody() data: Record<string, unknown>
+  ): Promise<unknown> {
+    const runner = this.manager.getRunnerOrThrow(accountId)
+    return runner.doSingleLandOp({
+      action: String(data?.action ?? '').trim().toLowerCase(),
+      landId: Number(data?.landId) || 0,
+      seedId: Number(data?.seedId) || 0
+    })
+  }
 }

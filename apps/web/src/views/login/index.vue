@@ -155,7 +155,7 @@ async function handleLogin() {
                   size="large"
                   autocomplete="current-password"
                   :disabled="loading"
-                  class="transition-all duration-300 !py-3 !border-0 !a-bg-layout/60 !backdrop-blur-md !text-base !rounded-2xl"
+                  class="!a-bg-layout/60 transition-all duration-300 !py-3 !border-0 !backdrop-blur-md !text-base !rounded-2xl"
                   @focus="focused = true"
                   @blur="focused = false"
                 >

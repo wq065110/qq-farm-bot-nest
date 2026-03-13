@@ -506,6 +506,38 @@ export class FarmWorker {
     return { hadWork: actions.length > 0, actions }
   }
 
+  async runSingleLandOperation(payload: { action: string, landId: number, seedId: number }): Promise<{ action: string, landId: number, seedId?: number, planted?: number, fertilized?: number }> {
+    const { action, landId, seedId } = payload
+    if (!landId || !Number.isFinite(landId))
+      throw new Error('无效 landId')
+
+    if (action === 'remove') {
+      await this.removePlant([landId])
+      return { action: 'remove', landId }
+    }
+
+    if (action === 'plant') {
+      if (!seedId || !Number.isFinite(seedId))
+        throw new Error('缺少 seedId')
+      const plantSize = this.gameConfig.getPlantSizeBySeedId(seedId)
+      if (plantSize > 1)
+        throw new Error(`仅支持 1x1 种子，当前为 ${plantSize}x${plantSize}`)
+      const { planted } = await this.plantSeeds(seedId, [landId], { maxPlantCount: 1 })
+      if (!planted)
+        throw new Error(`地块 #${landId} 种植失败`)
+      return { action: 'plant', landId, seedId, planted }
+    }
+
+    if (action === 'organic_fertilize') {
+      const fertilized = await this.fertilize([landId], ORGANIC_FERTILIZER_ID)
+      if (!fertilized)
+        throw new Error(`地块 #${landId} 施有机肥失败`)
+      return { action: 'organic_fertilize', landId, fertilized }
+    }
+
+    throw new Error(`不支持的单地块操作: ${action || 'unknown'}`)
+  }
+
   private buildStatusStr(status: Record<string, any[]>): string {
     const parts: string[] = []
     if (status.harvestable.length)
@@ -797,6 +829,23 @@ export class FarmWorker {
         const matureBegin = maturePhase ? toTimeSec(maturePhase.begin_time) : 0
         const plantSize = Math.max(1, Number((plantCfg as any)?.size) || 1)
 
+        const fruitId = Number((plantCfg as any)?.fruit?.id) || 0
+        const fruitCount = Number((plantCfg as any)?.fruit?.count) || 0
+        const fruitPrice = fruitId > 0 ? this.gameConfig.getFruitPrice(fruitId) : 0
+        const growTimeSec = this.gameConfig.getPlantGrowTime(plantId)
+
+        const mutantConfigIds: number[] = []
+        if (Array.isArray(phase?.mutants) && phase.mutants.length > 0) {
+          for (const m of phase.mutants)
+            mutantConfigIds.push(toNum((m as any).mutant_config_id))
+        }
+        if (mutantConfigIds.length === 0 && Array.isArray(plant?.mutant_config_ids)) {
+          for (const cid of plant.mutant_config_ids)
+            mutantConfigIds.push(toNum(cid))
+        }
+        const activeMutantIds = [...new Set(mutantConfigIds)].filter(Boolean)
+        const plantMutantRaw = String((plantCfg as any)?.mutant ?? '')
+
         let landStatus = 'growing'
         if (phase.phase === PlantPhase.MATURE)
           landStatus = 'harvestable'
@@ -808,6 +857,7 @@ export class FarmWorker {
           unlocked: true,
           status: landStatus,
           plantName: this.gameConfig.getPlantName(plantId),
+          plantId,
           seedId,
           seedImage: seedId > 0 ? this.gameConfig.getSeedImageBySeedId(seedId) : '',
           phaseName: PHASE_NAMES[phase.phase as number] || '',
@@ -825,7 +875,18 @@ export class FarmWorker {
           occupiedByMaster: context.occupiedByMaster,
           masterLandId: context.masterLandId,
           occupiedLandIds: context.occupiedLandIds,
-          plantSize
+          plantSize,
+          fruitId,
+          fruitName: fruitId > 0 ? this.gameConfig.getFruitName(fruitId) : '',
+          fruitCount,
+          fruitPrice,
+          totalIncome: fruitCount * fruitPrice,
+          exp: this.gameConfig.getPlantExp(plantId),
+          growTime: growTimeSec,
+          growTimeText: this.gameConfig.formatGrowTime(growTimeSec),
+          landLevelNeed: Number((plantCfg as any)?.land_level_need) ?? 0,
+          mutantActiveIds: activeMutantIds,
+          mutantRaw: plantMutantRaw || ''
         }
       })
       return { lands, summary: { harvestable: status.harvestable.length, growing: status.growing.length, empty: status.empty.length, dead: status.dead.length, needWater: status.needWater.length, needWeed: status.needWeed.length, needBug: status.needBug.length } }

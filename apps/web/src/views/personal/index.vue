@@ -92,6 +92,7 @@ useAccountRefresh(initPageData)
         :summary="summary"
         :connected="!!connected"
         :operating="operating"
+        :current-account-id="currentAccountId ?? undefined"
         @operate="handleOperate"
       />
 

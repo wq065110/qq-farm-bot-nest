@@ -37,6 +37,21 @@ export const useFarmStore = defineStore('farm', {
         return { ok: false, error: e?.message || '加载失败' }
       }
     },
+    async fetchBagSeeds(accountId: string): Promise<void> {
+      if (!accountId)
+        return
+      const list = await farmApi.queryBagSeeds()
+      this.setSeedsFromRealtime(Array.isArray(list) ? list : [])
+    },
+    async operateSingleLand(
+      accountId: string,
+      payload: { action: string, landId: number, seedId?: number }
+    ): Promise<any> {
+      if (!accountId)
+        return null
+      const result = await farmApi.singleLandOperate(payload)
+      return result
+    },
     setLandsFromRealtime(res: any) {
       if (!res)
         return
