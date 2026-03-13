@@ -1,4 +1,5 @@
 import type { DrizzleDB } from '../database/drizzle.provider'
+import type { AccountLogEntry, GameLogEntry, PersistedLogEntry } from '../game/types'
 import { Inject, Injectable, Logger } from '@nestjs/common'
 import { Cron } from '@nestjs/schedule'
 import { eq, sql } from 'drizzle-orm'
@@ -10,16 +11,16 @@ const RETENTION_MS = 7 * 24 * 60 * 60 * 1000
 @Injectable()
 export class GameLogService {
   private readonly logger = new Logger(GameLogService.name)
-  private globalLogs: any[] = []
-  private perAccountLogs = new Map<string, any[]>()
-  private accountLogs: any[] = []
+  private globalLogs: PersistedLogEntry[] = []
+  private perAccountLogs = new Map<string, PersistedLogEntry[]>()
+  private accountLogs: AccountLogEntry[] = []
 
-  private onLogCallback: ((entry: any) => void) | null = null
-  private onAccountLogCallback: ((entry: any) => void) | null = null
+  private onLogCallback: ((entry: PersistedLogEntry) => void) | null = null
+  private onAccountLogCallback: ((entry: AccountLogEntry) => void) | null = null
 
   constructor(@Inject(DRIZZLE_TOKEN) private db: DrizzleDB) {}
 
-  setCallbacks(callbacks: { onLog?: (entry: any) => void, onAccountLog?: (entry: any) => void }) {
+  setCallbacks(callbacks: { onLog?: (entry: PersistedLogEntry) => void, onAccountLog?: (entry: AccountLogEntry) => void }) {
     if (callbacks.onLog)
       this.onLogCallback = callbacks.onLog
     if (callbacks.onAccountLog)
@@ -27,8 +28,8 @@ export class GameLogService {
   }
 
   /** 写入一条农场/运行日志（内存 + 持久化 + 实时回调） */
-  appendLog(accountId: string, accountName: string, entry: { msg: string, tag?: string, meta?: Record<string, string>, isWarn?: boolean }) {
-    const logEntry = {
+  appendLog(accountId: string, accountName: string, entry: GameLogEntry) {
+    const logEntry: PersistedLogEntry = {
       ...entry,
       accountId,
       accountName,
@@ -77,9 +78,10 @@ export class GameLogService {
     return result.slice(-limit)
   }
 
-  addAccountLog(action: string, msg: string, accountId: string, accountName: string, extra?: any) {
+  addAccountLog(action: string, msg: string, accountId: string, accountName: string, extra?: Record<string, unknown>) {
     const now = Date.now()
-    const entry = { action, msg, accountId, accountName, createdAt: now, ...extra }
+    const reason = String(extra?.reason || '')
+    const entry: AccountLogEntry = { action, msg, accountId, accountName, createdAt: now, reason }
     this.accountLogs.push(entry)
     if (this.accountLogs.length > 500)
       this.accountLogs.shift()
@@ -88,11 +90,11 @@ export class GameLogService {
       accountName,
       action,
       msg,
-      reason: extra?.reason || '',
+      reason,
       createdAt: now,
       updatedAt: now,
-      extra: entry
-    }).catch(() => {})
+      extra: extra as Record<string, any> ?? {}
+    }).catch(e => this.logger.warn(`持久化账号操作日志失败: ${(e as Error)?.message}`))
     this.onAccountLogCallback?.(entry)
   }
 
@@ -115,7 +117,7 @@ export class GameLogService {
     this.accountLogs = this.accountLogs.filter(l => l.accountId !== accountId)
   }
 
-  private async persistLog(entry: any) {
+  private async persistLog(entry: PersistedLogEntry) {
     try {
       await this.db.insert(schema.gameLogs).values({
         accountId: entry?.accountId || '',
@@ -128,7 +130,9 @@ export class GameLogService {
         createdAt: entry?.createdAt || Date.now(),
         meta: entry?.meta || {}
       })
-    } catch {}
+    } catch (e) {
+      this.logger.warn(`持久化游戏日志失败: ${(e as Error)?.message}`)
+    }
   }
 
   /** 每日凌晨 4 点清理 30 天前的农场日志与账号操作日志 */

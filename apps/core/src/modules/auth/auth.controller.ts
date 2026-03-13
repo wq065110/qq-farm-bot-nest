@@ -1,6 +1,8 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Post } from '@nestjs/common'
 import { Public } from '../../common/decorators/public.decorator'
 import { AuthService } from './auth.service'
+import { ChangePasswordDto } from './dto/change-password.dto'
+import { LoginDto } from './dto/login.dto'
 
 @Controller('auth')
 export class AuthController {
@@ -9,8 +11,8 @@ export class AuthController {
   @Public()
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  async login(@Body('password') password: string) {
-    return this.authService.login(password)
+  async login(@Body() dto: LoginDto) {
+    return this.authService.login(dto.password)
   }
 
   @Get('validate')
@@ -20,11 +22,8 @@ export class AuthController {
 
   @Post('change-password')
   @HttpCode(HttpStatus.OK)
-  async changePassword(
-    @Body('oldPassword') oldPassword: string,
-    @Body('newPassword') newPassword: string
-  ) {
-    await this.authService.changePassword(oldPassword, newPassword)
+  async changePassword(@Body() dto: ChangePasswordDto) {
+    await this.authService.changePassword(dto.oldPassword, dto.newPassword)
     return null
   }
 

@@ -1,3 +1,4 @@
+import type { CreateAccountPayload, LinkUserState } from '../../game/types'
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
 import { AccountManagerService } from '../../game/account-manager.service'
 import { GameLogService } from '../../game/game-log.service'
@@ -5,7 +6,7 @@ import { StoreService } from '../../store/store.service'
 
 @Injectable()
 export class AccountService {
-  private importLocks = new Map<string, Promise<any>>()
+  private importLocks = new Map<string, Promise<null>>()
 
   constructor(
     private manager: AccountManagerService,
@@ -17,7 +18,7 @@ export class AccountService {
     return this.manager.getAccounts()
   }
 
-  async createOrUpdateAccount(payload: any) {
+  async createOrUpdateAccount(payload: CreateAccountPayload) {
     const skipAutoStart = payload?.skipAutoStart === true
     const isUpdateById = !!payload.id
     const resolvedUpdateId = isUpdateById ? this.manager.resolveAccountId(payload.id) : ''
@@ -27,31 +28,21 @@ export class AccountService {
     const beforeAccounts = before.accounts || []
 
     // 显式 id 更新：以 id 为主；否则（QQ 平台）尝试按 uin+platform 匹配已有账号
-    let targetBefore: any = null
-    if (isUpdateById) {
-      targetBefore = beforeAccounts.find((a: any) => String(a.id) === String(body.id))
-    } else if (payload.uin && (payload.platform || 'qq') === 'qq') {
-      const uin = String(payload.uin)
-      const platform = String(payload.platform || 'qq')
-      targetBefore = beforeAccounts.find((a: any) =>
-        String(a.uin) === uin && String(a.platform || 'qq') === platform
-      )
-    }
+    const targetBefore = isUpdateById
+      ? beforeAccounts.find(a => String(a.id) === String(body.id))
+      : (payload.uin && (payload.platform || 'qq') === 'qq')
+          ? beforeAccounts.find(a => String(a.uin) === String(payload.uin) && String(a.platform || 'qq') === String(payload.platform || 'qq'))
+          : undefined
 
     const data = this.store.addOrUpdateAccount(body)
     const afterAccounts = data.accounts || []
 
     // 先按 QQ uin+platform 匹配最新账号，否则回退到 id；用于日志与启动/重启
-    let targetAfter: any = null
-    if (payload.uin && (payload.platform || 'qq') === 'qq') {
-      const uin = String(payload.uin)
-      const platform = String(payload.platform || 'qq')
-      targetAfter = afterAccounts.find((a: any) =>
-        String(a.uin) === uin && String(a.platform || 'qq') === platform
-      )
-    }
+    let targetAfter = (payload.uin && (payload.platform || 'qq') === 'qq')
+      ? afterAccounts.find(a => String(a.uin) === String(payload.uin) && String(a.platform || 'qq') === String(payload.platform || 'qq'))
+      : undefined
     if (!targetAfter && isUpdateById) {
-      targetAfter = afterAccounts.find((a: any) => String(a.id) === String(body.id))
+      targetAfter = afterAccounts.find(a => String(a.id) === String(body.id))
     }
 
     const accountId = targetAfter
@@ -85,7 +76,7 @@ export class AccountService {
     }
 
     if (!effectiveIsUpdate && !skipAutoStart) {
-      const newAcc = afterAccounts.find((a: any) => String(a.id) === accountId) || afterAccounts.at(-1)
+      const newAcc = afterAccounts.find(a => String(a.id) === accountId) || afterAccounts.at(-1)
       if (newAcc)
         await this.manager.startAccount(String(newAcc.id))
     }
@@ -98,10 +89,8 @@ export class AccountService {
   /** 删除账号：先停止 core 侧 runner，再通知 link 真正断开连接并清理 store */
   async deleteAccount(id: string) {
     const resolvedId = this.manager.resolveAccountId(id) || String(id)
-    const before = this.manager.getAccounts()
-    const target = (before.accounts || []).find((a: any) =>
-      String(a.id) === resolvedId || String(a.uin) === id || String(a.qq) === id
-    )
+    const accounts = this.manager.getAccounts().accounts || []
+    const target = accounts.find(a => String(a.id) === resolvedId)
 
     await this.manager.stopAccount(resolvedId)
     await this.manager.disconnectFromLink(resolvedId)
@@ -142,12 +131,11 @@ export class AccountService {
     return null
   }
 
-  updateRemark(body: any) {
-    const rawRef = body.id || body.accountId || body.uin
+  updateRemark(body: { id?: string, accountId?: string, uin?: string, remark?: string, name?: string }) {
+    const rawRef = body.id || body.accountId || body.uin || ''
+    const resolvedId = this.manager.resolveAccountId(rawRef)
     const accounts = this.manager.getAccounts().accounts || []
-    const target = accounts.find((a: any) =>
-      String(a.id) === String(rawRef) || String(a.uin) === String(rawRef) || String(a.qq) === String(rawRef)
-    )
+    const target = accounts.find(a => String(a.id) === resolvedId)
 
     if (!target?.id)
       throw new NotFoundException('账号未找到')
@@ -206,14 +194,19 @@ export class AccountService {
     }
   }
 
-  private async doImport(code: string, platform: string) {
+  private async doImport(code: string, platform: string): Promise<null> {
     const normalizedPlatform = (platform || 'qq').trim() || 'qq'
-    const tempId = `import_${Date.now()}`
 
     // 仅建立一次连接：使用临时账号 ID 连接游戏，获取 openId / 昵称等
-    const userState = await (this.manager as any).linkClient.connectAccount(tempId, code, normalizedPlatform).catch((e: any) => {
+    let tempId: string
+    let userState: LinkUserState | undefined
+    try {
+      const result = await this.manager.connectForImport(code, normalizedPlatform)
+      tempId = result.tempId
+      userState = result.userState
+    } catch (e: any) {
       throw new BadRequestException(`无法连接游戏服务器，请检查 code 是否有效: ${e?.message || e}`)
-    })
+    }
 
     const openId = String(userState?.openId || '').trim()
     if (!openId)
@@ -224,11 +217,11 @@ export class AccountService {
 
     // 查找是否已有相同 uin + platform 的账号
     const all = this.manager.getAccounts().accounts || []
-    const existing = all.find((a: any) =>
+    const existing = all.find(a =>
       String(a.uin || '').trim() === openId && String(a.platform || 'qq') === normalizedPlatform
     )
 
-    const payload: Record<string, any> = {
+    const importPayload: CreateAccountPayload = {
       code,
       platform: normalizedPlatform,
       uin: openId,
@@ -237,23 +230,23 @@ export class AccountService {
 
     let targetId: string
     if (existing) {
-      payload.id = String(existing.id)
+      importPayload.id = String(existing.id)
       if (!existing.name || existing.name === `小小农夫-${String(existing.id).padStart(2, '0')}`)
-        payload.nick = nameFromGame || existing.nick || ''
+        importPayload.nick = nameFromGame || existing.nick || ''
       if (avatarFromGame)
-        payload.avatar = avatarFromGame
-      const result = await this.createOrUpdateAccount(payload)
+        importPayload.avatar = avatarFromGame
+      const result = await this.createOrUpdateAccount(importPayload)
       const updated = result.accounts || []
-      const target = updated.find((a: any) => String(a.id) === String(existing.id))
+      const target = updated.find(a => String(a.id) === String(existing.id))
       targetId = String((target || existing).id)
     } else {
       if (nameFromGame)
-        payload.nick = nameFromGame
+        importPayload.nick = nameFromGame
       if (avatarFromGame)
-        payload.avatar = avatarFromGame
-      const result = await this.createOrUpdateAccount(payload)
+        importPayload.avatar = avatarFromGame
+      const result = await this.createOrUpdateAccount(importPayload)
       const updated = result.accounts || []
-      const target = updated.find((a: any) =>
+      const target = updated.find(a =>
         String(a.uin || '').trim() === openId && String(a.platform || 'qq') === normalizedPlatform
       ) ?? updated.at(-1)
       if (!target)

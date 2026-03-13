@@ -1,4 +1,5 @@
 import type { IGameTransport, UserState } from './interfaces/game-transport.interface'
+import type { LinkAccountMeta, LinkConnectionInfo, LinkUserState } from './types'
 import { Buffer } from 'node:buffer'
 import { EventEmitter } from 'node:events'
 import net from 'node:net'
@@ -34,6 +35,9 @@ export interface LinkClientOptions {
  * 实现 IGameTransport 接口，与 link 进程通信完成游戏协议交互。
  */
 export class LinkClient extends EventEmitter {
+  private static readonly DEFAULT_REQUEST_TIMEOUT_MS = 15_000
+  private static readonly CONNECT_TIMEOUT_MS = 30_000
+
   private readonly logger = new Logger('LinkClient')
   private socket: net.Socket | null = null
   private buffer = Buffer.alloc(0)
@@ -113,7 +117,9 @@ export class LinkClient extends EventEmitter {
       try {
         const msg: FrameMessage = JSON.parse(payload.toString('utf-8'))
         this.handleMessage(msg)
-      } catch {}
+      } catch (e) {
+        this.logger.warn(`无法解析 Link 消息: ${(e as Error)?.message}`)
+      }
     }
   }
 
@@ -140,7 +146,7 @@ export class LinkClient extends EventEmitter {
     }
   }
 
-  private sendRequest(data: any, timeout = 15000): Promise<FrameMessage> {
+  private sendRequest(data: any, timeout = LinkClient.DEFAULT_REQUEST_TIMEOUT_MS): Promise<FrameMessage> {
     return new Promise((resolve, reject) => {
       if (!this._connected || !this.socket) {
         reject(new Error('未连接到 Link'))
@@ -174,9 +180,9 @@ export class LinkClient extends EventEmitter {
 
   // ========== High-level API ==========
 
-  async connectAccount(accountId: string, code: string, platform: string, clientConfig?: Record<string, any>): Promise<any> {
-    const res = await this.sendRequest({ type: 'connect', accountId, code, platform, clientConfig }, 30000)
-    return res.userState
+  async connectAccount(accountId: string, code: string, platform: string, clientConfig?: object): Promise<LinkUserState | undefined> {
+    const res = await this.sendRequest({ type: 'connect', accountId, code, platform, clientConfig }, LinkClient.CONNECT_TIMEOUT_MS)
+    return res.userState as LinkUserState | undefined
   }
 
   async rebindAccount(fromAccountId: string, toAccountId: string): Promise<void> {
@@ -187,14 +193,25 @@ export class LinkClient extends EventEmitter {
     await this.sendRequest({ type: 'disconnect', accountId })
   }
 
-  async getAccountStatus(accountId: string): Promise<any> {
+  async getAccountStatus(accountId: string): Promise<LinkAccountMeta | undefined> {
     const res = await this.sendRequest({ type: 'status', accountId })
-    return res.meta
+    return res.meta as LinkAccountMeta | undefined
   }
 
-  async listConnections(): Promise<any[]> {
+  async listConnections(): Promise<LinkConnectionInfo[]> {
     const res = await this.sendRequest({ type: 'list' })
-    return res.meta || []
+    return (res.meta || []) as LinkConnectionInfo[]
+  }
+
+  /** 为指定账号调用游戏服务方法（供 AccountTransport 使用） */
+  async invokeForAccount(accountId: string, serviceName: string, methodName: string, params: Record<string, unknown>, timeout = 10000): Promise<FrameMessage> {
+    return this.sendRequest({
+      type: 'invoke',
+      accountId,
+      service: serviceName,
+      method: methodName,
+      params: params ?? {}
+    }, timeout)
   }
 
   // ========== IGameTransport per-account adapter ==========
@@ -219,13 +236,7 @@ class AccountTransport extends EventEmitter implements IGameTransport {
   }
 
   async invoke<T = unknown>(serviceName: string, methodName: string, params: Record<string, unknown>, timeout = 10000): Promise<{ data: T, meta?: any }> {
-    const res = await (this.linkClient as any).sendRequest({
-      type: 'invoke',
-      accountId: this.accountId,
-      service: serviceName,
-      method: methodName,
-      params: params ?? {}
-    }, timeout)
+    const res = await this.linkClient.invokeForAccount(this.accountId, serviceName, methodName, params, timeout)
     return { data: (res.data ?? null) as T, meta: res.meta }
   }
 

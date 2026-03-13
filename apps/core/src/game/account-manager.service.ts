@@ -1,5 +1,6 @@
 import type { OnModuleDestroy, OnModuleInit } from '@nestjs/common'
 import type { AccountRunnerCallbacks, StatusEventName } from './account-runner'
+import type { AccountListItem, AccountLogEntry, ConnectionEventData, LinkUserState, PersistedLogEntry, ProfileEventData, StatusEventData } from './types'
 import process from 'node:process'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { StoreService } from '../store/store.service'
@@ -24,14 +25,14 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
   private runners = new Map<string, RunningAccount>()
   /** 每个账号上次用于建立 link 连接的 code，用于比对避免误用新 code 重连（code 用一次即失效） */
   private lastCodeUsedForConnection = new Map<string, string>()
-  private onStatusEventCallback: ((accountId: string, event: StatusEventName, data: any) => void) | null = null
-  private onAccountsUpdateCallback: ((data: any) => void) | null = null
-  private onLandsUpdateCallback: ((accountId: string, data: any) => void) | null = null
-  private onBagUpdateCallback: ((accountId: string, data: any) => void) | null = null
-  private onDailyGiftsUpdateCallback: ((accountId: string, data: any) => void) | null = null
-  private onFriendsUpdateCallback: ((accountId: string, data: any) => void) | null = null
-  private onStrategyUpdateCallback: ((accountId: string, data: any) => void) | null = null
-  private onPanelUpdateCallback: ((data: any) => void) | null = null
+  private onStatusEventCallback: ((accountId: string, event: StatusEventName, data: StatusEventData) => void) | null = null
+  private onAccountsUpdateCallback: ((data: { accounts: AccountListItem[] }) => void) | null = null
+  private onLandsUpdateCallback: ((accountId: string, data: unknown) => void) | null = null
+  private onBagUpdateCallback: ((accountId: string, data: unknown) => void) | null = null
+  private onDailyGiftsUpdateCallback: ((accountId: string, data: unknown) => void) | null = null
+  private onFriendsUpdateCallback: ((accountId: string, data: unknown) => void) | null = null
+  private onStrategyUpdateCallback: ((accountId: string, data: unknown) => void) | null = null
+  private onPanelUpdateCallback: ((data: unknown) => void) | null = null
   private linkClient!: LinkClient
 
   constructor(
@@ -44,16 +45,16 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
   }
 
   setRealtimeCallbacks(callbacks: {
-    onStatusEvent?: (accountId: string, event: StatusEventName, data: any) => void
-    onLog?: (entry: any) => void
-    onAccountLog?: (entry: any) => void
-    onAccountsUpdate?: (data: any) => void
-    onLandsUpdate?: (accountId: string, data: any) => void
-    onBagUpdate?: (accountId: string, data: any) => void
-    onDailyGiftsUpdate?: (accountId: string, data: any) => void
-    onFriendsUpdate?: (accountId: string, data: any) => void
-    onStrategyUpdate?: (accountId: string, data: any) => void
-    onPanelUpdate?: (data: any) => void
+    onStatusEvent?: (accountId: string, event: StatusEventName, data: StatusEventData) => void
+    onLog?: (entry: PersistedLogEntry) => void
+    onAccountLog?: (entry: AccountLogEntry) => void
+    onAccountsUpdate?: (data: { accounts: AccountListItem[] }) => void
+    onLandsUpdate?: (accountId: string, data: unknown) => void
+    onBagUpdate?: (accountId: string, data: unknown) => void
+    onDailyGiftsUpdate?: (accountId: string, data: unknown) => void
+    onFriendsUpdate?: (accountId: string, data: unknown) => void
+    onStrategyUpdate?: (accountId: string, data: unknown) => void
+    onPanelUpdate?: (data: unknown) => void
   }) {
     if (callbacks.onStatusEvent)
       this.onStatusEventCallback = callbacks.onStatusEvent
@@ -192,7 +193,7 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
       const list = await this.linkClient.listConnections()
       const storeIds = new Set(this.store.getAllAccounts().map(a => String(a.id)))
       for (const conn of list || []) {
-        const aid = String((conn as any)?.accountId ?? '').trim()
+        const aid = String(conn.accountId ?? '').trim()
         if (!aid)
           continue
         // 跳过导入/探测使用的临时连接，由各自流程管理生命周期
@@ -324,7 +325,7 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
 
   /** 通知 Link 端断开该账号的游戏连接；仅 删除账号/被踢/进程退出 时调用，停止账号不调用 */
   async disconnectFromLink(accountId: string): Promise<void> {
-    await this.linkClient.disconnectAccount(accountId).catch(() => {})
+    await this.linkClient.disconnectAccount(accountId).catch(e => this.logger.warn(`断开 link 连接失败 [${accountId}]: ${e?.message}`))
     this.lastCodeUsedForConnection.delete(accountId)
   }
 
@@ -367,8 +368,20 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
       this.logger.warn(`probeAccountByCode 失败: ${e}`)
       return null
     } finally {
+      // best-effort cleanup: 探测连接失败时也需要清理临时连接
       await this.linkClient.disconnectAccount(tempId).catch(() => {})
     }
+  }
+
+  /**
+   * 通过 code 建立临时连接用于导入，返回 tempId 和用户信息。
+   * 调用方需负责后续 rebind 或 disconnect。
+   */
+  async connectForImport(code: string, platform: string): Promise<{ tempId: string, userState: LinkUserState | undefined }> {
+    const tempId = `import_${Date.now()}`
+    const runtimeCfg = this.store.getRuntimeClient()
+    const userState = await this.linkClient.connectAccount(tempId, code, platform, runtimeCfg)
+    return { tempId, userState }
   }
 
   isAccountRunning(accountId: string): boolean {
@@ -377,25 +390,31 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
 
   // ========== Event Handlers ==========
 
-  private statusEventHandlers: Partial<Record<StatusEventName, (record: RunningAccount, accountId: string, data: any) => void>> = {}
+  /** 同步账号昵称（connection/profile 事件共用） */
+  private syncAccountNickname(record: RunningAccount, accountId: string, newName: string) {
+    if (!newName || newName === '未知' || newName === '未登录' || record.name === newName)
+      return
+    const oldName = record.name
+    record.name = newName
+    record.runner.name = newName
+    this.store.addOrUpdateAccount({ id: accountId, nick: newName })
+    this.logger.log(`已同步账号昵称: ${oldName || 'None'} -> ${newName}`)
+    this.gameLog.appendLog(accountId, record.name, {
+      msg: `已同步账号昵称: ${oldName || 'None'} -> ${newName}`,
+      tag: '系统',
+      meta: { module: 'system', event: 'nick_sync' }
+    })
+    this.notifyAccountsUpdate()
+  }
 
-  private buildStatusEventHandlers(): Partial<Record<StatusEventName, (record: RunningAccount, accountId: string, data: any) => void>> {
+  private statusEventHandlers: Partial<Record<StatusEventName, (record: RunningAccount, accountId: string, data: StatusEventData) => void>> = {}
+
+  private buildStatusEventHandlers(): Partial<Record<StatusEventName, (record: RunningAccount, accountId: string, data: StatusEventData) => void>> {
     return {
       connection: (record, accountId, data) => {
-        const connected = !!data?.connected
-        if (data?.accountName && data.accountName !== '未知' && data.accountName !== '未登录' && record.name !== data.accountName) {
-          const oldName = record.name
-          record.name = data.accountName
-          record.runner.name = data.accountName
-          this.store.addOrUpdateAccount({ id: accountId, nick: data.accountName })
-          this.logger.log(`已同步账号昵称: ${oldName || 'None'} -> ${data.accountName}`)
-          this.gameLog.appendLog(accountId, record.name, {
-            msg: `已同步账号昵称: ${oldName || 'None'} -> ${data.accountName}`,
-            tag: '系统',
-            meta: { module: 'system', event: 'nick_sync' }
-          })
-          this.notifyAccountsUpdate()
-        }
+        const connData = data as ConnectionEventData
+        const connected = !!connData.connected
+        this.syncAccountNickname(record, accountId, connData.accountName)
         if (connected) {
           record.disconnectedSince = 0
           record.autoDeleteTriggered = false
@@ -419,39 +438,27 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
               accountId,
               record.name
             )
-            this.stopAccount(accountId).then(() => this.disconnectFromLink(accountId)).catch(() => {})
+            this.stopAccount(accountId).then(() => this.disconnectFromLink(accountId)).catch(e => this.logger.warn(`自动删除离线账号失败 [${accountId}]: ${e?.message}`))
             this.store.deleteAccount(accountId)
           }
         }
       },
       profile: (record, accountId, data) => {
-        const profileName = data?.name
-        if (profileName && profileName !== '未知' && profileName !== '未登录' && record.name !== profileName) {
-          const oldName = record.name
-          record.name = profileName
-          record.runner.name = profileName
-          this.store.addOrUpdateAccount({ id: accountId, nick: profileName })
-          this.logger.log(`已同步账号昵称: ${oldName || 'None'} -> ${profileName}`)
-          this.gameLog.appendLog(accountId, record.name, {
-            msg: `已同步账号昵称: ${oldName || 'None'} -> ${profileName}`,
-            tag: '系统',
-            meta: { module: 'system', event: 'nick_sync' }
-          })
-          this.notifyAccountsUpdate()
-        }
-        const avatarUrl = data?.avatarUrl
-        if (avatarUrl && typeof avatarUrl === 'string' && avatarUrl.trim() !== '') {
+        const profData = data as ProfileEventData
+        this.syncAccountNickname(record, accountId, profData.name)
+        const avatarUrl = profData.avatarUrl
+        if (avatarUrl && avatarUrl.trim() !== '') {
           this.store.addOrUpdateAccount({ id: accountId, avatar: avatarUrl })
           this.notifyAccountsUpdate()
         }
-        const openId = data?.openId
-        if (openId && typeof openId === 'string' && openId.trim() !== '') {
+        const openId = profData.openId
+        if (openId && openId.trim() !== '') {
           const existing = this.store.getAccountById(accountId)
           if (!existing?.uin || String(existing.uin).trim() === '') {
             this.store.addOrUpdateAccount({ id: accountId, uin: openId })
           }
           // 登录后：按 uin + platform 去重，避免同一账号因多次导入产生多条记录
-          this.mergeDuplicateAccountsByUinPlatform(accountId, openId).catch(() => {})
+          this.mergeDuplicateAccountsByUinPlatform(accountId, openId).catch(e => this.logger.warn(`合并重复账号失败: ${e?.message}`))
         }
       }
     }
@@ -487,17 +494,17 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
       if (dupId === id)
         continue
       this.logger.log(`合并重复账号: ${dupId} -> ${id} (uin=${uin}, platform=${platform})`)
-      await this.stopAccount(dupId).catch(() => {})
-      await this.disconnectFromLink(dupId).catch(() => {})
+      await this.stopAccount(dupId).catch(e => this.logger.warn(`停止重复账号 ${dupId} 失败: ${e?.message}`))
+      await this.disconnectFromLink(dupId).catch(e => this.logger.warn(`断开重复账号 ${dupId} 失败: ${e?.message}`))
       this.store.deleteAccount(dupId)
       this.gameLog.deleteAccountLogs(dupId)
     }
 
     this.notifyAccountsUpdate()
-    await this.syncGhostConnections().catch(() => {})
+    await this.syncGhostConnections().catch(e => this.logger.warn(`同步幽灵连接失败: ${e?.message}`))
   }
 
-  private handleStatusEvent(accountId: string, event: StatusEventName, data: any, _name: string) {
+  private handleStatusEvent(accountId: string, event: StatusEventName, data: StatusEventData, _name: string) {
     const record = this.runners.get(accountId)
     if (!record)
       return
@@ -509,8 +516,12 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
     if (event === 'connection' || event === 'profile')
       this.notifyAccountsUpdate()
 
-    const payload = event === 'connection' ? { ...data, wsError: record.wsError } : data
-    this.onStatusEventCallback?.(accountId, event, payload)
+    if (event === 'connection') {
+      const connPayload: ConnectionEventData = { ...(data as ConnectionEventData), wsError: record.wsError }
+      this.onStatusEventCallback?.(accountId, event, connPayload)
+    } else {
+      this.onStatusEventCallback?.(accountId, event, data)
+    }
   }
 
   private async handleKicked(accountId: string, reason: string) {
@@ -520,7 +531,7 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
     this.logger.warn(`账号 ${record.name} 被踢下线: ${reason}`)
     this.gamePush.triggerOfflineReminder(accountId, record.name, `kickout:${reason}`, 0)
     this.gameLog.addAccountLog('kickout_stop', `账号 ${record.name} 被踢下线，已自动停止`, accountId, record.name)
-    await this.stopAccount(accountId).catch(() => {})
+    await this.stopAccount(accountId).catch(e => this.logger.warn(`停止被踢账号 ${accountId} 失败: ${e?.message}`))
     await this.disconnectFromLink(accountId)
   }
 
@@ -580,7 +591,7 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
   }
 
   /** 获取作物分析排行（仅依赖配置，不依赖账号是否运行） */
-  getAnalytics(sortBy: string): any[] {
+  getAnalytics(sortBy: string): Record<string, unknown>[] {
     const worker = new AnalyticsWorker(this.gameConfig)
     return worker.getPlantRankings(sortBy)
   }
@@ -604,7 +615,7 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
     return this.gameLog.getAccountLogs(limit)
   }
 
-  addAccountLog(action: string, msg: string, accountId: string, accountName: string, extra?: any) {
+  addAccountLog(action: string, msg: string, accountId: string, accountName: string, extra?: Record<string, unknown>) {
     this.gameLog.addAccountLog(action, msg, accountId, accountName, extra)
   }
 

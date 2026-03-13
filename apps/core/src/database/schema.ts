@@ -35,7 +35,7 @@ export const accountConfigs = sqliteTable('account_configs', {
 
 export const globalConfigs = sqliteTable('global_configs', {
   key: text('key').primaryKey(),
-  value: text('value', { mode: 'json' }).$type<any>(),
+  value: text('value', { mode: 'json' }).$type<unknown>(),
   createdAt: integer('created_at', { mode: 'number' }).default(0),
   updatedAt: integer('updated_at', { mode: 'number' }).default(0)
 })

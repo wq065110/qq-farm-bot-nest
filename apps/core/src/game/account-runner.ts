@@ -1,8 +1,9 @@
 import type { StoreService } from '../store/store.service'
-import type { IntervalsConfig } from './constants'
+import type { AccountConfigSnapshot, IntervalsConfig } from './constants'
 import type { GameConfigService } from './game-config.service'
 import type { IGameTransport } from './interfaces/game-transport.interface'
 import type { LinkClient } from './link-client'
+import type { GameLogEntry, LinkEventPayload, LinkUserState, StatusEventData } from './types'
 import { Logger } from '@nestjs/common'
 import { Scheduler } from '@qq-farm/shared'
 import { AnalyticsWorker } from './services/analytics.worker'
@@ -23,16 +24,16 @@ export interface AccountRunnerConfig {
 export type StatusEventName = 'connection' | 'profile' | 'session' | 'operations' | 'schedule'
 
 export interface AccountRunnerCallbacks {
-  onStatusEvent?: (accountId: string, event: StatusEventName, data: any, name?: string, callerRunner?: AccountRunner) => void
-  onLog?: (entry: any) => void
-  onAccountLog?: (entry: any) => void
+  onStatusEvent?: (accountId: string, event: StatusEventName, data: StatusEventData, name?: string, callerRunner?: AccountRunner) => void
+  onLog?: (entry: GameLogEntry) => void
+  onAccountLog?: (entry: Record<string, unknown>) => void
   onKicked?: (accountId: string, reason: string) => void
   onWsError?: (accountId: string, code: number, message: string) => void
   onStopped?: (accountId: string) => void
-  onLandsUpdate?: (accountId: string, data: any) => void
-  onBagUpdate?: (accountId: string, data: any) => void
-  onDailyGiftsUpdate?: (accountId: string, data: any) => void
-  onFriendsUpdate?: (accountId: string, data: any) => void
+  onLandsUpdate?: (accountId: string, data: unknown) => void
+  onBagUpdate?: (accountId: string, data: unknown) => void
+  onDailyGiftsUpdate?: (accountId: string, data: unknown) => void
+  onFriendsUpdate?: (accountId: string, data: unknown) => void
 }
 
 export class AccountRunner {
@@ -57,6 +58,7 @@ export class AccountRunner {
   private nextFriendRunAt = 0
   private lastDailyRunDate = ''
   private static readonly STATUS_FLUSH_DEBOUNCE_MS = 500
+  private static readonly DAILY_CHECK_INTERVAL_MS = 30_000
   private appliedConfigRevision = 0
 
   private farmIntervalMin = 2000
@@ -92,7 +94,7 @@ export class AccountRunner {
     this.callbacks.onLog?.({ msg, tag: '系统', meta: { module: 'system', ...(event && { event }) }, isWarn: true })
   }
 
-  private forwardLog = (entry: any) => this.callbacks.onLog?.(entry)
+  private forwardLog = (entry: GameLogEntry) => this.callbacks.onLog?.(entry)
 
   private syncTransportUserState() {
     if (this.transport?.userState)
@@ -125,14 +127,16 @@ export class AccountRunner {
     this.log('正在连接服务器...', 'connect')
 
     try {
-      let us: any = null
+      let us: LinkUserState | undefined
       try {
         const meta = await this.linkClient.getAccountStatus(this.accountId)
         if (meta?.connected && meta.userState) {
           us = meta.userState
           this.log('恢复游戏连接', 'connect')
         }
-      } catch {}
+      } catch (e) {
+        this.logger.warn(`获取账号 ${this.accountId} Link 状态失败: ${(e as Error)?.message}`)
+      }
       if (!us) {
         const runtimeCfg = this.store.getRuntimeClient()
         us = await this.linkClient.connectAccount(this.accountId, config.code, config.platform, runtimeCfg)
@@ -160,16 +164,18 @@ export class AccountRunner {
           }
           this.userState.coupon = Math.max(0, coupon)
           this.syncTransportUserState()
-        } catch {}
+        } catch (e) {
+          this.logger.warn(`获取背包信息失败: ${(e as Error)?.message}`)
+        }
 
         this.stats.initStats(Number(this.userState.gold || 0), Number(this.userState.exp || 0), Number(this.userState.coupon || 0))
 
-        await this.invite.processInviteCodes().catch(() => {})
+        await this.invite.processInviteCodes().catch(e => this.logger.warn(`处理邀请码失败: ${e?.message}`))
         if (!this.isRunning)
           return
         const auto = this.store.getAutomation(this.accountId)
         if (auto.fertilizer_gift)
-          await this.warehouse.autoOpenFertilizerGiftPacks().catch(() => 0)
+          await this.warehouse.autoOpenFertilizerGiftPacks().catch(e => this.logger.warn(`自动开启化肥礼包失败: ${e?.message}`))
         if (!this.isRunning)
           return
 
@@ -269,6 +275,7 @@ export class AccountRunner {
     }
   }
 
+  /** best-effort: 推送农田和背包数据到前端，失败不影响主流程 */
   private async pushLandsAndBag() {
     try {
       const [lands, bag] = await Promise.all([this.getLands(), this.getBag()])
@@ -279,6 +286,7 @@ export class AccountRunner {
     } catch {}
   }
 
+  /** best-effort: 推送好友数据到前端，失败不影响主流程 */
   private async pushFriends() {
     try {
       const friends = await this.getFriends()
@@ -298,7 +306,7 @@ export class AccountRunner {
       if (!this.unifiedRunning || !this.loginReady)
         return
       const now2 = Date.now()
-      const tasks: Promise<any>[] = []
+      const tasks: Promise<void>[] = []
       if (now2 >= this.nextFarmRunAt)
         tasks.push(this.runFarmTick())
       if (now2 >= this.nextFriendRunAt)
@@ -355,7 +363,7 @@ export class AccountRunner {
     this.stopDailyRoutineTimer()
     this.lastDailyRunDate = getDateKey()
     this.runDailyRoutines(true).catch(() => {})
-    this.scheduler.setIntervalTask('daily_routine_interval', 30_000, () => {
+    this.scheduler.setIntervalTask('daily_routine_interval', AccountRunner.DAILY_CHECK_INTERVAL_MS, () => {
       if (!this.loginReady)
         return
       const today = getDateKey()
@@ -383,7 +391,7 @@ export class AccountRunner {
     this.friendIntervalMax = friendMax * 1000
   }
 
-  applyConfig(snapshot: any) {
+  applyConfig(snapshot: Partial<AccountConfigSnapshot> & { __revision?: number }) {
     const rev = Number(snapshot?.__revision || 0)
     if (rev > 0)
       this.appliedConfigRevision = rev
@@ -418,9 +426,9 @@ export class AccountRunner {
 
   // ========== Events (from LinkClient) ==========
 
-  private linkEventHandlers: Record<string, (data: any) => void> = {}
+  private linkEventHandlers: Record<string, (data: LinkEventPayload) => void> = {}
 
-  private buildLinkEventHandlers(): Record<string, (data: any) => void> {
+  private buildLinkEventHandlers(): Record<string, (data: LinkEventPayload) => void> {
     return {
       kicked: data => this.onKickout(data),
       ws_error: data => this.onWsError(data),
@@ -463,30 +471,30 @@ export class AccountRunner {
     }
   }
 
-  handleLinkEvent(event: string, data: any) {
+  handleLinkEvent(event: string, data: LinkEventPayload) {
     this.linkEventHandlers[event]?.(data)
   }
 
-  private onKickout(payload: any) {
-    const reason = payload?.reason || '未知'
+  private onKickout(payload: LinkEventPayload) {
+    const reason = String(payload?.reason || '未知')
     this.warn(`被踢下线: ${reason}`, 'kickout')
     this.callbacks.onKicked?.(this.accountId, reason)
     this.scheduler.setTimeoutTask('kickout_stop', 200, () => this.stop())
   }
 
-  private onWsError(payload: any) {
+  private onWsError(payload: LinkEventPayload) {
     const code = Number(payload?.code || 0)
     if (code !== 400)
       return
     this.warn('连接被拒绝，可能需要更新 Code', 'connect')
-    this.callbacks.onWsError?.(this.accountId, code, payload?.message || '')
+    this.callbacks.onWsError?.(this.accountId, code, String(payload?.message || ''))
     if (this.isRunning)
       this.scheduler.setTimeoutTask('ws_error_cleanup', 1000, () => this.stop())
   }
 
   // ========== Status (atomic events) ==========
 
-  private emitStatusEvent(event: StatusEventName, data: any) {
+  private emitStatusEvent(event: StatusEventName, data: StatusEventData) {
     this.callbacks.onStatusEvent?.(this.accountId, event, data, this.name, this)
   }
 

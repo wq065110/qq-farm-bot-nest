@@ -1,11 +1,13 @@
 import type { DrizzleDB } from '../../database/drizzle.provider'
-import crypto from 'node:crypto'
 import { BadRequestException, Inject, Injectable, UnauthorizedException } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { JwtService } from '@nestjs/jwt'
+import bcrypt from 'bcryptjs'
 import { eq } from 'drizzle-orm'
 import { DRIZZLE_TOKEN } from '../../database/drizzle.provider'
 import * as schema from '../../database/schema'
+
+const BCRYPT_ROUNDS = 10
 
 @Injectable()
 export class AuthService {
@@ -15,8 +17,12 @@ export class AuthService {
     @Inject(DRIZZLE_TOKEN) private db: DrizzleDB
   ) {}
 
-  private hashPassword(pwd: string): string {
-    return crypto.createHash('sha256').update(String(pwd || '')).digest('hex')
+  private async hashPassword(pwd: string): Promise<string> {
+    return bcrypt.hash(String(pwd || ''), BCRYPT_ROUNDS)
+  }
+
+  private async verifyPassword(input: string, storedHash: string): Promise<boolean> {
+    return bcrypt.compare(input, storedHash)
   }
 
   private async getAdminPasswordHash(): Promise<string> {
@@ -31,10 +37,10 @@ export class AuthService {
   private async setAdminPasswordHash(hash: string): Promise<void> {
     await this.db
       .insert(schema.globalConfigs)
-      .values({ key: 'adminPasswordHash', value: hash as any })
+      .values({ key: 'adminPasswordHash', value: hash })
       .onConflictDoUpdate({
         target: schema.globalConfigs.key,
-        set: { value: hash as any }
+        set: { value: hash }
       })
   }
 
@@ -44,7 +50,7 @@ export class AuthService {
     let ok = false
 
     if (storedHash) {
-      ok = this.hashPassword(input) === storedHash
+      ok = await this.verifyPassword(input, storedHash)
     } else {
       ok = input === this.configService.get<string>('app.adminPassword', 'admin')
     }
@@ -69,13 +75,13 @@ export class AuthService {
 
     const storedHash = await this.getAdminPasswordHash()
     const ok = storedHash
-      ? this.hashPassword(oldPassword) === storedHash
+      ? await this.verifyPassword(oldPassword, storedHash)
       : oldPassword === this.configService.get<string>('app.adminPassword', 'admin')
 
     if (!ok) {
       throw new BadRequestException('原密码错误')
     }
 
-    await this.setAdminPasswordHash(this.hashPassword(newPassword))
+    await this.setAdminPasswordHash(await this.hashPassword(newPassword))
   }
 }

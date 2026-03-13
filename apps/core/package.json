@@ -22,6 +22,7 @@
     "@nestjs/websockets": "^11.1.16",
     "@qq-farm/shared": "workspace:*",
     "axios": "^1.13.6",
+    "bcryptjs": "^3.0.3",
     "better-sqlite3": "^12.6.2",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
@@ -41,6 +42,7 @@
   "devDependencies": {
     "@antfu/eslint-config": "^7.7.0",
     "@nestjs/cli": "^11.0.16",
+    "@types/bcryptjs": "^3.0.0",
     "@types/better-sqlite3": "^7.6.13",
     "@types/express": "^5.0.6",
     "@types/node": "^25.3.5",
