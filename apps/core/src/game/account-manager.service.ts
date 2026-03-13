@@ -1,6 +1,6 @@
 import type { OnModuleDestroy, OnModuleInit } from '@nestjs/common'
 import type { AccountRunnerCallbacks, StatusEventName } from './account-runner'
-import type { AccountListItem, AccountLogEntry, ConnectionEventData, LinkUserState, PersistedLogEntry, ProfileEventData, StatusEventData } from './types'
+import type { AccountListItem, AccountLogEntry, ConnectionEventData, LinkEventName, LinkUserState, PersistedLogEntry, ProfileEventData, StatusEventData } from './types'
 import process from 'node:process'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { StoreService } from '../store/store.service'
@@ -118,7 +118,7 @@ export class AccountManagerService implements OnModuleInit, OnModuleDestroy {
       port: Number(process.env.LINK_PORT) || 9800
     })
 
-    this.linkClient.on('link_event', ({ accountId, event, data }) => {
+    this.linkClient.on('link_event', ({ accountId, event, data }: { accountId: string, event: LinkEventName, data: any }) => {
       if (event === 'connected') {
         const acc = this.store.getAccountById(accountId)
         if (acc?.code != null)

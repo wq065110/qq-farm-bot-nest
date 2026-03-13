@@ -1,22 +1,14 @@
-import type { ClientConfig } from './protocol'
+import type { UserState } from '@qq-farm/shared'
+import type { ClientConfig } from '@qq-farm/shared/node'
 import { Buffer } from 'node:buffer'
 import { EventEmitter } from 'node:events'
-import { CLIENT_VERSION, DEFAULT_DEVICE_ID, DEFAULT_DEVICE_MEMORY, DEFAULT_DEVICE_NETWORK, DEFAULT_DEVICE_SYS_SOFTWARE, DEFAULT_OS, GAME_SERVER_URL, HEARTBEAT_INTERVAL_MS, Scheduler, syncServerTime, toLong, toNum } from '@qq-farm/shared'
+import { CLIENT_VERSION, createEmptyUserState, DEFAULT_DEVICE_ID, DEFAULT_DEVICE_MEMORY, DEFAULT_DEVICE_NETWORK, DEFAULT_DEVICE_SYS_SOFTWARE, DEFAULT_OS, GAME_SERVER_URL, HEARTBEAT_INTERVAL_MS, Scheduler, syncServerTime, toLong, toNum } from '@qq-farm/shared'
 import WebSocket from 'ws'
 import * as cryptoWasm from './crypto-wasm'
 
 const RE_UNEXPECTED_RESPONSE = /Unexpected server response:\s*(\d+)/i
 
-export interface UserState {
-  gid: number
-  name: string
-  level: number
-  gold: number
-  exp: number
-  coupon: number
-  avatarUrl: string
-  openId: string
-}
+export type { UserState } from '@qq-farm/shared'
 
 type MessageCallback = (err: Error | null, body?: Buffer, meta?: any) => void
 
@@ -26,7 +18,7 @@ export class GameClient extends EventEmitter {
   private serverSeq = 0
   private pendingCallbacks = new Map<number, MessageCallback>()
   readonly scheduler: Scheduler
-  readonly userState: UserState = { gid: 0, name: '', level: 0, gold: 0, exp: 0, coupon: 0, avatarUrl: '', openId: '' }
+  readonly userState: UserState = createEmptyUserState()
 
   private savedCode: string | null = null
   private platform = 'qq'
@@ -60,8 +52,8 @@ export class GameClient extends EventEmitter {
         sysSoftware: d.sysSoftware || DEFAULT_DEVICE_SYS_SOFTWARE,
         network: d.network || DEFAULT_DEVICE_NETWORK,
         memory: d.memory || DEFAULT_DEVICE_MEMORY,
-        deviceId: d.deviceId || `${DEFAULT_DEVICE_ID}<iPhone18,3>`,
-      },
+        deviceId: d.deviceId || `${DEFAULT_DEVICE_ID}<iPhone18,3>`
+      }
     }
   }
 
@@ -289,7 +281,7 @@ export class GameClient extends EventEmitter {
           sys_software: this.cfg.deviceInfo.sysSoftware,
           network: this.cfg.deviceInfo.network,
           memory: this.cfg.deviceInfo.memory,
-          device_id: this.cfg.deviceInfo.deviceId,
+          device_id: this.cfg.deviceInfo.deviceId
         },
         share_cfg_id: toLong(0),
         scene_id: '1256',

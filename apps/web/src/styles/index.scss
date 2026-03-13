@@ -21,7 +21,7 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: var(-ant-color-bg-layout, #cbd5e1);
+  background-color: var(--ant-color-bg-layout, #cbd5e1);
   border-radius: 9999px;
   border: 2px solid transparent;
   background-clip: content-box;

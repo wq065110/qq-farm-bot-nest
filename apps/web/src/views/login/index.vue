@@ -71,7 +71,7 @@ async function handleLogin() {
           top: '10%',
           left: '8%',
           fontSize: '54px',
-          color: 'var(-ant-color-bg-layout)'
+          color: 'var(--ant-color-bg-layout)'
         }"
       />
       <span
@@ -80,7 +80,7 @@ async function handleLogin() {
           top: '25%',
           right: '10%',
           fontSize: '36px',
-          color: 'var(-ant-color-bg-layout)',
+          color: 'var(--ant-color-bg-layout)',
           opacity: 0.2
         }"
       />
@@ -90,7 +90,7 @@ async function handleLogin() {
           top: '45%',
           left: '5%',
           fontSize: '42px',
-          color: 'var(-ant-color-bg-layout)',
+          color: 'var(--ant-color-bg-layout)',
           opacity: 0.9
         }"
       />
@@ -133,7 +133,7 @@ async function handleLogin() {
         <div
           class="px-6 pb-5 pt-8 flex flex-col items-center from-white/40 to-transparent bg-gradient-to-b"
         >
-          <img src="/icon.ico" alt="" class="mb-2 h-20 w-20">
+          <img src="/icon.ico" alt="" class="mb-2 h-18 w-18">
           <h1 class="tracking-tight font-bold flex items-center a-color-text text-xl">
             <span class="text-transparent from-[var(--ant-color-primary-text)] to-[var(--ant-color-primary-text)] via-[var(--ant-color-primary)] bg-gradient-to-br bg-clip-text">农场の助手</span>
           </h1>

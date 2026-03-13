@@ -9,15 +9,22 @@
       "types": "./dist/index.d.ts",
       "import": "./src/index.ts",
       "require": "./dist/index.js"
+    },
+    "./node": {
+      "types": "./dist/node.d.ts",
+      "import": "./src/node.ts",
+      "require": "./dist/node.js"
     }
   },
   "scripts": {
-    "stub": "tsc"
+    "stub": "tsc",
+    "build": "tsc"
   },
   "dependencies": {
     "long": "^5.3.2"
   },
   "devDependencies": {
+    "@types/node": "^25.5.0",
     "typescript": "~5.9.3"
   }
 }

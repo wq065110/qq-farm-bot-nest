@@ -3,7 +3,7 @@ import type { AccountConfigSnapshot, IntervalsConfig } from './constants'
 import type { GameConfigService } from './game-config.service'
 import type { IGameTransport } from './interfaces/game-transport.interface'
 import type { LinkClient } from './link-client'
-import type { GameLogEntry, LinkEventPayload, LinkUserState, StatusEventData } from './types'
+import type { GameLogEntry, LinkEventMap, LinkEventName, LinkUserState, StatusEventData } from './types'
 import { Logger } from '@nestjs/common'
 import { Scheduler } from '@qq-farm/shared'
 import { AnalyticsWorker } from './services/analytics.worker'
@@ -96,11 +96,6 @@ export class AccountRunner {
 
   private forwardLog = (entry: GameLogEntry) => this.callbacks.onLog?.(entry)
 
-  private syncTransportUserState() {
-    if (this.transport?.userState)
-      Object.assign(this.transport.userState, this.userState)
-  }
-
   // ========== Lifecycle ==========
 
   async start(config: AccountRunnerConfig) {
@@ -108,7 +103,7 @@ export class AccountRunner {
       return
     this.isRunning = true
 
-    this.transport = this.linkClient.createTransport(this.accountId)
+    this.transport = this.linkClient.createTransport(this.accountId, () => this.userState)
     this.warehouse = new WarehouseWorker(this.accountId, this.transport, this.gameConfig, this.store, this.stats)
     this.warehouse.onLog = this.forwardLog
     this.farm = new FarmWorker(this.accountId, this.transport, this.gameConfig, this.store, this.stats, this.analytics, this.warehouse)
@@ -145,7 +140,7 @@ export class AccountRunner {
         return
       if (us) {
         this.userState = { ...this.userState, ...us }
-        this.syncTransportUserState()
+
         this.loginReady = true
         this.name = this.userState.name || this.name
         this.log(`登录成功: ${this.userState.name || ''} (Lv${this.userState.level ?? ''})`, 'login')
@@ -163,7 +158,6 @@ export class AccountRunner {
             }
           }
           this.userState.coupon = Math.max(0, coupon)
-          this.syncTransportUserState()
         } catch (e) {
           this.logger.warn(`获取背包信息失败: ${(e as Error)?.message}`)
         }
@@ -426,13 +420,13 @@ export class AccountRunner {
 
   // ========== Events (from LinkClient) ==========
 
-  private linkEventHandlers: Record<string, (data: LinkEventPayload) => void> = {}
+  private linkEventHandlers: { [E in LinkEventName]?: (data: LinkEventMap[E]) => void } = {}
 
-  private buildLinkEventHandlers(): Record<string, (data: LinkEventPayload) => void> {
+  private buildLinkEventHandlers(): { [E in LinkEventName]?: (data: LinkEventMap[E]) => void } {
     return {
       kicked: data => this.onKickout(data),
       ws_error: data => this.onWsError(data),
-      reconnecting: data => this.log(`WS 断开，正在重连 (${data?.attempt}/${data?.maxAttempts})...`, 'reconnecting'),
+      reconnecting: data => this.log(`WS 断开，正在重连 (${data.attempt}/${data.maxAttempts})...`, 'reconnecting'),
       disconnected: () => {
         if (this.loginReady) {
           this.loginReady = false
@@ -440,7 +434,7 @@ export class AccountRunner {
         }
       },
       login_failed: (data) => {
-        this.warn(`登录失败: ${data?.error || '未知原因'}，code 可能已过期`, 'login_failed')
+        this.warn(`登录失败: ${data.error || '未知原因'}，code 可能已过期`, 'login_failed')
         if (this.loginReady) {
           this.loginReady = false
           this.emitConnection()
@@ -460,7 +454,7 @@ export class AccountRunner {
           if (Number(data.coupon) === 0 && Number(this.userState.coupon) > 0)
             merged.coupon = this.userState.coupon
           this.userState = merged
-          this.syncTransportUserState()
+
           if (merged.level != null && merged.level > oldLevel && oldLevel > 0) {
             this.stats.recordOperation('levelUp', 1)
             this.log(`账号升级至 Lv${merged.level}`, 'level_up')
@@ -471,23 +465,23 @@ export class AccountRunner {
     }
   }
 
-  handleLinkEvent(event: string, data: LinkEventPayload) {
-    this.linkEventHandlers[event]?.(data)
+  handleLinkEvent<E extends LinkEventName>(event: E, data: LinkEventMap[E]) {
+    const handler = this.linkEventHandlers[event] as ((d: LinkEventMap[E]) => void) | undefined
+    handler?.(data)
   }
 
-  private onKickout(payload: LinkEventPayload) {
-    const reason = String(payload?.reason || '未知')
+  private onKickout(payload: LinkEventMap['kicked']) {
+    const reason = payload.reason || '未知'
     this.warn(`被踢下线: ${reason}`, 'kickout')
     this.callbacks.onKicked?.(this.accountId, reason)
     this.scheduler.setTimeoutTask('kickout_stop', 200, () => this.stop())
   }
 
-  private onWsError(payload: LinkEventPayload) {
-    const code = Number(payload?.code || 0)
-    if (code !== 400)
+  private onWsError(payload: LinkEventMap['ws_error']) {
+    if (payload.code !== 400)
       return
     this.warn('连接被拒绝，可能需要更新 Code', 'connect')
-    this.callbacks.onWsError?.(this.accountId, code, String(payload?.message || ''))
+    this.callbacks.onWsError?.(this.accountId, payload.code, payload.message || '')
     if (this.isRunning)
       this.scheduler.setTimeoutTask('ws_error_cleanup', 1000, () => this.stop())
   }

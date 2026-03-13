@@ -10,9 +10,5 @@ export const DEFAULT_DEVICE_NETWORK = 'wifi'
 export const DEFAULT_DEVICE_MEMORY = '7672'
 export const DEFAULT_DEVICE_ID = 'iPhone X'
 
-// 网络
-export const TCP_PORT = 9800
-export const TCP_HOST = '127.0.0.1'
-
 // 远程登录（Core HTTP import-url 校验）
 export const DEFAULT_REMOTE_LOGIN_KEY = 'xxnf9527'

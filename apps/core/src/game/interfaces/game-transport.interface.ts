@@ -1,13 +1,4 @@
-export interface UserState {
-  gid: number
-  name: string
-  level: number
-  gold: number
-  exp: number
-  coupon: number
-  avatarUrl: string
-  openId: string
-}
+export type { UserState } from '@qq-farm/shared'
 
 /**
  * Workers 依赖的传输层抽象接口。
@@ -16,7 +7,7 @@ export interface UserState {
  */
 export interface IGameTransport {
   /** 当前用户状态（只读引用） */
-  readonly userState: UserState
+  readonly userState: import('@qq-farm/shared').UserState
 
   /** 语义调用：由 link 负责 proto 编解码，仅传 service/method/params，返回解码后的 data */
   invoke: <T = unknown>(

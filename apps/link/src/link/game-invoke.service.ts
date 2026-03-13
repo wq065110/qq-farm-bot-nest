@@ -85,6 +85,26 @@ const INVOKE_TYPE_MAP: Record<string, Record<string, [string, string]>> = {
   }
 }
 
+/**
+ * 从 INVOKE_TYPE_MAP 自动推导 (typeName -> proto 全限定名) 映射。
+ * 规则：service 全名 = "gamepb.xxxpb.XxxService"，prefix = "gamepb.xxxpb"。
+ */
+function buildPrefixMap(): Map<string, string> {
+  const map = new Map<string, string>()
+  for (const [service, methods] of Object.entries(INVOKE_TYPE_MAP)) {
+    // "gamepb.plantpb.PlantService" → prefix = "gamepb.plantpb"
+    const lastDot = service.lastIndexOf('.')
+    if (lastDot < 0)
+      continue
+    const prefix = service.substring(0, lastDot)
+    for (const [reqName, replyName] of Object.values(methods)) {
+      map.set(reqName, prefix)
+      map.set(replyName, prefix)
+    }
+  }
+  return map
+}
+
 @Injectable()
 export class GameInvokeService implements OnModuleInit {
   private readonly logger = new Logger(GameInvokeService.name)
@@ -126,106 +146,15 @@ export class GameInvokeService implements OnModuleInit {
       return
     }
 
-    const lookup = (fullName: string) => root.lookupType(fullName)
+    const prefixMap = buildPrefixMap()
     const types: Record<string, protobuf.Type> = {}
 
-    /** 类型名 -> proto 全限定名前缀 */
-    const prefixMap: Record<string, string> = {
-      AllLandsRequest: 'gamepb.plantpb',
-      AllLandsReply: 'gamepb.plantpb',
-      HarvestRequest: 'gamepb.plantpb',
-      HarvestReply: 'gamepb.plantpb',
-      WaterLandRequest: 'gamepb.plantpb',
-      WaterLandReply: 'gamepb.plantpb',
-      WeedOutRequest: 'gamepb.plantpb',
-      WeedOutReply: 'gamepb.plantpb',
-      InsecticideRequest: 'gamepb.plantpb',
-      InsecticideReply: 'gamepb.plantpb',
-      RemovePlantRequest: 'gamepb.plantpb',
-      RemovePlantReply: 'gamepb.plantpb',
-      UpgradeLandRequest: 'gamepb.plantpb',
-      UpgradeLandReply: 'gamepb.plantpb',
-      UnlockLandRequest: 'gamepb.plantpb',
-      UnlockLandReply: 'gamepb.plantpb',
-      FertilizeRequest: 'gamepb.plantpb',
-      FertilizeReply: 'gamepb.plantpb',
-      PlantRequest: 'gamepb.plantpb',
-      PlantReply: 'gamepb.plantpb',
-      CheckCanOperateRequest: 'gamepb.plantpb',
-      CheckCanOperateReply: 'gamepb.plantpb',
-      PutInsectsRequest: 'gamepb.plantpb',
-      PutInsectsReply: 'gamepb.plantpb',
-      PutWeedsRequest: 'gamepb.plantpb',
-      PutWeedsReply: 'gamepb.plantpb',
-      ShopInfoRequest: 'gamepb.shoppb',
-      ShopInfoReply: 'gamepb.shoppb',
-      BuyGoodsRequest: 'gamepb.shoppb',
-      BuyGoodsReply: 'gamepb.shoppb',
-      SyncAllRequest: 'gamepb.friendpb',
-      SyncAllReply: 'gamepb.friendpb',
-      GetAllRequest: 'gamepb.friendpb',
-      GetAllReply: 'gamepb.friendpb',
-      GetApplicationsRequest: 'gamepb.friendpb',
-      GetApplicationsReply: 'gamepb.friendpb',
-      AcceptFriendsRequest: 'gamepb.friendpb',
-      AcceptFriendsReply: 'gamepb.friendpb',
-      EnterRequest: 'gamepb.visitpb',
-      EnterReply: 'gamepb.visitpb',
-      LeaveRequest: 'gamepb.visitpb',
-      LeaveReply: 'gamepb.visitpb',
-      TaskInfoRequest: 'gamepb.taskpb',
-      TaskInfoReply: 'gamepb.taskpb',
-      ClaimTaskRewardRequest: 'gamepb.taskpb',
-      ClaimTaskRewardReply: 'gamepb.taskpb',
-      ClaimDailyRewardRequest: 'gamepb.taskpb',
-      ClaimDailyRewardReply: 'gamepb.taskpb',
-      BagRequest: 'gamepb.itempb',
-      BagReply: 'gamepb.itempb',
-      SellRequest: 'gamepb.itempb',
-      SellReply: 'gamepb.itempb',
-      UseRequest: 'gamepb.itempb',
-      UseReply: 'gamepb.itempb',
-      BatchUseRequest: 'gamepb.itempb',
-      BatchUseReply: 'gamepb.itempb',
-      ReportArkClickRequest: 'gamepb.userpb',
-      ReportArkClickReply: 'gamepb.userpb',
-      GetEmailListRequest: 'gamepb.emailpb',
-      GetEmailListReply: 'gamepb.emailpb',
-      BatchClaimEmailRequest: 'gamepb.emailpb',
-      BatchClaimEmailReply: 'gamepb.emailpb',
-      ClaimEmailRequest: 'gamepb.emailpb',
-      ClaimEmailReply: 'gamepb.emailpb',
-      GetMonthCardInfosRequest: 'gamepb.mallpb',
-      GetMonthCardInfosReply: 'gamepb.mallpb',
-      ClaimMonthCardRewardRequest: 'gamepb.mallpb',
-      ClaimMonthCardRewardReply: 'gamepb.mallpb',
-      GetMallListBySlotTypeRequest: 'gamepb.mallpb',
-      GetMallListBySlotTypeResponse: 'gamepb.mallpb',
-      PurchaseRequest: 'gamepb.mallpb',
-      PurchaseResponse: 'gamepb.mallpb',
-      GetTodayClaimStatusRequest: 'gamepb.redpacketpb',
-      GetTodayClaimStatusReply: 'gamepb.redpacketpb',
-      ClaimRedPacketRequest: 'gamepb.redpacketpb',
-      ClaimRedPacketReply: 'gamepb.redpacketpb',
-      GetDailyGiftStatusRequest: 'gamepb.qqvippb',
-      GetDailyGiftStatusReply: 'gamepb.qqvippb',
-      ClaimDailyGiftRequest: 'gamepb.qqvippb',
-      ClaimDailyGiftReply: 'gamepb.qqvippb',
-      CheckCanShareRequest: 'gamepb.sharepb',
-      CheckCanShareReply: 'gamepb.sharepb',
-      ReportShareRequest: 'gamepb.sharepb',
-      ReportShareReply: 'gamepb.sharepb',
-      ClaimShareRewardRequest: 'gamepb.sharepb',
-      ClaimShareRewardReply: 'gamepb.sharepb',
-      ClaimAllRewardsV2Request: 'gamepb.illustratedpb',
-      ClaimAllRewardsV2Reply: 'gamepb.illustratedpb',
-      InteractRecordsRequest: 'gamepb.interactpb',
-      InteractRecordsReply: 'gamepb.interactpb'
-    }
-
-    for (const name of Object.keys(prefixMap)) {
-      const prefix = prefixMap[name]
-      types[name] = lookup(`${prefix}.${name}`)
+    for (const [name, prefix] of prefixMap) {
+      try {
+        types[name] = root.lookupType(`${prefix}.${name}`)
+      } catch {
+        this.logger.warn(`Proto 类型未找到: ${prefix}.${name}`)
+      }
     }
 
     this.fullTypes = types
@@ -237,7 +166,7 @@ export class GameInvokeService implements OnModuleInit {
     return this.ready
   }
 
-  /** 根据 (service, method) 获取请求/响应类型并执行编码-发送-解码 */
+  /** 根据 (service, method) 获取请求/响应类型 */
   getTypes(service: string, method: string): { RequestType: protobuf.Type, ReplyType: protobuf.Type } | null {
     const methods = INVOKE_TYPE_MAP[service]
     if (!methods)

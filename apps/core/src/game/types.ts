@@ -1,3 +1,5 @@
+import type { UserState } from '@qq-farm/shared'
+
 /** 游戏日志条目（appendLog 的参数和回调数据） */
 export interface GameLogEntry {
   msg: string
@@ -73,19 +75,8 @@ export interface AccountListItem {
   updatedAt: number
 }
 
-/** Link 侧返回的用户状态（connectAccount / getAccountStatus） */
-export interface LinkUserState {
-  gid?: number
-  name?: string
-  level?: number
-  gold?: number
-  exp?: number
-  coupon?: number
-  avatarUrl?: string
-  openId?: string
-  platform?: string
-  [key: string]: unknown
-}
+/** Link 侧返回的用户状态（connectAccount / getAccountStatus），所有字段可选 */
+export type LinkUserState = Partial<UserState> & Record<string, unknown>
 
 /** Link 连接列表项（listConnections 返回值的单项） */
 export interface LinkConnectionInfo {
@@ -127,7 +118,19 @@ export interface OperationsEventData {
 /** 状态事件数据联合类型 */
 export type StatusEventData = ConnectionEventData | ProfileEventData | SessionEventData | OperationsEventData | ScheduleEventData
 
-/** Link 事件回调数据（来自 link 进程的事件通知，结构不固定） */
-export interface LinkEventPayload {
-  [key: string]: unknown
+// ==================== 类型安全的 Link 事件 ====================
+
+export type LinkEventName = 'connected' | 'disconnected' | 'state_update' | 'kicked' | 'ws_error' | 'reconnecting' | 'login_failed' | 'notify'
+
+export interface LinkEventMap {
+  connected: LinkUserState
+  disconnected: { code?: number }
+  state_update: LinkUserState
+  kicked: { type?: string, reason: string }
+  ws_error: { code: number, message: string }
+  reconnecting: { attempt: number, maxAttempts: number }
+  login_failed: { error: string }
+  notify: { type: string, body: string }
 }
+
+export type LinkEventPayload<E extends LinkEventName = LinkEventName> = LinkEventMap[E]

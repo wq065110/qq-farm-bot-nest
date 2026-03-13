@@ -1,10 +1,9 @@
-import type { Request, ResponseMessage } from './protocol'
+import type { TcpRequest, TcpResponse } from '@qq-farm/shared/node'
 import { Buffer } from 'node:buffer'
 import net from 'node:net'
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common'
-import { TCP_HOST, TCP_PORT } from '@qq-farm/shared'
+import { encodeFrame, FrameDecoder, TCP_HOST, TCP_PORT } from '@qq-farm/shared/node'
 import { ConnectionManagerService } from './connection-manager.service'
-import { encodeFrame, FrameDecoder } from './protocol'
 
 @Injectable()
 export class TcpServerService implements OnModuleInit, OnModuleDestroy {
@@ -32,7 +31,7 @@ export class TcpServerService implements OnModuleInit, OnModuleDestroy {
 
   private handleConnection(socket: net.Socket) {
     this.clients.add(socket)
-    const decoder = new FrameDecoder()
+    const decoder = new FrameDecoder<TcpRequest>()
     const remoteAddr = `${socket.remoteAddress}:${socket.remotePort}`
     this.logger.log(`客户端连接: ${remoteAddr}`)
 
@@ -55,9 +54,9 @@ export class TcpServerService implements OnModuleInit, OnModuleDestroy {
     })
   }
 
-  private async handleRequest(socket: net.Socket, req: Request) {
-    const respond = (res: Omit<ResponseMessage, 'type'>) => {
-      const frame = encodeFrame({ type: 'response', ...res } as ResponseMessage)
+  private async handleRequest(socket: net.Socket, req: TcpRequest) {
+    const respond = (res: Omit<TcpResponse, 'type'>) => {
+      const frame = encodeFrame({ type: 'response', ...res } as TcpResponse)
       if (!socket.destroyed)
         socket.write(frame)
     }

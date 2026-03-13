@@ -1,28 +1,15 @@
-import type { IGameTransport, UserState } from './interfaces/game-transport.interface'
-import type { LinkAccountMeta, LinkConnectionInfo, LinkUserState } from './types'
+import type { UserState } from '@qq-farm/shared'
+import type { TcpEvent, TcpResponse } from '@qq-farm/shared/node'
+import type { IGameTransport } from './interfaces/game-transport.interface'
+import type { LinkAccountMeta, LinkConnectionInfo, LinkEventName, LinkUserState } from './types'
 import { Buffer } from 'node:buffer'
 import { EventEmitter } from 'node:events'
 import net from 'node:net'
 import { Logger } from '@nestjs/common'
+import { createEmptyUserState } from '@qq-farm/shared'
+import { encodeRequestFrame, FrameDecoder } from '@qq-farm/shared/node'
 
-interface PendingRequest {
-  resolve: (value: any) => void
-  reject: (reason: any) => void
-  timer: ReturnType<typeof setTimeout>
-}
-
-interface FrameMessage {
-  type: string
-  rid?: string
-  ok?: boolean
-  error?: string
-  body?: string
-  meta?: any
-  userState?: any
-  accountId?: string
-  event?: string
-  data?: any
-}
+type TcpInbound = TcpResponse | TcpEvent
 
 export interface LinkClientOptions {
   host?: string
@@ -40,7 +27,7 @@ export class LinkClient extends EventEmitter {
 
   private readonly logger = new Logger('LinkClient')
   private socket: net.Socket | null = null
-  private buffer = Buffer.alloc(0)
+  private readonly decoder = new FrameDecoder<TcpInbound>()
   private pending = new Map<string, PendingRequest>()
   private ridCounter = 0
   private _connected = false
@@ -74,12 +61,14 @@ export class LinkClient extends EventEmitter {
       })
 
       this.socket.on('data', (chunk: Buffer) => {
-        this.buffer = Buffer.concat([this.buffer, chunk])
-        this.processBuffer()
+        const messages = this.decoder.feed(chunk)
+        for (const msg of messages)
+          this.handleMessage(msg)
       })
 
       this.socket.on('close', () => {
         this._connected = false
+        this.decoder.reset()
         this.rejectAllPending('连接断开')
         this.emit('disconnected')
         if (!this._destroyed) {
@@ -107,23 +96,7 @@ export class LinkClient extends EventEmitter {
     this.removeAllListeners()
   }
 
-  private processBuffer() {
-    while (this.buffer.length >= 4) {
-      const len = this.buffer.readUInt32BE(0)
-      if (this.buffer.length < 4 + len)
-        break
-      const payload = this.buffer.subarray(4, 4 + len)
-      this.buffer = this.buffer.subarray(4 + len)
-      try {
-        const msg: FrameMessage = JSON.parse(payload.toString('utf-8'))
-        this.handleMessage(msg)
-      } catch (e) {
-        this.logger.warn(`无法解析 Link 消息: ${(e as Error)?.message}`)
-      }
-    }
-  }
-
-  private handleMessage(msg: FrameMessage) {
+  private handleMessage(msg: TcpInbound) {
     if (msg.type === 'response' && msg.rid) {
       const p = this.pending.get(msg.rid)
       if (p) {
@@ -140,13 +113,13 @@ export class LinkClient extends EventEmitter {
     if (msg.type === 'event') {
       this.emit('link_event', {
         accountId: msg.accountId,
-        event: msg.event,
+        event: msg.event as LinkEventName,
         data: msg.data
       })
     }
   }
 
-  private sendRequest(data: any, timeout = LinkClient.DEFAULT_REQUEST_TIMEOUT_MS): Promise<FrameMessage> {
+  private sendRequest(data: Record<string, unknown>, timeout = LinkClient.DEFAULT_REQUEST_TIMEOUT_MS): Promise<TcpResponse> {
     return new Promise((resolve, reject) => {
       if (!this._connected || !this.socket) {
         reject(new Error('未连接到 Link'))
@@ -154,11 +127,7 @@ export class LinkClient extends EventEmitter {
       }
       const rid = String(++this.ridCounter)
       data.rid = rid
-      const json = JSON.stringify(data)
-      const payload = Buffer.from(json, 'utf-8')
-      const frame = Buffer.alloc(4 + payload.length)
-      frame.writeUInt32BE(payload.length, 0)
-      payload.copy(frame, 4)
+      const frame = encodeRequestFrame(data)
 
       const timer = setTimeout(() => {
         this.pending.delete(rid)
@@ -204,7 +173,7 @@ export class LinkClient extends EventEmitter {
   }
 
   /** 为指定账号调用游戏服务方法（供 AccountTransport 使用） */
-  async invokeForAccount(accountId: string, serviceName: string, methodName: string, params: Record<string, unknown>, timeout = 10000): Promise<FrameMessage> {
+  async invokeForAccount(accountId: string, serviceName: string, methodName: string, params: Record<string, unknown>, timeout = 10000): Promise<TcpResponse> {
     return this.sendRequest({
       type: 'invoke',
       accountId,
@@ -216,23 +185,36 @@ export class LinkClient extends EventEmitter {
 
   // ========== IGameTransport per-account adapter ==========
 
-  createTransport(accountId: string): IGameTransport {
-    return new AccountTransport(accountId, this)
+  createTransport(accountId: string, getState?: () => UserState): IGameTransport {
+    return new AccountTransport(accountId, this, getState)
   }
+}
+
+interface PendingRequest {
+  resolve: (value: any) => void
+  reject: (reason: any) => void
+  timer: ReturnType<typeof setTimeout>
 }
 
 /**
  * 为单个账号提供 IGameTransport 接口，内部通过 LinkClient 发送 TCP 请求。
- * 继承 EventEmitter 以支持 Workers 的事件订阅。
+ * 继承 EventEmitter 以支持 Workers 的事件订阅（landsChanged / sell 等）。
+ *
+ * userState 通过 getter 引用 AccountRunner 的状态对象，无需手动同步。
  */
 class AccountTransport extends EventEmitter implements IGameTransport {
-  readonly userState: UserState = { gid: 0, name: '', level: 0, gold: 0, exp: 0, coupon: 0, avatarUrl: '', openId: '' }
+  private readonly fallbackState: UserState = createEmptyUserState()
 
   constructor(
     private readonly accountId: string,
-    private readonly linkClient: LinkClient
+    private readonly linkClient: LinkClient,
+    private readonly getState?: () => UserState
   ) {
     super()
+  }
+
+  get userState(): UserState {
+    return this.getState?.() ?? this.fallbackState
   }
 
   async invoke<T = unknown>(serviceName: string, methodName: string, params: Record<string, unknown>, timeout = 10000): Promise<{ data: T, meta?: any }> {
@@ -242,9 +224,5 @@ class AccountTransport extends EventEmitter implements IGameTransport {
 
   isConnected(): boolean {
     return this.linkClient.connected
-  }
-
-  updateUserState(state: Partial<UserState>) {
-    Object.assign(this.userState, state)
   }
 }

@@ -1,6 +1,7 @@
-import type { ClientConfig } from './protocol'
+import type { UserState } from '@qq-farm/shared'
+import type { ClientConfig } from '@qq-farm/shared/node'
 import { Injectable, Logger } from '@nestjs/common'
-import { GameClient, UserState } from './game-client'
+import { GameClient } from './game-client'
 import { GameInvokeService } from './game-invoke.service'
 import { ProtoLoaderService } from './proto-loader.service'
 

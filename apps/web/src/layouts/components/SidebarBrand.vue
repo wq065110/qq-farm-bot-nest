@@ -9,7 +9,7 @@ defineProps<{
 <template>
   <div
     class="brand-header border-b border-b-solid flex shrink-0 h-12 items-center a-border-b-border-sec"
-    :class="collapsed ? 'justify-center px-2' : 'gap-2 px-4'"
+    :class="collapsed ? 'justify-center px-2' : 'gap-2.5 px-4'"
   >
     <div class="brand-icon shrink-0">
       <img src="/icon.ico" alt="" class="h-7 w-7">

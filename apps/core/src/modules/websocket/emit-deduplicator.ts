@@ -1,4 +1,4 @@
-import equal from '@blumintinc/fast-deep-equal'
+import equal from '@superblocksteam/fast-deep-equal'
 
 /**
  * 统一 WS 推送去重：比对本次 payload 与上次 hash，一致则不推送。
