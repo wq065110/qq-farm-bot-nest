@@ -124,7 +124,7 @@ async function handleLogin() {
     <div class="p-5 flex items-center inset-0 justify-center absolute z-20">
       <a-card
         variant="borderless"
-        class="login-card max-w-[380px] w-full relative overflow-hidden rounded-2xl !border-white/30 !bg-white/30 !shadow-[0_8px_32px_0_rgba(31,38,135,0.15)] !backdrop-blur-xl !border dark:!bg-black/30"
+        class="login-card max-w-[380px] w-full relative overflow-hidden rounded-2xl !border-white/30 !bg-white/30 !shadow-[0_8px_32px_0_rgba(31,38,135,0.15)] !backdrop-blur-xl !border"
         :classes="{ body: '!p-0' }"
       >
         <span class="text-[9px] text-white tracking-[0.15em] font-bold px-[5px] bg-[var(--ant-color-primary)] inline-flex h-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.25)] items-center right-2 top-2 absolute rounded">PLUS</span>
@@ -135,7 +135,7 @@ async function handleLogin() {
         >
           <img src="/icon.ico" alt="" class="mb-2 h-20 w-20">
           <h1 class="tracking-tight font-bold flex items-center a-color-text text-xl">
-            <span class="text-transparent mr-2 from-[var(--ant-color-primary-text)] to-[var(--ant-color-primary-text)] via-[var(--ant-color-primary)] bg-gradient-to-br bg-clip-text">农场の助手</span>
+            <span class="text-transparent from-[var(--ant-color-primary-text)] to-[var(--ant-color-primary-text)] via-[var(--ant-color-primary)] bg-gradient-to-br bg-clip-text">农场の助手</span>
           </h1>
         </div>
 
@@ -158,7 +158,7 @@ async function handleLogin() {
                   size="large"
                   autocomplete="current-password"
                   :disabled="loading"
-                  class="transition-all duration-300 !py-3.5 !border-0 !bg-layout/60 !backdrop-blur-md !text-base !rounded-2xl"
+                  class="transition-all duration-300 !py-3 !border-0 !bg-layout/60 !backdrop-blur-md !text-base !rounded-2xl"
                   @focus="focused = true"
                   @blur="focused = false"
                 >
@@ -187,22 +187,19 @@ async function handleLogin() {
               block
               size="large"
               :loading="loading"
-              class="group transition-all duration-300 relative overflow-hidden !font-bold !border-none !bg-opacity-90 !h-12 !backdrop-blur-sm !text-lg !rounded-2xl !shadow-lg active:!scale-[0.98] hover:!scale-[1.02] hover:!shadow-xl"
+              class="group transition-all duration-300 !font-bold !bg-opacity-90 !h-12 active:!scale-[0.98] hover:!scale-[1.02]"
               :style="{ background: 'linear-gradient(135deg, var(--ant-color-primary) 0%, #34d399 100%)' }"
             >
-              <template v-if="!loading" #icon>
+              <template v-if="!loading">
                 <span class="i-streamline-emojis-tractor mr-1 transition-transform text-xl group-hover:translate-x-1" />
               </template>
-              <span class="text-white [text-shadow:0_1px_2px_rgba(0,0,0,0.1)] relative z-10">进入农场</span>
-
-              <!-- Shine Effect -->
-              <div class="transition-transform duration-1000 inset-0 absolute z-0 from-transparent to-transparent via-white/20 bg-gradient-to-r -translate-x-full group-hover:translate-x-full" />
+              <span>进入农场</span>
             </a-button>
           </a-form>
 
           <div class="mt-6 flex justify-center">
-            <div class="text-gray-500 px-4 py-1.5 border-white/30 rounded-full bg-white/30 flex gap-2 select-none transition-colors items-center backdrop-blur-lg border text-xs shadow-sm dark:text-gray-400 dark:bg-black/30 hover:bg-white/50 dark:hover:bg-black/40">
-              <span class="text-green-600 dark:text-green-400 i-carbon-security text-sm" />
+            <div class="px-4 py-1.5 border-white/30 rounded-full bg-white/30 flex gap-2 select-none transition-colors items-center backdrop-blur-lg a-color-text border text-xs shadow-sm hover:bg-white/50">
+              <span class="i-carbon-security text-green-6 text-sm" />
               <span>安全加密连接</span>
             </div>
           </div>

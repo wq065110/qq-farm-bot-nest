@@ -40,12 +40,11 @@
     "ws": "^8.19.0"
   },
   "devDependencies": {
-    "@antfu/eslint-config": "^7.7.0",
+    "@antfu/eslint-config": "^7.7.2",
     "@nestjs/cli": "^11.0.16",
-    "@types/bcryptjs": "^3.0.0",
     "@types/better-sqlite3": "^7.6.13",
     "@types/express": "^5.0.6",
-    "@types/node": "^25.3.5",
+    "@types/node": "^25.5.0",
     "@types/passport-jwt": "^4.0.1",
     "@types/qrcode": "^1.5.6",
     "@types/ws": "^8.18.1",
