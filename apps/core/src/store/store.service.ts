@@ -513,17 +513,24 @@ export class StoreService {
     if (acc.id) {
       const existing = this.db.select().from(schema.accounts).where(eq(schema.accounts.id, String(acc.id))).get()
       if (existing) {
+        const name = dedupByUin && acc.loginType === 'qr'
+          ? existing.name
+          : (acc.name !== undefined ? acc.name : existing.name)
+        const code = acc.code !== undefined ? acc.code : existing.code
+        const platform = acc.platform !== undefined ? acc.platform : existing.platform
+        const uin = acc.uin !== undefined ? String(acc.uin) : existing.uin
+        const qq = acc.qq !== undefined ? String(acc.qq) : existing.qq
+        const avatar = acc.avatar || acc.avatarUrl || existing.avatar
+        const nick = acc.nick !== undefined ? acc.nick : existing.nick
+        const next = { name, code, platform, uin, qq, avatar, nick }
+        const fields = ['name', 'code', 'platform', 'uin', 'qq', 'avatar', 'nick'] as const
+        const hasChange = fields.some(k => existing[k] !== next[k])
+        if (!hasChange) {
+          this.ensureAccountConfig(String(acc.id))
+          return this.getAccounts()
+        }
         this.db.update(schema.accounts).set({
-          // 业务约定：重复扫码同一个 QQ 号（loginType=qr + uin 去重命中）时，不自动覆盖备注，只更新 code 等登录相关字段
-          name: dedupByUin && acc.loginType === 'qr'
-            ? existing.name
-            : (acc.name !== undefined ? acc.name : existing.name),
-          code: acc.code !== undefined ? acc.code : existing.code,
-          platform: acc.platform !== undefined ? acc.platform : existing.platform,
-          uin: acc.uin !== undefined ? String(acc.uin) : existing.uin,
-          qq: acc.qq !== undefined ? String(acc.qq) : existing.qq,
-          avatar: acc.avatar || acc.avatarUrl || existing.avatar,
-          nick: acc.nick !== undefined ? acc.nick : existing.nick,
+          ...next,
           updatedAt: Date.now()
         }).where(eq(schema.accounts.id, String(acc.id))).run()
         this.ensureAccountConfig(String(acc.id))
