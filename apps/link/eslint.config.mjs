@@ -18,7 +18,9 @@ export default antfu(
       'style/object-curly-spacing': ['error', 'always'],
       'style/linebreak-style': ['error', 'unix'],
       'style/comma-dangle': ['error', 'never'],
-      'style/brace-style': ['error', '1tbs', { allowSingleLine: true }]
+      'style/brace-style': ['error', '1tbs', { allowSingleLine: true }],
+
+      'e18e/prefer-spread-syntax': 'off'
     }
   }
 )
