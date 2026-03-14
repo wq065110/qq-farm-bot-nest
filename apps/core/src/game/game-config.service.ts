@@ -226,8 +226,16 @@ export class GameConfigService implements OnModuleInit {
     return mins > 0 ? `${hours}小时${mins}分` : `${hours}小时`
   }
 
+  /** 单季作物用 exp；多季作物（有 exp_alter）用 exp + round(exp_alter * 0.15) 作为展示经验 */
   getPlantExp(plantId: number): number {
-    return this.plantMap.get(plantId)?.exp ?? 0
+    const plant = this.plantMap.get(plantId)
+    if (!plant)
+      return 0
+    const base = Number(plant.exp) || 0
+    const expAlter = Number((plant as any).exp_alter) || 0
+    if (expAlter > 0)
+      return base + Math.floor(expAlter * 0.15)
+    return base
   }
 
   getAllPlants(): PlantInfo[] {

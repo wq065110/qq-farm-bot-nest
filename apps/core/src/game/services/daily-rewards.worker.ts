@@ -358,6 +358,9 @@ export class DailyRewardsWorker {
   private lastBuyAt = 0
 
   async autoBuyFertilizer(config: import('../constants').FertilizerBuyConfig, force = false): Promise<number> {
+    const today = getDateKey()
+    if (!force && this.fertBuyDone === today)
+      return 0
     const now = Date.now()
     if (!force && now - this.lastBuyAt < DailyRewardsWorker.BUY_COOLDOWN_MS)
       return 0

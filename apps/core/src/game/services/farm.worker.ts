@@ -32,6 +32,24 @@ function hasPlantData(land: any): boolean {
   return !!(plant && Array.isArray(plant.phases) && plant.phases.length > 0)
 }
 
+/** 解析 Plant 配置中的 mutant 字符串为数组，格式如 "6:1040224:10" 或 "6:1040224:10,7:1040225:5" */
+function parseMutantRawToArray(raw: string): Array<{ typeId: number, fruitId: number, chance: number }> {
+  if (!raw?.trim())
+    return []
+  const out: Array<{ typeId: number, fruitId: number, chance: number }> = []
+  for (const segment of raw.split(',')) {
+    const parts = segment.trim().split(':')
+    if (parts.length < 3)
+      continue
+    const typeId = toNum(parts[0])
+    const fruitId = toNum(parts[1])
+    const chance = toNum(parts[2])
+    if (typeId > 0)
+      out.push({ typeId, fruitId, chance })
+  }
+  return out
+}
+
 function getLinkedMasterLand(land: any, landsMap: Map<number, any>): any | null {
   const landId = toNum(land?.id)
   const masterLandId = toNum(land?.master_land_id)
@@ -835,16 +853,17 @@ export class FarmWorker {
         const growTimeSec = this.gameConfig.getPlantGrowTime(plantId)
 
         const mutantConfigIds: number[] = []
-        if (Array.isArray(phase?.mutants) && phase.mutants.length > 0) {
+        if (Array.isArray(phase?.mutants)) {
           for (const m of phase.mutants)
             mutantConfigIds.push(toNum((m as any).mutant_config_id))
         }
-        if (mutantConfigIds.length === 0 && Array.isArray(plant?.mutant_config_ids)) {
+        if (Array.isArray(plant?.mutant_config_ids)) {
           for (const cid of plant.mutant_config_ids)
             mutantConfigIds.push(toNum(cid))
         }
         const activeMutantIds = [...new Set(mutantConfigIds)].filter(Boolean)
-        const plantMutantRaw = String((plantCfg as any)?.mutant ?? '')
+        const plantMutantRawStr = String((plantCfg as any)?.mutant ?? '')
+        const mutantRawArray = parseMutantRawToArray(plantMutantRawStr)
 
         let landStatus = 'growing'
         if (phase.phase === PlantPhase.MATURE)
@@ -886,7 +905,7 @@ export class FarmWorker {
           growTimeText: this.gameConfig.formatGrowTime(growTimeSec),
           landLevelNeed: Number((plantCfg as any)?.land_level_need) ?? 0,
           mutantActiveIds: activeMutantIds,
-          mutantRaw: plantMutantRaw || ''
+          mutants: mutantRawArray
         }
       })
       return { lands, summary: { harvestable: status.harvestable.length, growing: status.growing.length, empty: status.empty.length, dead: status.dead.length, needWater: status.needWater.length, needWeed: status.needWeed.length, needBug: status.needBug.length } }

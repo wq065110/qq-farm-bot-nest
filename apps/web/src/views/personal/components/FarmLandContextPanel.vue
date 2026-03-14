@@ -4,6 +4,7 @@ import { computed, ref, watch } from 'vue'
 import {
   getMutantInfo,
   LAND_LEVEL_NAMES,
+  LAND_STATUS_ICONS,
   LAND_STATUS_NAMES
 } from '../constants'
 
@@ -26,7 +27,7 @@ interface LandDetail {
   totalSeasons?: number
   plantSize?: number
   mutantActiveIds?: number[]
-  mutantRaw?: string
+  mutants?: Array<{ typeId: number, fruitId: number, chance: number }>
   [key: string]: unknown
 }
 
@@ -80,7 +81,7 @@ const detailItems = computed(() => {
   items.push({
     label: '当前状态',
     value: LAND_STATUS_NAMES[status ?? ''] ?? land.phaseName ?? '-',
-    icon: status === 'harvestable' ? 'i-streamline-emojis-cooked-rice' : status === 'growing' ? 'i-streamline-emojis-seedling' : status === 'dead' ? 'i-streamline-emojis-wilted-flower' : ''
+    icon: LAND_STATUS_ICONS[status ?? ''] ?? ''
   })
 
   if (land.phaseName && status !== 'empty')
@@ -123,18 +124,11 @@ const activeMutants = computed(() => {
   return land.mutantActiveIds.map(id => ({ id, ...getMutantInfo(id) }))
 })
 
-const mutantRawParsed = computed(() => {
-  const raw = targetLand.value?.mutantRaw
-  if (!raw)
-    return null
-  const parts = raw.split(':')
-  if (parts.length < 3)
-    return null
-  const typeId = Number(parts[0]) || 0
-  const chance = Number(parts[2]) || 0
-  if (typeId <= 0)
-    return null
-  return { typeId, chance }
+const mutantsList = computed(() => {
+  const arr = targetLand.value?.mutants
+  if (!Array.isArray(arr) || arr.length === 0)
+    return []
+  return arr
 })
 
 function openSeedDialog(land: LandDetail): void {
@@ -223,7 +217,7 @@ defineExpose({
         v-for="seed in bagSeeds1x1"
         :key="seed.seedId"
         class="p-2.5 flex gap-3 cursor-pointer transition-colors items-center rounded-lg"
-        :class="selectedSeedId === seed.seedId ? 'a-bg-primary-bg ring-1 a-ring-primary' : 'hover:a-bg-layout'"
+        :class="selectedSeedId === seed.seedId ? 'a-bg-primary-bg shadow-sm' : 'hover:a-bg-layout'"
         @click="selectedSeedId = Number(seed.seedId)"
       >
         <div class="flex shrink-0 h-10 w-10 items-center justify-center overflow-hidden a-bg-layout rounded-lg">
@@ -302,7 +296,7 @@ defineExpose({
       </div>
 
       <!-- Mutations -->
-      <div v-if="activeMutants.length || mutantRawParsed" class="mt-3 p-3 a-bg-layout rounded-lg">
+      <div v-if="activeMutants.length || mutantsList.length" class="mt-3 p-3 a-bg-layout rounded-lg">
         <div class="font-medium mb-2 a-color-text-secondary text-xs">
           变异信息
         </div>
@@ -311,8 +305,8 @@ defineExpose({
             {{ `${m.name} · ${m.effect}` }}
           </a-tag>
         </div>
-        <div v-if="mutantRawParsed" class="a-color-text-tertiary text-xs" :class="activeMutants.length ? 'mt-2' : ''">
-          可变异（{{ mutantRawParsed.chance }}% 概率）
+        <div v-else-if="mutantsList.length" class="a-color-text-tertiary text-xs" :class="activeMutants.length ? 'mt-2' : ''">
+          可变异（{{ mutantsList.map(x => x.chance).join('%、') }}% 概率）
         </div>
       </div>
 

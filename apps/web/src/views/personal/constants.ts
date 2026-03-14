@@ -23,6 +23,12 @@ export const LAND_STATUS_NAMES: Record<string, string> = {
   locked: '未解锁'
 }
 
+export const LAND_STATUS_ICONS: Record<string, string> = {
+  harvestable: 'i-streamline-emojis-cooked-rice',
+  growing: 'i-streamline-emojis-seedling',
+  dead: 'i-streamline-emojis-cross-mark'
+}
+
 export const FARM_OPERATIONS: Array<{ type: FarmOpType, label: string, icon: string }> = [
   { type: 'harvest', label: '收获', icon: 'i-streamline-emojis-cooked-rice' },
   { type: 'clear', label: '除草', icon: 'i-streamline-emojis-herb' },
@@ -53,9 +59,10 @@ export interface MutantTypeInfo {
 export const MUTANT_TYPES: Record<number, MutantTypeInfo> = {
   1: { name: '冰冻', effect: '售价×3', color: 'cyan' },
   2: { name: '爱心', effect: '数量×3', color: 'magenta' },
-  3: { name: '黄金', effect: '产出黄金果实', color: 'gold' },
+  3: { name: '暗化', effect: '售价×2', color: 'purple' },
   4: { name: '湿润', effect: '数量×2', color: 'blue' },
-  5: { name: '暗化', effect: '售价×2', color: 'purple' }
+  5: { name: '黄金', effect: '产出黄金果实', color: 'gold' },
+  6: { name: '黄金', effect: '产出稀有果实', color: 'gold' }
 }
 
 export function getMutantInfo(id: number): MutantTypeInfo {
