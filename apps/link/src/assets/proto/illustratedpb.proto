@@ -9,19 +9,29 @@ message GetIllustratedListV2Request {
     bool full = 2;
 }
 
+message IllustratedRewardInfo {
+    int32 reward_id = 1;
+    int32 count = 2;
+}
+
 message IllustratedItem {
-    int64 seed_id = 1;
-    bool unlocked = 2;
-    bool planted = 3;
-    int32 planted_count = 4;
-    int32 harvest_count = 5;
-    int32 category = 6;
-    bytes reward_info = 7;
-    bool has_reward = 8;
+    int64 fruit_id = 1;
+    int32 unlock_state = 2;
+    int32 plant_state = 3;
+    int32 harvest_count = 4;
+    int32 category = 5;
+    IllustratedRewardInfo reward_info = 6;
+    bool has_reward = 7;
 }
 
 message GetIllustratedListV2Reply {
     repeated IllustratedItem items = 1;
+    int32 exp = 2;
+    int32 level = 3;
+    corepb.Item reward_hint = 4;
+    repeated int32 proto_ver = 5;
+    int32 next_level_exp = 7;
+    bool reward_box_enabled = 9;
 }
 
 message ClaimAllRewardsV2Request {
